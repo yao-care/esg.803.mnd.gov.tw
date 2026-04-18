@@ -1,0 +1,14 @@
+{
+  "name": "knowledge-body-template",
+  "version": "0.1.0",
+  "description": "知識體管理系統模板 — 可複製的 AI 稽核助理框架",
+  "scripts": {
+    "test": "node --test scripts/lib/core/__tests__/*.test.js",
+    "build:assistant": "node scripts/lib/core/build.js",
+    "qa-report": "node scripts/lib/core/qa-report.js",
+    "chunk-audit": "node scripts/lib/core/chunk-audit.js"
+  },
+  "dependencies": {
+    "minisearch": "^7.1.1"
+  }
+}

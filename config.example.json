@@ -1,0 +1,91 @@
+{
+  "knowledge_body": {
+    "name": "（嚮導產生）",
+    "name_en": "example",
+    "description": "（嚮導產生）",
+    "organization": "（嚮導產生）"
+  },
+  "data_sources": {
+    "documents": {
+      "enabled": true,
+      "path": "knowledge/",
+      "types": []
+    },
+    "tables": {
+      "collected": { "enabled": false, "path": "data/collected/" },
+      "reported": { "enabled": false, "path": "data/reported/" }
+    },
+    "imports": {
+      "enabled": false,
+      "path": "imports/",
+      "parsers": ["pdf", "office", "image"]
+    }
+  },
+  "targets": [],
+  "collectors": [],
+  "event_collectors": [],
+  "monitor": {
+    "heartbeat": { "enabled": false, "timeout_hours": 24 },
+    "posture_check": { "enabled": false },
+    "drills": {
+      "enabled": false,
+      "frequency_months": 6,
+      "notify_days_before": [30, 7, 1],
+      "contacts": []
+    },
+    "adapters": []
+  },
+  "exercises": {
+    "enabled": false,
+    "schedule": "",
+    "playbooks": []
+  },
+  "notify": {
+    "email": {
+      "enabled": false,
+      "recipients": []
+    }
+  },
+  "qa": {
+    "search_hit_threshold": 0.95,
+    "answer_rate_threshold": 0.98,
+    "citation_accuracy_threshold": 0.98
+  },
+  "git": {
+    "main_branch": "main",
+    "publish_branch": "audit",
+    "review_branch_prefix": "review-"
+  },
+  "ui": {
+    "locale": "zh-TW",
+    "assistant_title": "知識助理",
+    "welcome_message": "👋 你好！請輸入問題，我將根據文件回答。",
+    "drill_welcome_message": "請選擇評鑑範圍並按「開始模擬評鑑」開始。",
+    "doc_group_labels": {},
+    "scan_display_names": {},
+    "status_labels": {
+      "completed": "完成",
+      "pass": "通過",
+      "fail": "失敗",
+      "warning": "警告",
+      "error": "錯誤"
+    }
+  },
+  "domain": {
+    "control_id_pattern": "",
+    "control_name": "",
+    "identity_doc_map": {},
+    "system_prompt": "",
+    "drill_system_prompt": "",
+    "metadata_filename": "merge.yaml",
+    "form_prefix": "FRM",
+    "assessment_controls": [],
+    "assessment_controls_covered": [],
+    "citation_pattern": "\\[來源:[^\\]]+\\]"
+  },
+  "api": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-20250514",
+    "key_env_var": "ANTHROPIC_API_KEY"
+  }
+}
