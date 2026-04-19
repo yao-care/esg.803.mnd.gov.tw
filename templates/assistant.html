@@ -887,18 +887,22 @@ function renderDocNav(filter) {
 // DOCUMENT LOOKUP (prefix matching)
 // ============================================================
 function findDocByKey(key) {
-  // Exact match first
   if (RENDERED_DOCS[key]) return { docKey: key, html: RENDERED_DOCS[key] };
-
-  // Prefix match: "ISMS-303" should match "ISMS-303-資通安全人員管理及教育訓練作業說明書"
   const prefix = key.replace(/\s+/g, '');
+  let mainDoc = null;
+  let subDoc = null;
   for (const dk of Object.keys(RENDERED_DOCS)) {
-    if (dk === prefix || dk.startsWith(prefix + '-') || dk.startsWith(prefix + '_')) {
-      return { docKey: dk, html: RENDERED_DOCS[dk] };
+    if (dk === prefix) return { docKey: dk, html: RENDERED_DOCS[dk] };
+    if (dk.startsWith(prefix + '-') || dk.startsWith(prefix + '_')) {
+      const afterPrefix = dk.charAt(prefix.length + 1);
+      if (/\d/.test(afterPrefix)) {
+        if (!subDoc) subDoc = { docKey: dk, html: RENDERED_DOCS[dk] };
+      } else {
+        if (!mainDoc) mainDoc = { docKey: dk, html: RENDERED_DOCS[dk] };
+      }
     }
   }
-
-  return null;
+  return mainDoc || subDoc || null;
 }
 
 // ============================================================
@@ -943,25 +947,31 @@ function showDocument(docKey, sectionId) {
   iframe.style.display = 'block';
   iframe.srcdoc = html;
 
-  if (sectionId) {
-    iframe.onload = () => {
-      try {
+  iframe.onload = () => {
+    try {
+      const body = iframe.contentDocument.body;
+      if (body) {
+        body.innerHTML = autoLinkDocKeys(body.innerHTML);
+        wireUpCitations(body);
+      }
+      if (sectionId) {
         const iDoc = iframe.contentDocument;
-        // Find heading containing sectionId text
-        const headings = iDoc.querySelectorAll('h1,h2,h3,h4,h5,h6');
-        for (const h of headings) {
-          if (h.textContent.includes(sectionId) || (h.id && h.id.includes(sectionId))) {
-            h.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            break;
+        const el = iDoc.getElementById(sectionId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          const headings = iDoc.querySelectorAll('h1,h2,h3,h4');
+          for (const h of headings) {
+            if (h.textContent.includes(sectionId)) {
+              h.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              break;
+            }
           }
         }
-        // Also try by id
-        const el = iDoc.getElementById(sectionId);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } catch (_) { /* cross-origin or file:// */ }
-      iframe.onload = null;
-    };
-  }
+      }
+    } catch (_) { /* cross-origin safety */ }
+    iframe.onload = null;
+  };
 
   // On small screens, close sidebar after navigation
   if (window.innerWidth <= 1200) {
