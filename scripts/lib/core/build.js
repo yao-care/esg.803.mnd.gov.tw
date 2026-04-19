@@ -41,6 +41,7 @@ const { renderCollectedHtml }                  = require('./render.js');
 const { generateAllSchemas }                   = require('./generate-schemas');
 const { postProcessForms }                     = require('./form-processor');
 const { renderRecords }                        = require('./record-renderer');
+const { fetchExternalSources }                 = require('./external-fetcher');
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -637,6 +638,14 @@ function build(overrides = {}) {
     if (generated.length > 0) {
       console.log(`[build] Generated ${generated.length} form schemas`);
     }
+  }
+
+  // ---- Step 2d: External data sources ----
+  const externalResult = fetchExternalSources(config, domain.metadata_filename);
+  allChunks.push(...externalResult.chunks);
+  Object.assign(renderedDocs, externalResult.renderedDocs);
+  if (externalResult.chunks.length > 0) {
+    console.log(`[build] External: ${externalResult.chunks.length} chunks merged`);
   }
 
   console.log(`[build] Total chunks: ${allChunks.length}`);
