@@ -256,6 +256,14 @@ npm run qa-report -- --evaluate qa-answers.json --html
 
 **門檻值**：搜尋命中率 >= 95%（CI 門檻）、回答率 >= 98%、引用準確率 >= 98%。
 
+## 引文系統維護
+
+引文系統由三層防護構成（rule/parser/QA），修改任一層時需注意：
+
+1. 修改 system_prompt 時：保留尾端的 few-shot 範例
+2. 修改 templates/assistant.html 時：不可移除 normalizeCitations、parseCitations、autoLinkDocKeys 任何一個函式
+3. 新增文件類型時：確認 doc_key 格式能被 autoLinkDocKeys 的正則匹配
+
 ## Git Branch Policy
 
 ### 允許存在的分支 / Allowed Branches
