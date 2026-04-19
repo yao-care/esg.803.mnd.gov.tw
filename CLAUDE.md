@@ -1,3 +1,10 @@
+# AKORA
+
+> **A**uditable · **K**nowledge Body · **O**rganizer · **R**etrieval · **A**gent
+>
+> 把散落的文件，升級為可稽核的 AI 知識體。
+> Fork 即用的 Claude CLI 模板，為任何領域打造經驗證的知識助理。
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.

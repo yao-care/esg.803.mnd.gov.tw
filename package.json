@@ -1,7 +1,7 @@
 {
-  "name": "knowledge-body-template",
+  "name": "akora",
   "version": "0.1.0",
-  "description": "知識體管理系統模板 — 可複製的 AI 稽核助理框架",
+  "description": "AKORA — 可稽核 AI 知識體模板 (Auditable AI Knowledge Body Template)",
   "scripts": {
     "test": "node --test-concurrency=1 --test scripts/lib/core/__tests__/*.test.js",
     "build:assistant": "node scripts/lib/core/build.js",
