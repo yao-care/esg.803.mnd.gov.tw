@@ -1101,6 +1101,12 @@ async function main() {
     identity: (args.find(a => a.startsWith('--identity=')) || '').replace('--identity=', ''),
     source: (args.find(a => a.startsWith('--source=')) || '').replace('--source=', ''),
     ci: args.includes('--ci'),
+    profile: (() => {
+      const eq = args.find(a => a.startsWith('--profile='));
+      if (eq) return eq.replace('--profile=', '');
+      const idx = args.indexOf('--profile');
+      return (idx !== -1 && args[idx + 1] && !args[idx + 1].startsWith('--')) ? args[idx + 1] : 'assistant';
+    })(),
   };
 
   console.log('[qa-report] Building index...');
@@ -1109,7 +1115,10 @@ async function main() {
   console.log(`[qa-report] ${Object.keys(chunksMap).length} chunks, ${metaIndex.length} meta entries`);
 
   // Load seed questions                                                  // [15]
-  const seedPath = path.join(__dirname, 'qa-questions.json');
+  // Load profile-specific question file
+  const profileConfig = config.profiles?.[flags.profile] || {};
+  const questionsFile = profileConfig.qa_questions || 'qa-questions.json';
+  const seedPath = path.join(__dirname, questionsFile);
   if (!fs.existsSync(seedPath)) {
     console.error(`Seed questions not found: ${seedPath}`);
     process.exit(1);
@@ -1126,7 +1135,7 @@ async function main() {
 
   // Dynamic questions
   if (!flags.seedOnly) {
-    const cachePath = path.join(__dirname, 'qa-dynamic-cache.json');
+    const cachePath = path.join(__dirname, `qa-dynamic-cache-${flags.profile}.json`);
     const dynamic = await generateDynamicQuestions(allChunks, questions, cachePath, flags.refreshDynamic);
     console.log(`[qa-report] Dynamic questions: ${dynamic.length}`);
     questions = [...questions, ...dynamic];
@@ -1186,7 +1195,8 @@ async function main() {
     }
     const evalResults = importAnswers(questions, searchResultsMap, answersData);
     const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
-    const outputPath = path.join(flags.outputDir, `qa-accuracy-report-${dateStr}.md`);
+    const reportBaseName = `${flags.profile}-report-${dateStr}`;
+    const outputPath = path.join(flags.outputDir, `${reportBaseName}.md`);
     generateReport(evalResults, outputPath);
     if (flags.html) {
       const htmlPath = outputPath.replace(/\.md$/, '.html');
@@ -1297,7 +1307,8 @@ async function main() {
 
   // Generate report
   const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
-  const outputPath = path.join(flags.outputDir, `qa-accuracy-report-${dateStr}.md`);
+  const reportBaseName = `${flags.profile}-report-${dateStr}`;
+  const outputPath = path.join(flags.outputDir, `${reportBaseName}.md`);
   generateReport(results, outputPath);
 
   if (flags.html) {
