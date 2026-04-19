@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * search.js — MiniSearch Index Builder for AI Audit Assistant
+ * search.js — MiniSearch Index Builder for Knowledge Body Assistant
  *
  * Provides full-text search index building with Chinese word segmentation.
  * Works in Node.js (build time) and modern browsers (query time).
@@ -144,7 +144,7 @@ function buildMetaIndex(chunks) {
     title: chunk.title,
     version: chunk.version || '',
     section: chunk.section,
-    iso_controls: chunk.iso_controls,
+    controls: chunk.controls,
     type: chunk.type,
     char_count: chunk.text ? chunk.text.length : 0,
   }));

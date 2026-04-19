@@ -277,16 +277,27 @@ function renderSummaryCards(summary, cardMap) {
 function renderChecksTable(checks) {
   if (!Array.isArray(checks) || checks.length === 0) return '';
 
-  // Detect which columns are present
-  const hasOwasp    = checks.some(c => c.owasp_llm);
-  const hasNist     = checks.some(c => c.nist_ai_rmf);
-  const hasIso      = checks.some(c => c.iso_27001);
+  // Core columns always present
+  const coreKeys = new Set(['name', 'status', 'detail', 'findings']);
   const hasFindings = checks.some(c => c.findings && c.findings.length > 0);
 
+  // Dynamically detect extra columns (compliance frameworks, etc.)
+  // by scanning all check objects for keys not in the core set.
+  const extraCols = [];
+  const seenExtra = new Set();
+  for (const c of checks) {
+    for (const key of Object.keys(c)) {
+      if (!coreKeys.has(key) && !seenExtra.has(key) && typeof c[key] === 'string') {
+        seenExtra.add(key);
+        extraCols.push(key);
+      }
+    }
+  }
+
   let head = '<th>Check</th><th>Status</th><th>Detail</th>';
-  if (hasIso)   head += '<th>ISO 27001</th>';
-  if (hasOwasp) head += '<th>OWASP LLM</th>';
-  if (hasNist)  head += '<th>NIST AI RMF</th>';
+  for (const col of extraCols) {
+    head += `<th>${esc(col)}</th>`;
+  }
 
   const rows = checks.map(c => {
     const sc = statusClass(c.status);
@@ -301,9 +312,9 @@ function renderChecksTable(checks) {
       row += `</ul>`;
     }
     row += `</td>`;
-    if (hasIso)   row += `<td>${esc(c.iso_27001 || '')}</td>`;
-    if (hasOwasp) row += `<td>${esc(c.owasp_llm || '')}</td>`;
-    if (hasNist)  row += `<td>${esc(c.nist_ai_rmf || '')}</td>`;
+    for (const col of extraCols) {
+      row += `<td>${esc(c[col] || '')}</td>`;
+    }
     return `<tr>${row}</tr>`;
   }).join('\n');
 

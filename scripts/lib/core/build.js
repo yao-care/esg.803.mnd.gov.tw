@@ -362,9 +362,11 @@ function substitutePlaceholders(html, config) {
   html = html.replace('__ASSESSMENT_CONTROLS_COVERED__', JSON.stringify(domain.assessment_controls_covered || []));
   html = html.replace('__ASSESSMENT_CONTROLS_ALL__', JSON.stringify(domain.assessment_controls || []));
   html = html.replace('__DOC_GROUP_LABELS__', JSON.stringify(ui.doc_group_labels || {}));
-  html = html.replace('__KB_NAME__', kb.name || '');
+  html = html.replace(/__KB_NAME__/g, kb.name || '');
+  html = html.replace(/__KB_DESCRIPTION__/g, kb.description || '');
   html = html.replace('__ORGANIZATION__', kb.organization || '');
   html = html.replace('__CONTROL_NAME__', domain.control_name || '');
+  html = html.replace('__CONTROL_ID_PATTERN__', domain.control_id_pattern || '');
 
   return html;
 }

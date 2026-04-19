@@ -787,7 +787,7 @@ function renderDocNav(filter) {
           d.doc_key || '',
           d.title || '',
           d.doc_id || '',
-          ...(d.iso_controls || [])
+          ...(d.controls || [])
         ].join(' ').toLowerCase();
         return hay.includes(q);
       })
@@ -900,7 +900,7 @@ function parseCitations(text) {
   // Replace [來源:doc_key#section] with clickable badges
   return text.replace(/\[來源:([^\]#]+?)(?:#([^\]]*?))?\]/g, (match, docPart, sectionPart) => {
     // Strip common directory prefixes — RENDERED_DOCS keys are bare folder names
-    const docKey = docPart.replace(/^(isms|knowledge)\//, '');
+    const docKey = docPart.replace(/^knowledge\//, '');
     const sectionAttr = sectionPart ? ` data-section="${escapeAttr(sectionPart)}"` : '';
     const label = sectionPart
       ? `📄 ${docKey} §${sectionPart}`
@@ -1023,15 +1023,20 @@ function initMiniSearch() {
 
 function structuredSearch(query) {
   const results = [];
-  // Match ISO control IDs like A.8.28, A.5.1
-  const isoMatches = [...query.matchAll(/A\.\d+\.\d+/gi)].map(m => m[0].toUpperCase());
+  // Match control IDs using configured pattern (injected at build time)
+  const CONTROL_ID_PATTERN = '__CONTROL_ID_PATTERN__';
+  let controlMatches = [];
+  if (CONTROL_ID_PATTERN) {
+    const controlRe = new RegExp(CONTROL_ID_PATTERN, 'gi');
+    controlMatches = [...query.matchAll(controlRe)].map(m => m[0].toUpperCase());
+  }
   // Match doc IDs like FRM-001, GDL-AI, MTX-001
   const docMatches = [...query.matchAll(/[A-Z]{2,5}-[A-Z0-9\-]+/gi)].map(m => m[0].toUpperCase());
 
   for (const entry of META_INDEX) {
     let matched = false;
-    for (const ctrl of isoMatches) {
-      if ((entry.iso_controls || []).some(c => c.toUpperCase() === ctrl)) {
+    for (const ctrl of controlMatches) {
+      if ((entry.controls || []).some(c => c.toUpperCase() === ctrl)) {
         matched = true; break;
       }
     }
@@ -1073,7 +1078,7 @@ async function twoPassFallback(query) {
   if (!state.apiKey || META_INDEX.length === 0) return [];
   // First pass: ask Claude which chunk IDs are relevant given the meta index
   const metaSummary = META_INDEX.slice(0, 80).map(m =>
-    `${m.chunk_id}: [${(m.iso_controls||[]).join(',')}] ${m.title} - ${m.section || ''}`
+    `${m.chunk_id}: [${(m.controls||[]).join(',')}] ${m.title} - ${m.section || ''}`
   ).join('\n');
 
   const prompt = `根據以下文件索引，找出與問題「${query}」最相關的 chunk_id（最多5個），只輸出 JSON 陣列格式，例如 ["chunk_01","chunk_02"]。
@@ -1456,7 +1461,7 @@ async function sendDrillStart(controls, aiDiv) {
   // Load context for the first few controls
   const firstCtrl = controls[0];
   const relatedChunks = META_INDEX
-    .filter(m => (m.iso_controls || []).some(c => c === firstCtrl.id))
+    .filter(m => (m.controls || []).some(c => c === firstCtrl.id))
     .map(m => CHUNKS[m.chunk_id])
     .filter(Boolean)
     .slice(0, 3);

@@ -3,285 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>__KB_NAME__ - 檢測流程</title>
-  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <title>__KB_NAME__</title>
+  <link rel="stylesheet" href="styles.css">
   <style>
-    /* ── OKLCH Design System ── */
-    :root {
-      --bg-base:     oklch(0.97 0.005 250);
-      --bg-surface:  oklch(0.94 0.005 250);
-      --bg-overlay:  oklch(0.90 0.008 250);
-      --bg-hover:    oklch(0.92 0.005 250);
-
-      --text-primary:   oklch(0.20 0.01 250);
-      --text-secondary: oklch(0.45 0.01 250);
-      --text-muted:     oklch(0.60 0.008 250);
-
-      --color-critical: oklch(0.55 0.22 25);
-      --color-high:     oklch(0.55 0.16 55);
-      --color-medium:   oklch(0.52 0.14 80);
-      --color-low:      oklch(0.52 0.13 240);
-
-      --color-pass:  oklch(0.48 0.16 150);
-      --color-fail:  oklch(0.55 0.22 25);
-      --color-warn:  oklch(0.52 0.14 80);
-      --color-info:  oklch(0.52 0.13 240);
-
-      --color-link:   oklch(0.48 0.15 250);
-      --color-purple: oklch(0.50 0.17 300);
-      --color-cyan:   oklch(0.48 0.10 200);
-      --color-pink:   oklch(0.52 0.17 340);
-      --color-indigo: oklch(0.48 0.15 280);
-
-      --border-subtle: oklch(0.85 0.005 250);
-
-      --text-xs:   1.125rem;
-      --text-sm:   1.25rem;
-      --text-base: 1.5rem;
-      --text-lg:   1.75rem;
-      --text-xl:   2rem;
-      --text-2xl:  3rem;
-      --text-3xl:  3.5rem;
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg-base, #f5f6f8);
+      color: var(--text-primary, #1e2030);
     }
-
-    @supports not (color: oklch(0 0 0)) {
-      :root {
-        --bg-base:     #f5f6f8;
-        --bg-surface:  #ecedf0;
-        --bg-overlay:  #dfe0e5;
-        --bg-hover:    #e5e6ea;
-
-        --text-primary:   #1e2030;
-        --text-secondary: #5e6070;
-        --text-muted:     #8a8c98;
-
-        --color-critical: #c93135;
-        --color-high:     #b86a2a;
-        --color-medium:   #8a7020;
-        --color-low:      #2a6bb8;
-
-        --color-pass:  #1e8050;
-        --color-fail:  #c93135;
-        --color-warn:  #8a7020;
-        --color-info:  #2a6bb8;
-
-        --color-link:   #1e5ab8;
-        --color-purple: #7830b8;
-        --color-cyan:   #1e7a8a;
-        --color-pink:   #b8306a;
-        --color-indigo: #4830b8;
-
-        --border-subtle: #d5d6da;
-      }
+    .landing-container {
+      text-align: center;
+      max-width: 640px;
+      padding: 3rem 1.5rem;
     }
-
-    /* ── Utility classes ── */
-    .text-primary   { color: var(--text-primary); }
-    .text-secondary { color: var(--text-secondary); }
-    .text-muted     { color: var(--text-muted); }
-    .text-link      { color: var(--color-link); }
-    .bg-surface     { background: var(--bg-surface); }
-    .border-subtle  { border-color: var(--border-subtle); }
-    .fs-xs   { font-size: var(--text-xs); }
-    .fs-sm   { font-size: var(--text-sm); }
-    .fs-base { font-size: var(--text-base); }
-    .fs-lg   { font-size: var(--text-lg); }
-    .fs-xl   { font-size: var(--text-xl); }
-    .fs-2xl  { font-size: var(--text-2xl); }
-    .fs-3xl  { font-size: var(--text-3xl); }
-
-    /* ── Base styles ── */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: var(--bg-base); color: var(--text-primary); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: var(--text-base); line-height: 1.6; min-height: 100vh; }
-    a { color: var(--color-link); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-
-    /* ── Page layout ── */
-    header { text-align: center; padding: 3rem 1rem 1rem; }
-    header h1 { font-size: var(--text-xl); font-weight: 700; margin-bottom: 0.5rem; }
-    header p { color: var(--text-secondary); font-size: var(--text-sm); }
-    #flow { width: 100%; overflow-x: auto; }
-    svg { display: block; margin: 0 auto; }
-    .node rect { rx: 12; ry: 12; stroke-width: 2; cursor: default; }
-    .node text { fill: var(--text-primary); font-size: 13px; font-weight: 600; pointer-events: none; }
-    .node .subtitle { fill: var(--text-secondary); font-size: 10px; font-weight: 400; }
-    .link { fill: none; stroke-width: 2; }
-    .link-arrow { fill: var(--text-muted); }
-    .phase-label { fill: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-    .legend { margin: 2rem auto; max-width: 900px; padding: 0 1rem; }
-    .legend h3 { font-size: var(--text-sm); margin-bottom: 1rem; color: var(--text-secondary); }
-    .legend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
-    .legend-item { background: var(--bg-surface); border-radius: 8px; padding: 1rem; border-left: 4px solid; }
-    .legend-item h4 { font-size: var(--text-xs); margin-bottom: 0.25rem; }
-    .legend-item p { font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.5; }
-    footer { text-align: center; padding: 2rem; color: var(--text-muted); font-size: var(--text-xs); }
+    .landing-container h1 {
+      font-size: var(--text-xl, 2rem);
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    .landing-container p {
+      font-size: var(--text-base, 1.5rem);
+      color: var(--text-secondary, #5e6070);
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+    .landing-container .hint {
+      font-size: var(--text-sm, 1.25rem);
+      color: var(--text-muted, #8a8c98);
+      margin-top: 2rem;
+    }
   </style>
 </head>
 <body>
-  <header>
+  <div class="landing-container">
     <h1>__KB_NAME__</h1>
     <p>__KB_DESCRIPTION__</p>
-  </header>
-
-  <div id="flow"></div>
-
-  <div class="legend">
-    <h3>檢測項目說明</h3>
-    <div class="legend-grid">
-      <div class="legend-item" style="border-color: #f59e0b;">
-        <h4>SSDLC 安全開發生命週期</h4>
-        <p>檢查專案是否具備安全開發基礎：CI/CD 設定、依賴管理、密鑰掃描、分支保護等。</p>
-      </div>
-      <div class="legend-item" style="border-color: #ef4444;">
-        <h4>SAST 靜態源碼掃描</h4>
-        <p>使用 Semgrep 對原始碼進行靜態分析，偵測注入攻擊、XSS、不安全的加密等安全漏洞。</p>
-      </div>
-      <div class="legend-item" style="border-color: #8b5cf6;">
-        <h4>弱點掃描</h4>
-        <p>使用 Trivy 掃描依賴套件的已知漏洞 (CVE)，依嚴重度分級：Critical / High / Medium。</p>
-      </div>
-      <div class="legend-item" style="border-color: #ec4899;">
-        <h4>滲透測試</h4>
-        <p>使用 OWASP ZAP 與 Nuclei 對上線網站進行動態安全測試，模擬攻擊者行為。</p>
-      </div>
-      <div class="legend-item" style="border-color: #06b6d4;">
-        <h4>連結檢查</h4>
-        <p>掃描網站所有內部與外部連結，偵測 404 斷連、重導向異常等問題。</p>
-      </div>
-      <div class="legend-item" style="border-color: #10b981;">
-        <h4>SEO / AEO 檢測</h4>
-        <p>Meta 標籤、Schema 結構化資料、SGE/AEO 標記、E-E-A-T 信號、Core Web Vitals、YMYL 合規。</p>
-      </div>
-    </div>
+    <p class="hint">知識體內容由嚮導初始化後產生。</p>
   </div>
-
-  <footer>Powered by __KB_NAME__</footer>
-
-  <script>
-    const nodes = [
-      // Phase 1: Input
-      { id: 'input', label: '輸入參數', subtitle: 'Repo URL / Web URL', x: 80, y: 200, w: 130, h: 56, color: '#334155', stroke: '#475569', phase: 1 },
-      // Phase 2: Setup
-      { id: 'setup', label: '環境準備', subtitle: 'Semgrep / Trivy / Nuclei', x: 270, y: 200, w: 150, h: 56, color: '#334155', stroke: '#475569', phase: 2 },
-      // Phase 3: Clone
-      { id: 'clone', label: 'Clone 原始碼', subtitle: 'git clone --depth 1', x: 480, y: 120, w: 140, h: 56, color: '#1e3a5f', stroke: '#3b82f6', phase: 3 },
-      // Phase 3: Fetch
-      { id: 'fetch', label: '取得網頁', subtitle: 'curl', x: 480, y: 280, w: 140, h: 56, color: '#1e3a5f', stroke: '#3b82f6', phase: 3 },
-      // Phase 4: Security scans
-      { id: 'ssdlc', label: 'SSDLC', subtitle: 'Checkov', x: 680, y: 40, w: 120, h: 50, color: '#422006', stroke: '#f59e0b', phase: 4 },
-      { id: 'sast', label: 'SAST', subtitle: 'Semgrep', x: 680, y: 110, w: 120, h: 50, color: '#450a0a', stroke: '#ef4444', phase: 4 },
-      { id: 'vuln', label: '弱點掃描', subtitle: 'Trivy', x: 680, y: 180, w: 120, h: 50, color: '#2e1065', stroke: '#8b5cf6', phase: 4 },
-      // Phase 4: Web scans
-      { id: 'pentest', label: '滲透測試', subtitle: 'ZAP + Nuclei', x: 680, y: 260, w: 120, h: 50, color: '#500724', stroke: '#ec4899', phase: 4 },
-      { id: 'links', label: '連結檢查', subtitle: '404 偵測', x: 680, y: 330, w: 120, h: 50, color: '#083344', stroke: '#06b6d4', phase: 4 },
-      { id: 'seo', label: 'SEO / AEO', subtitle: 'Meta+Schema+SGE...', x: 680, y: 400, w: 120, h: 50, color: '#052e16', stroke: '#10b981', phase: 4 },
-      // Phase 5: Report
-      { id: 'report', label: '產生報告', subtitle: 'HTML + GitHub Pages', x: 870, y: 200, w: 140, h: 56, color: '#1e293b', stroke: '#6366f1', phase: 5 },
-    ];
-
-    const links = [
-      { source: 'input', target: 'setup' },
-      { source: 'setup', target: 'clone' },
-      { source: 'setup', target: 'fetch' },
-      { source: 'clone', target: 'ssdlc' },
-      { source: 'clone', target: 'sast' },
-      { source: 'clone', target: 'vuln' },
-      { source: 'fetch', target: 'pentest' },
-      { source: 'fetch', target: 'links' },
-      { source: 'fetch', target: 'seo' },
-      { source: 'ssdlc', target: 'report' },
-      { source: 'sast', target: 'report' },
-      { source: 'vuln', target: 'report' },
-      { source: 'pentest', target: 'report' },
-      { source: 'links', target: 'report' },
-      { source: 'seo', target: 'report' },
-    ];
-
-    const phases = [
-      { x: 80, label: '輸入' },
-      { x: 270, label: '安裝' },
-      { x: 480, label: '取得資料' },
-      { x: 680, label: '掃描檢測' },
-      { x: 870, label: '報告' },
-    ];
-
-    const svgW = 1080, svgH = 490;
-    const svg = d3.select('#flow').append('svg')
-      .attr('viewBox', `0 0 ${svgW} ${svgH}`)
-      .attr('width', '100%')
-      .attr('style', 'max-width: 1080px');
-
-    // Arrow marker
-    svg.append('defs').append('marker')
-      .attr('id', 'arrow').attr('viewBox', '0 0 10 10')
-      .attr('refX', 10).attr('refY', 5)
-      .attr('markerWidth', 8).attr('markerHeight', 8)
-      .attr('orient', 'auto-start-reverse')
-      .append('path').attr('d', 'M 0 0 L 10 5 L 0 10 z')
-      .attr('class', 'link-arrow');
-
-    // Phase labels
-    phases.forEach(p => {
-      svg.append('text')
-        .attr('class', 'phase-label')
-        .attr('x', p.x + 60).attr('y', 470)
-        .attr('text-anchor', 'middle')
-        .text(p.label);
-    });
-
-    // Build lookup
-    const nodeMap = {};
-    nodes.forEach(n => { nodeMap[n.id] = n; });
-
-    // Draw links
-    links.forEach(l => {
-      const s = nodeMap[l.source], t = nodeMap[l.target];
-      const sx = s.x + s.w, sy = s.y + s.h / 2;
-      const tx = t.x, ty = t.y + t.h / 2;
-      const mx = (sx + tx) / 2;
-
-      svg.append('path')
-        .attr('class', 'link')
-        .attr('stroke', '#475569')
-        .attr('d', `M${sx},${sy} C${mx},${sy} ${mx},${ty} ${tx},${ty}`)
-        .attr('marker-end', 'url(#arrow)');
-    });
-
-    // Draw nodes
-    const nodeG = svg.selectAll('.node')
-      .data(nodes).enter().append('g')
-      .attr('class', 'node')
-      .attr('transform', d => `translate(${d.x},${d.y})`);
-
-    nodeG.append('rect')
-      .attr('width', d => d.w).attr('height', d => d.h)
-      .attr('fill', d => d.color).attr('stroke', d => d.stroke);
-
-    nodeG.append('text')
-      .attr('x', d => d.w / 2).attr('y', d => d.h / 2 - 4)
-      .attr('text-anchor', 'middle')
-      .text(d => d.label);
-
-    nodeG.append('text')
-      .attr('class', 'subtitle')
-      .attr('x', d => d.w / 2).attr('y', d => d.h / 2 + 12)
-      .attr('text-anchor', 'middle')
-      .text(d => d.subtitle);
-
-    // Animate links on load
-    svg.selectAll('.link').each(function() {
-      const len = this.getTotalLength();
-      d3.select(this)
-        .attr('stroke-dasharray', len)
-        .attr('stroke-dashoffset', len)
-        .transition().duration(1200).ease(d3.easeCubicOut)
-        .attr('stroke-dashoffset', 0);
-    });
-
-    // Fade in nodes
-    nodeG.style('opacity', 0)
-      .transition().delay((d, i) => i * 80).duration(500)
-      .style('opacity', 1);
-  </script>
 </body>
 </html>

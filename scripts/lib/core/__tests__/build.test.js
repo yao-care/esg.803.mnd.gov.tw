@@ -13,7 +13,8 @@ describe('build.js', () => {
   const testDocDir = path.join(knowledgeDir, '01-test-doc');
 
   before(() => {
-    fs.mkdirSync(testDocDir, { recursive: true });
+    // Only create config.json — test fixtures at tests/fixtures/knowledge/01-test-doc/
+    // are git-tracked and should NOT be overwritten.
     fs.writeFileSync(configPath, JSON.stringify({
       knowledge_body: { name: 'Test KB', name_en: 'test', organization: 'Test Org' },
       data_sources: {
@@ -43,14 +44,11 @@ describe('build.js', () => {
       },
       api: { provider: 'anthropic', model: 'claude-sonnet-4-20250514', key_env_var: 'ANTHROPIC_API_KEY' }
     }));
-
-    // Create test document with merge.yaml
-    fs.writeFileSync(path.join(testDocDir, 'merge.yaml'), 'title: Test Document\nversion: "1.0"\nlanguages:\n  zh: content.md\n');
-    fs.writeFileSync(path.join(testDocDir, 'content.md'), '---\ntitle: Test Document\ndoc_id: DOC-01\nversion: "1.0"\n---\n\n## Section 1\n\nTest content here.\n\n## Section 2\n\nMore test content.\n');
   });
 
   after(() => {
-    fs.rmSync(path.join(PROJECT_ROOT, 'tests', 'fixtures'), { recursive: true, force: true });
+    // Only clean up the config.json created by this test — do NOT remove
+    // tests/fixtures/ since it contains git-tracked fixture files.
     if (fs.existsSync(configPath)) fs.unlinkSync(configPath);
   });
 

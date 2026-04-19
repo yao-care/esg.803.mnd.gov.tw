@@ -128,7 +128,7 @@ describe('qa-report.js', () => {
     delete require.cache[require.resolve('../qa-report.js')];
     const { structuredSearch } = require('../qa-report.js');
     const chunksMap = { 'c1': { text: 'test' } };
-    const metaIndex = [{ chunk_id: 'c1', doc_key: 'doc-a', iso_controls: ['A.5.1'], doc_id: 'DOC-01' }];
+    const metaIndex = [{ chunk_id: 'c1', doc_key: 'doc-a', controls: ['A.5.1'], doc_id: 'DOC-01' }];
     // With empty control_id_pattern (from config), structured search should return empty
     const results = structuredSearch('What about A.5.1?', chunksMap, metaIndex);
     assert.strictEqual(results.length, 0);

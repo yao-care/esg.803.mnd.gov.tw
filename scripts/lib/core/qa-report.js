@@ -133,7 +133,7 @@ function structuredSearch(query, chunksMap, metaIndex) {
   for (const entry of metaIndex) {
     let matched = false;
     for (const ctrl of controlMatches) {
-      if ((entry.iso_controls || []).some(c => c.toUpperCase() === ctrl)) {
+      if ((entry.controls || []).some(c => c.toUpperCase() === ctrl)) {
         matched = true;
         break;
       }
