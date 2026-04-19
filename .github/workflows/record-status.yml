@@ -6,10 +6,12 @@ on:
     paths:
       - 'data/reported/*.json'
 
+permissions:
+  contents: write
+
 jobs:
   update-status:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true || github.event.pull_request.merged == false
     steps:
       - uses: actions/checkout@v4
         with:

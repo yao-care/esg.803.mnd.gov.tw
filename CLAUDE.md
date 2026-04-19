@@ -360,4 +360,5 @@ gh release create "audit-$(date +%Y%m%d)" /tmp/Documents-$(date +%Y%m%d).zip \
 | `review.yml` | 文件稽核 |
 | `publish.yml` | 文件變更時自動渲染 + 部署至 audit branch |
 | `qa-report.yml` | 每月 AI 對答品質驗證報告 |
+| `record-status.yml` | PR merge/close 時自動更新 record 狀態 |
 | `remediation-verify.yml` | Issue 關閉時自動驗證修補 |
