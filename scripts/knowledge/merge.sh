@@ -158,6 +158,21 @@ if [ ! -f "$TEMPLATE_FILE" ]; then
   exit 1
 fi
 
+# ── Step 4b: Fields ↔ markdown consistency check (FRM only) ──
+if [[ "$DOCUMENT_ID" == ${FORM_PREFIX}-* ]] || [[ "$DOC_TYPE" == "$FORM_PREFIX" ]]; then
+  FIELDS_JSON=$(echo "$MERGE_JSON" | jq -r '.fields // []')
+  FIELD_COUNT=$(echo "$FIELDS_JSON" | jq 'length')
+  if [ "$FIELD_COUNT" -gt 0 ]; then
+    MD_CONTENT=$(cat "$MAIN_ZH_PATH")
+    for i in $(seq 0 $((FIELD_COUNT - 1))); do
+      FIELD_NAME=$(echo "$FIELDS_JSON" | jq -r ".[$i].name")
+      if ! echo "$MD_CONTENT" | grep -q "$FIELD_NAME"; then
+        echo "[merge] Warning: field '$FIELD_NAME' defined in $METADATA_FILENAME but not found in markdown"
+      fi
+    done
+  fi
+fi
+
 # ── Step 5: Generate status badge HTML ──
 case "$STATUS" in
   approved)
