@@ -970,6 +970,23 @@ function showDocument(docKey, sectionId) {
 }
 
 // ============================================================
+// CITATION NORMALIZATION
+// ============================================================
+function normalizeCitations(text) {
+  // 全形方括號 → 半形（僅轉換包含引文關鍵字的內容）
+  text = text.replace(/【((?:來源|来源|出處|引用|參考|參照|文件)[：:][^】]*)】/g, '[$1]');
+  // 全形冒號 → 半形
+  text = text.replace(/\[來源：/g, '[來源:');
+  // 簡體 → 繁體
+  text = text.replace(/\[来源[：:]/g, '[來源:');
+  // 其他同義詞
+  text = text.replace(/\[(出處|引用|參考|參照|文件)[：:]\s*/g, '[來源:');
+  // 冒號後空白
+  text = text.replace(/\[來源:\s+/g, '[來源:');
+  return text;
+}
+
+// ============================================================
 // CITATION PARSING
 // ============================================================
 function parseCitations(text) {
@@ -1012,9 +1029,11 @@ function escapeHtml(s) {
 // ============================================================
 // MINIMAL MARKDOWN RENDERER
 // ============================================================
-function renderMarkdown(text) {
+function renderMarkdown(text, { skipAutoLink = false } = {}) {
+  // Normalize citation variants (full-width brackets, colons, simplified Chinese, synonyms)
+  const normalized = normalizeCitations(text);
   // Handle citations first (don't escape them)
-  const withCitations = parseCitations(text);
+  const withCitations = parseCitations(normalized);
 
   // Split into lines for processing
   let html = withCitations
@@ -1096,7 +1115,11 @@ function renderMarkdown(text) {
   if (inList) result.push(`</${inList}>`);
   if (inTable) result.push('</table>');
 
-  return result.join('');
+  let finalHtml = result.join('');
+  if (!skipAutoLink) {
+    finalHtml = autoLinkDocKeys(finalHtml);
+  }
+  return finalHtml;
 }
 
 // ============================================================
@@ -1446,14 +1469,15 @@ async function handleQA(query, aiDiv, msgs) {
   let fullText = '';
   await callClaudeStream(apiMsgs, QA_SYSTEM_PROMPT, (accumulated) => {
     fullText = accumulated;
-    aiDiv.innerHTML = renderMarkdown(accumulated);
+    aiDiv.innerHTML = renderMarkdown(accumulated, { skipAutoLink: true });
     document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
   });
 
   // Save to state
   msgs.push({ role: 'assistant', content: fullText });
 
-  // Wire up citation clicks
+  // Final render with autoLink
+  aiDiv.innerHTML = renderMarkdown(fullText);
   wireUpCitations(aiDiv);
 }
 
@@ -1463,7 +1487,7 @@ async function handleDrillAnswer(answer, aiDiv, msgs) {
   let fullText = '';
   await callClaudeStream(apiMsgs, drillSystemPrompt(state.drillControls), (accumulated) => {
     fullText = accumulated;
-    aiDiv.innerHTML = renderMarkdown(accumulated);
+    aiDiv.innerHTML = renderMarkdown(accumulated, { skipAutoLink: true });
     document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
   });
 
@@ -1473,6 +1497,8 @@ async function handleDrillAnswer(answer, aiDiv, msgs) {
   state.drillIndex++;
   updateDrillProgress();
 
+  // Final render with autoLink
+  aiDiv.innerHTML = renderMarkdown(fullText);
   wireUpCitations(aiDiv);
 }
 
@@ -1490,6 +1516,32 @@ function wireUpCitations(container) {
       }
     });
   });
+}
+
+// ============================================================
+// AUTO-LINK DOCUMENT KEYS (defense layer 2 fallback)
+// ============================================================
+function autoLinkDocKeys(html) {
+  const docIds = [...new Set(
+    META_INDEX
+      .map(m => {
+        const match = m.doc_key.match(/^([A-Za-z]+-\d+(?:-\d+[a-z]?)?)/);
+        return match ? match[1] : null;
+      })
+      .filter(Boolean)
+  )].sort((a, b) => b.length - a.length);
+
+  for (const docId of docIds) {
+    const escaped = docId.replace(/-/g, '\\-');
+    const regex = new RegExp(
+      `(?<![\\w-])(${escaped})(?![-_\\w\\u4e00-\\u9fff])(?![^<]*<\\/span>)(?![^<]*<\\/code>)(?![^<]*<\\/pre>)`,
+      'g'
+    );
+    html = html.replace(regex, (match, id) => {
+      return `<span class="citation auto-link" data-doc="${id}" role="button" tabindex="0" title="${id}">📄 ${id}</span>`;
+    });
+  }
+  return html;
 }
 
 // ============================================================
@@ -1575,11 +1627,13 @@ async function sendDrillStart(controls, aiDiv) {
   let fullText = '';
   await callClaudeStream(apiMsgs, drillSystemPrompt(controls), (accumulated) => {
     fullText = accumulated;
-    aiDiv.innerHTML = renderMarkdown(accumulated);
+    aiDiv.innerHTML = renderMarkdown(accumulated, { skipAutoLink: true });
     document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
   });
 
   state.drillMessages.push({ role: 'assistant', content: fullText });
+  // Final render with autoLink
+  aiDiv.innerHTML = renderMarkdown(fullText);
   wireUpCitations(aiDiv);
   updateTokenEstimate();
 }
