@@ -144,9 +144,9 @@ else
 fi
 
 # ── Step 4: Determine template ──
-if [[ "$DOCUMENT_ID" == FRM-* ]]; then
+if [[ "$DOCUMENT_ID" == ${FORM_PREFIX}-* ]]; then
   TEMPLATE_FILE="$REPO_ROOT/templates/form.html"
-  echo "[merge] Using form template (FRM document)"
+  echo "[merge] Using form template (${FORM_PREFIX} document)"
 else
   TEMPLATE_FILE="$REPO_ROOT/templates/document.html"
   echo "[merge] Using document template"
@@ -322,7 +322,7 @@ if [ -n "$GIT_LOG" ]; then
     # Escape HTML special chars in the commit message
     SAFE_MSG=$(python3 -c "import sys,html; print(html.escape(sys.argv[1]))" "$msg")
 
-    if [[ "$DOCUMENT_ID" == FRM-* ]]; then
+    if [[ "$DOCUMENT_ID" == ${FORM_PREFIX}-* ]]; then
       # Form template uses table rows
       VERSION_HISTORY="${VERSION_HISTORY}<tr><td><code>${SHORT_HASH}</code></td><td>${DATE_ONLY}</td><td>git</td><td>${SAFE_MSG}</td></tr>"
     else
@@ -333,7 +333,7 @@ if [ -n "$GIT_LOG" ]; then
 fi
 
 if [ -z "$VERSION_HISTORY" ]; then
-  if [[ "$DOCUMENT_ID" == FRM-* ]]; then
+  if [[ "$DOCUMENT_ID" == ${FORM_PREFIX}-* ]]; then
     VERSION_HISTORY='<tr><td colspan="4" style="color: var(--text-muted);">（尚無版本紀錄）</td></tr>'
   else
     VERSION_HISTORY='<div class="version-history-entry"><span class="version-history-date">—</span><span class="version-history-hash">—</span><span class="version-history-msg">（尚無版本紀錄）</span></div>'
