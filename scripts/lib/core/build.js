@@ -105,6 +105,35 @@ function extractDocumentId(yamlContent) {
 // Markdown → HTML fallback renderer (for documents without pre-rendered HTML)
 // ---------------------------------------------------------------------------
 
+const CHINESE_NUMBERS = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十',
+  '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十'];
+
+/**
+ * Convert numbered headings to Chinese-style numbering.
+ * - `## 1. Title` → `## 一、Title`  (top-level sections)
+ * - `### X.Y Title` → `### （Y中文）Title`  (sub-sections)
+ *
+ * This runs ONLY in renderMarkdownToHtml (display), NOT in chunkMarkdown (search).
+ *
+ * @param {string} markdown
+ * @returns {string}
+ */
+function convertNumbersToChinese(markdown) {
+  // Convert top-level: ## 1. Title → ## 一、Title
+  let result = markdown.replace(/^(## )(\d+)\. (.+)$/gm, (match, prefix, num, title) => {
+    const cn = CHINESE_NUMBERS[parseInt(num)] || num;
+    return `${prefix}${cn}、${title}`;
+  });
+
+  // Convert sub-sections: ### X.Y Title → ### （Y中文）Title
+  result = result.replace(/^(### )\d+\.(\d+) (.+)$/gm, (match, prefix, subNum, title) => {
+    const cn = CHINESE_NUMBERS[parseInt(subNum)] || subNum;
+    return `${prefix}（${cn}）${title}`;
+  });
+
+  return result;
+}
+
 /**
  * Escape HTML entities.
  *
@@ -131,6 +160,9 @@ function escHtml(str) {
 function renderMarkdownToHtml(md, title) {
   // Strip YAML front matter
   let body = md.replace(/^---[\s\S]*?---\s*/, '');
+
+  // Convert numbered headings to Chinese format (display only)
+  body = convertNumbersToChinese(body);
 
   // Convert fenced code blocks first (before escaping)
   const codeBlocks = [];
@@ -662,4 +694,5 @@ module.exports = {
   extractZhPath,
   extractDocumentId,
   renderMarkdownToHtml,
+  convertNumbersToChinese,
 };
