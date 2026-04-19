@@ -529,15 +529,20 @@ function replacePlaceholder(template, marker, defaultPat, value) {
  * @param {Object} config - Full config object
  * @returns {string} HTML with placeholders replaced
  */
-function substitutePlaceholders(html, config) {
+function substitutePlaceholders(html, config, profile = null) {
   const ui = config.ui || {};
   const domain = config.domain || {};
   const kb = config.knowledge_body || {};
 
-  html = html.replace(/__ASSISTANT_TITLE__/g, ui.assistant_title || '');
+  // Profile overrides for title and system prompt
+  const effectiveTitle = profile?.label || ui.assistant_title || '';
+  const promptKey = profile?.system_prompt_key || 'system_prompt';
+  const effectivePrompt = domain[promptKey] || domain.system_prompt || '';
+
+  html = html.replace(/__ASSISTANT_TITLE__/g, effectiveTitle);
   html = html.replace(/__WELCOME_MESSAGE__/g, ui.welcome_message || '');
   html = html.replace(/__DRILL_WELCOME_MESSAGE__/g, ui.drill_welcome_message || '');
-  html = html.replace('__QA_SYSTEM_PROMPT__', JSON.stringify(domain.system_prompt || ''));
+  html = html.replace('__QA_SYSTEM_PROMPT__', JSON.stringify(effectivePrompt));
   html = html.replace('__DRILL_SYSTEM_PROMPT__', JSON.stringify(domain.drill_system_prompt || ''));
   html = html.replace('__ASSESSMENT_CONTROLS_COVERED__', JSON.stringify(domain.assessment_controls_covered || []));
   html = html.replace('__ASSESSMENT_CONTROLS_ALL__', JSON.stringify(domain.assessment_controls || []));
