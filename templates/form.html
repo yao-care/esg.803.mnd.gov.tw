@@ -252,6 +252,16 @@
       font-size: var(--text-sm);
       cursor: pointer;
     }
+    .btn-toggle {
+      background: var(--color-link);
+      color: white;
+      padding: 0.75rem 2rem;
+      border: none;
+      border-radius: 0.25rem;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      cursor: pointer;
+    }
     .btn-submit {
       background: var(--color-pass);
       color: white;
@@ -261,8 +271,6 @@
       font-size: var(--text-sm);
       font-weight: 600;
       cursor: pointer;
-      opacity: 0.5;
-      cursor: not-allowed;
     }
 
     /* ── References ── */
@@ -356,16 +364,21 @@
 
     <!-- Toolbar (no-print) -->
     <div class="toolbar no-print">
-      <span class="fs-xs text-secondary">表單操作 Form Actions</span>
+      <button id="btn-toggle" class="btn-toggle" onclick="toggleMode()">填寫</button>
+      <button id="btn-submit" class="btn-submit" onclick="submitForm()" style="display:none">提交</button>
       <div class="toolbar-spacer"></div>
-      <button class="btn-print no-print" onclick="window.print()">列印 Print</button>
-      <button class="btn-submit no-print" disabled title="表單提交功能尚未設定">提交 Submit (Coming Soon)</button>
+      <button class="btn-print" onclick="window.print()">列印 Print</button>
     </div>
 
     <!-- Main content -->
     <div class="section">
       <div class="content-body">
-        {{CONTENT_ZH}}
+        <div id="view-mode">
+          {{CONTENT_ZH}}
+        </div>
+        <div id="fill-mode" style="display:none">
+          <!-- FILL_MODE_PLACEHOLDER -->
+        </div>
       </div>
     </div>
 
@@ -395,6 +408,8 @@
       </div>
     </div>
 
+    <!-- RECORDS_PLACEHOLDER -->
+
     <!-- Footer -->
     <div class="doc-footer">
       <span>{{DOCUMENT_ID}} v{{VERSION}} &mdash; {{TITLE_ZH}}</span>
@@ -414,5 +429,25 @@ document.querySelectorAll('pre.mermaid code').forEach(el => {
 mermaid.run({ querySelector: '.mermaid' });
 </script>
 
+<!-- FORM_CONFIG_PLACEHOLDER -->
+<script>
+function toggleMode() {
+  const view = document.getElementById('view-mode');
+  const fill = document.getElementById('fill-mode');
+  const btnToggle = document.getElementById('btn-toggle');
+  const btnSubmit = document.getElementById('btn-submit');
+  if (fill.style.display === 'none') {
+    view.style.display = 'none';
+    fill.style.display = 'block';
+    btnToggle.textContent = '檢視';
+    btnSubmit.style.display = '';
+  } else {
+    view.style.display = 'block';
+    fill.style.display = 'none';
+    btnToggle.textContent = '填寫';
+    btnSubmit.style.display = 'none';
+  }
+}
+</script>
 </body>
 </html>
