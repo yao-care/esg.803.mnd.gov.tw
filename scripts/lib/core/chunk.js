@@ -193,6 +193,7 @@ function chunkMarkdown(md, docKey, config = {}) {
   const docId = frontmatter.document_id || frontmatter.doc_id || docKey;
   const title = frontmatter.title_zh || frontmatter.title_en || frontmatter.title || docKey;
   const version = frontmatter.version || '';
+  const group = frontmatter.group || '';
   const controls = Array.isArray(frontmatter.controls)
     ? frontmatter.controls
     : (Array.isArray(frontmatter.iso_27001_controls) ? frontmatter.iso_27001_controls : []);
@@ -229,6 +230,7 @@ function chunkMarkdown(md, docKey, config = {}) {
       version,
       section,
       controls,
+      group,
       type: 'document',
       source_type: 'document',
       text,

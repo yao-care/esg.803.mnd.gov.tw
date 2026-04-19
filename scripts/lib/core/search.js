@@ -145,6 +145,7 @@ function buildMetaIndex(chunks) {
     version: chunk.version || '',
     section: chunk.section,
     controls: chunk.controls,
+    group: chunk.group || '',
     type: chunk.type,
     char_count: chunk.text ? chunk.text.length : 0,
   }));

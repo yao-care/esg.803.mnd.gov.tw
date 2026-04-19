@@ -793,16 +793,27 @@ function renderDocNav(filter) {
       })
     : docs;
 
-  // Group
-  const groups = {
-    document: filtered.filter(d => d.type === 'document'),
-    collected: filtered.filter(d => d.type === 'collected'),
-    reported: filtered.filter(d => d.type === 'reported'),
-  };
+  // Group: use frontmatter 'group' field for documents when available,
+  // fall back to 'type' for collected/reported or documents without group
+  const hasGroups = filtered.some(d => d.type === 'document' && d.group);
+  const groups = {};
+  const groupOrder = [];
+
+  for (const d of filtered) {
+    const groupKey = (d.type === 'document' && hasGroups && d.group)
+      ? d.group
+      : d.type;
+    if (!groups[groupKey]) {
+      groups[groupKey] = [];
+      groupOrder.push(groupKey);
+    }
+    groups[groupKey].push(d);
+  }
 
   nav.innerHTML = '';
 
-  for (const [groupKey, items] of Object.entries(groups)) {
+  for (const groupKey of groupOrder) {
+    const items = groups[groupKey];
     if (items.length === 0) continue;
 
     const label = document.createElement('div');
