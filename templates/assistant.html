@@ -1263,7 +1263,13 @@ async function callClaude(messages, systemPrompt, maxTokens) {
   const body = {
     model: APP_CONFIG.model || 'claude-sonnet-4-20250514',
     max_tokens: maxTokens || APP_CONFIG.max_tokens_per_turn || 4096,
-    system: systemPrompt,
+    system: [
+      {
+        type: 'text',
+        text: systemPrompt,
+        cache_control: { type: 'ephemeral' }
+      }
+    ],
     messages
   };
 
@@ -1298,7 +1304,13 @@ async function callClaudeStream(messages, systemPrompt, onChunk) {
   const body = {
     model: APP_CONFIG.model || 'claude-sonnet-4-20250514',
     max_tokens: APP_CONFIG.max_tokens_per_turn || 4096,
-    system: systemPrompt,
+    system: [
+      {
+        type: 'text',
+        text: systemPrompt,
+        cache_control: { type: 'ephemeral' }
+      }
+    ],
     messages,
     stream: true
   };
