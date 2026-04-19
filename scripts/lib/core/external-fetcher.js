@@ -6,7 +6,7 @@ const path = require('node:path');
 const os = require('node:os');
 const { execFileSync } = require('node:child_process');
 const { chunkMarkdown } = require('./chunk');
-const { renderMarkdownToHtml } = require('./build');
+const { renderMarkdownToHtml } = require('./markdown-renderer');
 
 function matchGlob(name, pattern) {
   const regex = new RegExp('^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
