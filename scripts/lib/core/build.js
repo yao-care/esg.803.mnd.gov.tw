@@ -520,6 +520,12 @@ function build(overrides = {}) {
   };
 
   for (const [profileName, profile] of Object.entries(profiles)) {
+    // Validate profile key format (spec 3.1)
+    if (!/^[a-z0-9-]+$/.test(profileName)) {
+      console.error(`[build] Invalid profile key "${profileName}" — must match [a-z0-9-]+, skipping`);
+      continue;
+    }
+
     // ---- Step 3: Filter chunks for this profile ----
     const profileChunks = filterChunks(allChunks, profile.exclude_types);
 
