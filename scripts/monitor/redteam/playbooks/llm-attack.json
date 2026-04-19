@@ -1,0 +1,27 @@
+{
+  "name": "LLM Attack Chain",
+  "description": "OWASP LLM Top 10 attack simulation",
+  "mitre_tactics": [
+    {
+      "id": "AML.TA0001",
+      "name": "LLM Prompt Exploitation",
+      "detect_timeout_sec": 30,
+      "techniques": [
+        {
+          "id": "LLM01",
+          "name": "Prompt Injection",
+          "attack_script": "llm-exploit.sh",
+          "args": "--probes knownbadsignatures,encoding",
+          "detect_timeout_sec": 5
+        },
+        {
+          "id": "LLM02",
+          "name": "Insecure Output Handling",
+          "attack_script": "llm-exploit.sh",
+          "args": "--probes dan,xss",
+          "detect_timeout_sec": 5
+        }
+      ]
+    }
+  ]
+}
