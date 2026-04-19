@@ -2,6 +2,7 @@
 document_id: FRM-TEST
 title_zh: 測試表單
 title_en: Test Form
+type: FRM
 main:
   zh: test-form.md
 

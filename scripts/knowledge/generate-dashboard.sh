@@ -44,8 +44,11 @@ for folder in "$DOCS_DIR"/*/; do
     *)        badge="<span style=\"font-size:14px;\">$status</span>" ;;
   esac
 
+  doc_type=$(grep "^type:" "$folder/$METADATA_FILENAME" 2>/dev/null | sed 's/^type: *//' || true)
   link_dir="documents"
-  [ "$type_prefix" = "$FORM_PREFIX" ] && link_dir="forms"
+  if [ "$type_prefix" = "$FORM_PREFIX" ] || [ "$doc_type" = "$FORM_PREFIX" ]; then
+    link_dir="forms"
+  fi
 
   row="<tr style=\"border-bottom:1px solid #dfe0e5;\"><td style=\"padding:10px 14px;\"><a href=\"$link_dir/$bname/index.html\" style=\"color:#2a6bb8;text-decoration:none;font-weight:600;\">$doc_id</a></td><td style=\"padding:10px 14px;\">$title_zh<br><span style=\"color:#8a8c98;font-size:14px;\">$title_en</span></td><td style=\"padding:10px 14px;text-align:center;\">v$version</td><td style=\"padding:10px 14px;text-align:center;\">$badge</td><td style=\"padding:10px 14px;text-align:center;color:#8a8c98;\">$last_mod</td></tr>"
 
