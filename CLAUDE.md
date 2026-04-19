@@ -128,6 +128,9 @@ FRM 類型還需額外包含 `fields:` 定義（用於表單閉環系統）。
 
 ```bash
 bash scripts/setup-org.sh
+
+# 設定 upstream remote，日後可同步模板引擎更新
+git remote add template https://github.com/weiqi-kids/akora.git
 ```
 
 ### Step 6 — 驗證
@@ -172,6 +175,9 @@ grep -rh "^next_review_date:" knowledge/*/merge.yaml 2>/dev/null | head -20
 
 # 5. 動態題快取是否需要更新（檢查 knowledge/ 最新修改時間 vs cache 時間）
 stat -f '%m' scripts/lib/core/qa-dynamic-cache.json 2>/dev/null
+
+# 6. 模板引擎是否有更新（若有 template remote）
+git remote get-url template 2>/dev/null && git fetch template --quiet 2>/dev/null && git log --oneline HEAD..template/main -- scripts/ templates/ tests/ .github/ 2>/dev/null | head -10
 ```
 
 根據結果，推薦行動：
@@ -183,6 +189,7 @@ stat -f '%m' scripts/lib/core/qa-dynamic-cache.json 2>/dev/null
 | 有未推送的 commit | `git push origin main` |
 | 文件 30 天內到期 | 列出到期文件，提醒審查 |
 | knowledge/ 有變更但動態題 cache 未更新 | `npm run qa-report -- --refresh-dynamic` |
+| 模板引擎有更新 | 報告更新數量，建議 `git merge template/main`（參見 `docs/upstream-sync.md`） |
 | 全部正常 | 報告「系統狀態正常，無待處理事項」 |
 
 ---
