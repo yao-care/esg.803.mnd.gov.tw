@@ -454,11 +454,17 @@
     .msg-ai h3, .msg-ai h4 { font-size: var(--text-xs); }
 
     .msg-ai blockquote {
-      border-left: 3px solid var(--border);
+      border-left: 3px solid var(--border-subtle);
       padding-left: 10px;
       margin: 6px 0;
       color: var(--text-secondary);
       font-size: var(--text-xs);
+    }
+
+    .msg-ai hr {
+      border: none;
+      border-top: 1px solid var(--border-subtle);
+      margin: 10px 0;
     }
 
     .msg-ai table {
@@ -468,7 +474,7 @@
       width: 100%;
     }
     .msg-ai th, .msg-ai td {
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-subtle);
       padding: 4px 8px;
       text-align: left;
     }
@@ -878,23 +884,40 @@ function renderDocNav(filter) {
 }
 
 // ============================================================
+// DOCUMENT LOOKUP (prefix matching)
+// ============================================================
+function findDocByKey(key) {
+  // Exact match first
+  if (RENDERED_DOCS[key]) return { docKey: key, html: RENDERED_DOCS[key] };
+
+  // Prefix match: "ISMS-303" should match "ISMS-303-資通安全人員管理及教育訓練作業說明書"
+  const prefix = key.replace(/\s+/g, '');
+  for (const dk of Object.keys(RENDERED_DOCS)) {
+    if (dk === prefix || dk.startsWith(prefix + '-') || dk.startsWith(prefix + '_')) {
+      return { docKey: dk, html: RENDERED_DOCS[dk] };
+    }
+  }
+
+  return null;
+}
+
+// ============================================================
 // DOCUMENT VIEWER
 // ============================================================
 function showDocument(docKey, sectionId) {
-  state.currentDocKey = docKey;
-
-  // Update nav highlight
-  document.querySelectorAll('.doc-item').forEach(el => {
-    el.classList.toggle('active', el.dataset.docKey === docKey);
-  });
-
   const iframe = document.getElementById('doc-iframe');
   const placeholder = document.getElementById('doc-placeholder');
   const centerTitle = document.getElementById('center-title');
 
-  const html = RENDERED_DOCS[docKey];
-  if (!html) {
+  // Look up document with prefix matching
+  const found = findDocByKey(docKey);
+  if (!found) {
     // No rendered doc available — show placeholder with message
+    state.currentDocKey = docKey;
+    // Update nav highlight
+    document.querySelectorAll('.doc-item').forEach(el => {
+      el.classList.toggle('active', el.dataset.docKey === docKey);
+    });
     iframe.style.display = 'none';
     placeholder.style.display = 'flex';
     placeholder.querySelector('div:last-child').textContent = `文件 "${docKey}" 尚未嵌入`;
@@ -902,9 +925,19 @@ function showDocument(docKey, sectionId) {
     return;
   }
 
+  // Use the resolved key (may differ from input if prefix-matched)
+  const resolvedKey = found.docKey;
+  const html = found.html;
+  state.currentDocKey = resolvedKey;
+
+  // Update nav highlight
+  document.querySelectorAll('.doc-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.docKey === resolvedKey);
+  });
+
   // Find title from META_INDEX
-  const meta = META_INDEX.find(m => m.doc_key === docKey);
-  centerTitle.textContent = (meta && meta.title) ? meta.title : docKey;
+  const meta = META_INDEX.find(m => m.doc_key === resolvedKey);
+  centerTitle.textContent = (meta && meta.title) ? meta.title : resolvedKey;
 
   placeholder.style.display = 'none';
   iframe.style.display = 'block';
@@ -945,11 +978,27 @@ function parseCitations(text) {
     // Strip common directory prefixes — RENDERED_DOCS keys are bare folder names
     const docKey = docPart.replace(/^knowledge\//, '');
     const sectionAttr = sectionPart ? ` data-section="${escapeAttr(sectionPart)}"` : '';
+    // Shorten display label: "ISMS-303-資通安全人員管理及教育訓練作業說明書" → "ISMS-303"
+    const shortKey = shortenDocKey(docKey);
     const label = sectionPart
-      ? `📄 ${docKey} §${sectionPart}`
-      : `📄 ${docKey}`;
-    return `<span class="citation" data-doc="${escapeAttr(docKey)}"${sectionAttr} role="button" tabindex="0">${label}</span>`;
+      ? `📄 ${shortKey} §${sectionPart}`
+      : `📄 ${shortKey}`;
+    return `<span class="citation" data-doc="${escapeAttr(docKey)}"${sectionAttr} role="button" tabindex="0" title="${escapeAttr(docKey)}">${label}</span>`;
   });
+}
+
+function shortenDocKey(key) {
+  // Extract leading ID portion: "ISMS-303-資通安全…" → "ISMS-303"
+  // Pattern: uppercase prefix + numbers, stop at first CJK char or third hyphen-segment
+  const m = key.match(/^([A-Za-z]+-\d+)/);
+  if (m) return m[1];
+  // For keys like "FRM-001-xxx" — take first two segments
+  const parts = key.split('-');
+  if (parts.length >= 2 && /^[A-Za-z]+$/.test(parts[0])) {
+    return parts.slice(0, 2).join('-');
+  }
+  // Fallback: if too long, truncate
+  return key.length > 20 ? key.slice(0, 20) + '…' : key;
 }
 
 function escapeAttr(s) {
@@ -994,6 +1043,15 @@ function renderMarkdown(text) {
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
+
+    // Horizontal rule (---, ***, ___)
+    if (/^[-*_]{3,}\s*$/.test(line.trim())) {
+      if (inList) { result.push(`</${inList}>`); inList = false; }
+      if (inTable) { result.push('</table>'); inTable = false; headerParsed = false; }
+      result.push('<hr>');
+      continue;
+    }
+
     const listMatch = line.match(/^[-*]\s+(.+)/);
     const numMatch  = line.match(/^\d+\.\s+(.+)/);
 
@@ -1013,7 +1071,7 @@ function renderMarkdown(text) {
       const tag = !headerParsed ? 'th' : 'td';
       const bgStyle = !headerParsed ? 'background:var(--bg-secondary);font-weight:700;' : '';
       result.push('<tr>' + cells.map(c =>
-        `<${tag} style="border:1px solid var(--border);padding:6px 10px;text-align:left;${bgStyle}">${c}</${tag}>`
+        `<${tag} style="border:1px solid var(--border-subtle);padding:6px 10px;text-align:left;${bgStyle}">${c}</${tag}>`
       ).join('') + '</tr>');
       if (!headerParsed) headerParsed = true;
     } else {
