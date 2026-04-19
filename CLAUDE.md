@@ -45,7 +45,7 @@ ls config.json 2>/dev/null && echo "MODE=normal" || echo "MODE=wizard"
 ```
 ✅ policy — 政策文件（組織層級的方針宣告）
 ✅ procedure — 程序書（具體作業流程）
-✅ form — 表單（記錄用）
+✅ form — 表單（可填寫、提交、追蹤紀錄）
 ❓ guideline — 指引（非強制性參考）
 ```
 
@@ -195,6 +195,12 @@ npm run qa-report -- --search-only --ci
 
 # 分塊品質稽核
 npm run chunk-audit
+
+# 驗證提交紀錄
+npm run validate-records
+
+# 產出表單 JSON Schema
+npm run generate-schemas
 ```
 
 ### 收集與掃描
