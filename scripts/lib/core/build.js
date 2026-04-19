@@ -641,20 +641,18 @@ function build(overrides = {}) {
 
   console.log(`[build] Total chunks: ${allChunks.length}`);
 
-  // ---- Step 3: Build indexes ----
-  const metaIndex = buildMetaIndex(allChunks);
-  const searchIndexJson = buildSearchIndex(allChunks);
+  // ---- Profile loop (Steps 3-7) ----
+  const profiles = config.profiles || {
+    assistant: {
+      label: ui.assistant_title || '知識助理',
+      system_prompt_key: 'system_prompt',
+      exclude_types: [],
+      qa_questions: 'qa-questions.json',
+    },
+  };
 
-  // Build chunksMap: { chunk_id: { text, doc_key, title } }
-  const chunksMap = {};
-  for (const chunk of allChunks) {
-    chunksMap[chunk.chunk_id] = { text: chunk.text, doc_key: chunk.doc_key, title: chunk.title };
-  }
-
-  console.log(`[build] Meta index: ${metaIndex.length} entries`);
-
-  // ---- Step 4: Read template and MiniSearch lib ----
-  const templatePath   = path.join(PROJECT_ROOT, 'templates', 'assistant.html');
+  // Read template and MiniSearch lib once (shared across profiles)
+  const templatePath = path.join(PROJECT_ROOT, 'templates', 'assistant.html');
   const miniSearchPath = path.join(PROJECT_ROOT, 'node_modules', 'minisearch', 'dist', 'umd', 'index.js');
 
   if (!fs.existsSync(templatePath)) {
@@ -662,10 +660,9 @@ function build(overrides = {}) {
     process.exit(1);
   }
 
-  let template = fs.readFileSync(templatePath, 'utf8');
+  const templateHtml = fs.readFileSync(templatePath, 'utf8');
   const miniSearchLib = readFileSafe(miniSearchPath) || '';
 
-  // ---- Step 5: Build app config for the SPA ----
   const appConfig = {
     api_key: api.key || '',
     model: api.model || 'claude-sonnet-4-20250514',
@@ -673,39 +670,66 @@ function build(overrides = {}) {
     locale: ui.locale || 'zh-TW',
   };
 
-  // ---- Step 6: Assemble ----
-  // Replace data placeholders
-  template = replacePlaceholder(template, '__CHUNKS__', '{}', JSON.stringify(chunksMap));
-  template = replacePlaceholder(template, '__META_INDEX__', '[]', JSON.stringify(metaIndex));
-  template = replacePlaceholder(template, '__SEARCH_INDEX__', '"{}"', JSON.stringify(searchIndexJson));
+  for (const [profileName, profile] of Object.entries(profiles)) {
+    // ---- Step 3: Filter chunks for this profile ----
+    const profileChunks = filterChunks(allChunks, profile.exclude_types);
 
-  // Escape </script> inside embedded HTML to prevent breaking the outer <script> tag
-  const renderedJson = JSON.stringify(renderedDocs).replace(/<\/script>/gi, '<\\/script>');
-  template = replacePlaceholder(template, '__RENDERED_DOCS__', '{}', renderedJson);
+    // ---- Step 4: Build indexes ----
+    const metaIndex = buildMetaIndex(profileChunks);
+    const searchIndexJson = buildSearchIndex(profileChunks);
 
-  // Replace APP_CONFIG
-  template = template.replace(
-    /\/\*__APP_CONFIG__\*\/\{[^\n]*\}/,
-    `/*__APP_CONFIG__*/${JSON.stringify(appConfig)}`
-  );
+    // Build chunksMap: { chunk_id: { text, doc_key, title } }
+    const chunksMap = {};
+    for (const chunk of profileChunks) {
+      chunksMap[chunk.chunk_id] = { text: chunk.text, doc_key: chunk.doc_key, title: chunk.title };
+    }
 
-  // Replace MiniSearch lib
-  if (miniSearchLib) {
+    console.log(`[build] Profile "${profileName}": ${profileChunks.length} chunks, meta index: ${metaIndex.length} entries`);
+
+    // ---- Step 5: Filter rendered docs to only include matching doc_keys ----
+    const profileRenderedDocs = {};
+    const profileDocKeys = new Set(profileChunks.map(c => c.doc_key));
+    for (const [key, html] of Object.entries(renderedDocs)) {
+      if (profileDocKeys.has(key)) profileRenderedDocs[key] = html;
+    }
+
+    // ---- Step 6: Assemble HTML from template ----
+    let template = templateHtml;
+
+    // Replace MiniSearch lib
+    if (miniSearchLib) {
+      template = template.replace(
+        '<script>/*__MINISEARCH_LIB__*/</script>',
+        `<script>${miniSearchLib}</script>`
+      );
+    }
+
+    // Replace data placeholders
+    template = replacePlaceholder(template, '__CHUNKS__', '{}', JSON.stringify(chunksMap));
+    template = replacePlaceholder(template, '__META_INDEX__', '[]', JSON.stringify(metaIndex));
+    template = replacePlaceholder(template, '__SEARCH_INDEX__', '"{}"', JSON.stringify(searchIndexJson));
+
+    // Escape </script> inside embedded HTML to prevent breaking the outer <script> tag
+    const renderedJson = JSON.stringify(profileRenderedDocs).replace(/<\/script>/gi, '<\\/script>');
+    template = replacePlaceholder(template, '__RENDERED_DOCS__', '{}', renderedJson);
+
+    // Replace APP_CONFIG
     template = template.replace(
-      '<script>/*__MINISEARCH_LIB__*/</script>',
-      `<script>${miniSearchLib}</script>`
+      /\/\*__APP_CONFIG__\*\/\{[^\n]*\}/,
+      `/*__APP_CONFIG__*/${JSON.stringify(appConfig)}`
     );
+
+    // Substitute UI/domain placeholders with profile overrides
+    template = substitutePlaceholders(template, config, profile);
+
+    // ---- Step 7: Write output ----
+    const profileDestFile = path.join(outputDir, `${profileName}.html`);
+    fs.mkdirSync(path.dirname(profileDestFile), { recursive: true });
+    fs.writeFileSync(profileDestFile, template, 'utf8');
+
+    const sizeMB = (fs.statSync(profileDestFile).size / (1024 * 1024)).toFixed(2);
+    console.log(`[build] Profile "${profileName}": ${profileChunks.length} chunks → ${profileDestFile} (${sizeMB} MB)`);
   }
-
-  // Substitute UI/domain placeholders
-  template = substitutePlaceholders(template, config);
-
-  // ---- Step 7: Write output ----
-  fs.mkdirSync(path.dirname(destFile), { recursive: true });
-  fs.writeFileSync(destFile, template, 'utf8');
-
-  const sizeMB = (fs.statSync(destFile).size / (1024 * 1024)).toFixed(2);
-  console.log(`[build] Output: ${destFile} (${sizeMB} MB)`);
 
   // ---- Step 8: Post-process form pages ----
   if (reportedConfig.enabled !== false) {
