@@ -85,4 +85,45 @@ describe('validate-record', () => {
     const result = validateRecordFile(filePath, schemasDir);
     assert.strictEqual(result.valid, true);
   });
+
+  it('rejects invalid date format', () => {
+    const record = {
+      record_id: 'FRM-TEST-20260315-143022-d1e6',
+      document_id: 'FRM-TEST',
+      submitted_at: '2026-03-15T14:30:22+08:00',
+      submitted_by: { name: 'Test', source: 'ci' },
+      status: 'submitted',
+      fields: {
+        '類別': '類別A',
+        '說明': 'test',
+        '日期': 'not-a-date',
+        '通報人': 'Test',
+      },
+      audit_trail: [],
+    };
+    const result = validateRecord(record, schemasDir);
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.errors.some(e => e.includes('日期')));
+  });
+
+  it('rejects invalid email format', () => {
+    const record = {
+      record_id: 'FRM-TEST-20260315-143022-e2f7',
+      document_id: 'FRM-TEST',
+      submitted_at: '2026-03-15T14:30:22+08:00',
+      submitted_by: { name: 'Test', source: 'ci' },
+      status: 'submitted',
+      fields: {
+        '類別': '類別A',
+        '說明': 'test',
+        '日期': '2026-03-15',
+        '通報人': 'Test',
+        '聯絡信箱': 'not-an-email',
+      },
+      audit_trail: [],
+    };
+    const result = validateRecord(record, schemasDir);
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.errors.some(e => e.includes('聯絡信箱') || e.includes('email')));
+  });
 });

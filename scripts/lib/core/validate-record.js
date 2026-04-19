@@ -58,6 +58,25 @@ function validateRecord(record, schemasDir) {
     if (prop.type === 'number' && typeof value !== 'number') {
       errors.push(`${name}: 應為數字，實際為 ${typeof value}`);
     }
+
+    // Format validation
+    if (prop.format === 'date-time' && typeof value === 'string') {
+      if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value) || isNaN(new Date(value).getTime())) {
+        errors.push(`${name}: 日期時間格式不符 ISO 8601 (got "${value}")`);
+      }
+    }
+
+    if (prop.format === 'date' && typeof value === 'string') {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || isNaN(new Date(value + 'T00:00:00').getTime())) {
+        errors.push(`${name}: 日期格式不符 YYYY-MM-DD (got "${value}")`);
+      }
+    }
+
+    if (prop.format === 'email' && typeof value === 'string') {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        errors.push(`${name}: email 格式不符 (got "${value}")`);
+      }
+    }
   }
 
   return { valid: errors.length === 0, errors };
