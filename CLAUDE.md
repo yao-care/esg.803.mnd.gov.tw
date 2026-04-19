@@ -40,14 +40,18 @@ ls config.json 2>/dev/null && echo "MODE=normal" || echo "MODE=wizard"
 
 **2a. 文件類型（Document Types）**
 
-列出該領域典型的文件類型。例如 ISO 27001 會有政策、程序書、記錄表單、風險評鑑表等；ISO 9001 會有品質手冊、作業指導書、矯正措施報告等。每個類型一行，格式：
+列出該領域典型的文件類型。每個類型必須定義一個 **2-5 字母大寫代碼**（用作 document_id 前綴和 merge.yaml 的 `type:` 欄位）。例如 ISO 27001 會有 POL（政策）、PRO（程序書）、FRM（表單）等；ISO 9001 可能有 QM（品質手冊）、WI（作業指導書）、CAR（矯正措施報告）等。
+
+每個類型一行，格式：`代碼 — 類型名稱（說明）`
 
 ```
-✅ policy — 政策文件（組織層級的方針宣告）
-✅ procedure — 程序書（具體作業流程）
-✅ form — 表單（可填寫、提交、追蹤紀錄）
-❓ guideline — 指引（非強制性參考）
+✅ POL — 政策文件（組織層級的方針宣告）
+✅ PRO — 程序書（具體作業流程）
+✅ FRM — 表單（可填寫、提交、追蹤紀錄）
+❓ GDL — 指引（非強制性參考）
 ```
+
+**代碼規則：** 代碼將用於 document_id 命名（如 `POL-001`）和 merge.yaml 的 `type:` 欄位。其中表單類型代碼必須與 `config.json` 的 `domain.form_prefix` 一致（預設 `FRM`）。
 
 **2b. 收集器（Collectors）**
 
@@ -104,8 +108,21 @@ ls config.json 2>/dev/null && echo "MODE=normal" || echo "MODE=wizard"
 | `collectors/*.sh` | 每個收集器一個骨架腳本（含 `#!/bin/bash`、參數解析、TODO 標記） |
 | `.github/ISSUE_TEMPLATE/*.yml` | 若需要手動表單（例如事件通報、變更申請），產出 GitHub Issue 模板 |
 | `.github/workflows/*.yml` | 根據 config 中啟用的功能，客製化現有 workflow 的 cron 排程 |
-| `knowledge/` | 依文件類型建立子目錄，每個目錄放一份骨架文件 |
+| `knowledge/` | 依文件類型建立子目錄，每個目錄放一份骨架 merge.yaml（**必須含 `type:` 欄位**）和 .md 文件 |
 | `scripts/lib/core/qa-questions.json` | 20~50 題領域專屬的種子題目（涵蓋各文件類型，用於 QA 驗證） |
+
+**骨架 merge.yaml 範例（每個 knowledge/ 子目錄必須包含）：**
+
+```yaml
+document_id: POL-001
+type: POL          # ← 必填！對應 Step 2a 定義的類型代碼
+title_zh: 資訊安全政策
+title_en: Information Security Policy
+main:
+  zh: 資訊安全政策.md
+```
+
+FRM 類型還需額外包含 `fields:` 定義（用於表單閉環系統）。
 
 產出完成後執行：
 
