@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OKLCH Light Theme Preview</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .swatch {
+      width: 3rem; height: 3rem; border-radius: 0.5rem;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: var(--text-xs); font-weight: 700; color: white;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="container mx-auto px-4 py-8 max-w-6xl">
+
+    <!-- ============ Header ============ -->
+    <header class="mb-12">
+      <h1 class="fs-3xl font-bold mb-2">OKLCH Light Theme Preview</h1>
+      <p class="text-secondary">System Integration Quality Control - 淺色主題配色與字級預覽</p>
+    </header>
+
+    <!-- ============ Section 1: Typography Scale ============ -->
+    <section class="mb-12">
+      <h2 class="fs-xl font-bold mb-4" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">Typography Scale</h2>
+      <div class="bg-surface rounded-lg p-6 space-y-3">
+        <p class="fs-3xl font-bold">text-3xl (56px) — 報告標題</p>
+        <p class="fs-2xl font-bold">text-2xl (48px) — 摘要卡片數字</p>
+        <p class="fs-xl font-bold">text-xl (32px) — 區段標題</p>
+        <p class="fs-lg">text-lg (28px) — 強調文字</p>
+        <p class="fs-base">text-base (24px) — 正文</p>
+        <p class="fs-sm">text-sm (20px) — 表格內文</p>
+        <p class="fs-xs">text-xs (18px) — 徽章、標籤（最小字）</p>
+      </div>
+    </section>
+
+    <!-- ============ Section 2: Color Palette ============ -->
+    <section class="mb-12">
+      <h2 class="fs-xl font-bold mb-4" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">Color Palette</h2>
+
+      <!-- Backgrounds -->
+      <h3 class="fs-lg font-bold mb-3 text-secondary">Backgrounds</h3>
+      <div class="grid grid-cols-4 gap-4 mb-6">
+        <div class="rounded-lg p-4 bg-base" style="border: 1px solid var(--border-subtle);">
+          <p class="fs-sm font-bold">bg-base</p>
+          <p class="fs-xs text-muted">oklch(0.97 0.005 250)</p>
+        </div>
+        <div class="rounded-lg p-4 bg-surface">
+          <p class="fs-sm font-bold">bg-surface</p>
+          <p class="fs-xs text-muted">oklch(0.94 0.005 250)</p>
+        </div>
+        <div class="rounded-lg p-4 bg-overlay">
+          <p class="fs-sm font-bold">bg-overlay</p>
+          <p class="fs-xs text-muted">oklch(0.90 0.008 250)</p>
+        </div>
+        <div class="rounded-lg p-4" style="background: var(--bg-hover);">
+          <p class="fs-sm font-bold">bg-hover</p>
+          <p class="fs-xs text-muted">oklch(0.92 0.005 250)</p>
+        </div>
+      </div>
+
+      <!-- Text Hierarchy -->
+      <h3 class="fs-lg font-bold mb-3 text-secondary">Text Hierarchy</h3>
+      <div class="bg-surface rounded-lg p-6 mb-6 grid grid-cols-3 gap-4">
+        <div>
+          <p class="fs-lg font-bold text-primary">Primary</p>
+          <p class="fs-xs text-muted">oklch(0.20 0.01 250)</p>
+        </div>
+        <div>
+          <p class="fs-lg font-bold text-secondary">Secondary</p>
+          <p class="fs-xs text-muted">oklch(0.45 0.01 250)</p>
+        </div>
+        <div>
+          <p class="fs-lg font-bold text-muted">Muted</p>
+          <p class="fs-xs text-muted">oklch(0.60 0.008 250)</p>
+        </div>
+      </div>
+
+      <!-- Severity Colors -->
+      <h3 class="fs-lg font-bold mb-3 text-secondary">Severity Colors</h3>
+      <div class="grid grid-cols-4 gap-4 mb-6">
+        <div class="bg-surface rounded-lg p-4 text-center">
+          <div class="swatch mx-auto mb-2" style="background: var(--color-critical);">C</div>
+          <p class="fs-sm text-critical font-bold">Critical</p>
+          <p class="fs-xs text-muted">oklch(0.55 0.22 25)</p>
+        </div>
+        <div class="bg-surface rounded-lg p-4 text-center">
+          <div class="swatch mx-auto mb-2" style="background: var(--color-high);">H</div>
+          <p class="fs-sm text-high font-bold">High</p>
+          <p class="fs-xs text-muted">oklch(0.55 0.16 55)</p>
+        </div>
+        <div class="bg-surface rounded-lg p-4 text-center">
+          <div class="swatch mx-auto mb-2" style="background: var(--color-medium);">M</div>
+          <p class="fs-sm text-medium font-bold">Medium</p>
+          <p class="fs-xs text-muted">oklch(0.52 0.14 80)</p>
+        </div>
+        <div class="bg-surface rounded-lg p-4 text-center">
+          <div class="swatch mx-auto mb-2" style="background: var(--color-low);">L</div>
+          <p class="fs-sm text-low font-bold">Low</p>
+          <p class="fs-xs text-muted">oklch(0.52 0.13 240)</p>
+        </div>
+      </div>
+
+      <!-- Status Colors -->
+      <h3 class="fs-lg font-bold mb-3 text-secondary">Status Colors</h3>
+      <div class="grid grid-cols-3 gap-4 mb-6">
+        <div class="bg-surface rounded-lg p-4 text-center">
+          <div class="swatch mx-auto mb-2" style="background: var(--color-pass);">P</div>
+          <p class="fs-sm text-pass font-bold">Pass</p>
+        </div>
+        <div class="bg-surface rounded-lg p-4 text-center">
+          <div class="swatch mx-auto mb-2" style="background: var(--color-fail);">F</div>
+          <p class="fs-sm text-fail font-bold">Fail</p>
+        </div>
+        <div class="bg-surface rounded-lg p-4 text-center">
+          <div class="swatch mx-auto mb-2" style="background: var(--color-warn);">W</div>
+          <p class="fs-sm text-warn font-bold">Warn</p>
+        </div>
+      </div>
+
+      <!-- Functional Colors -->
+      <h3 class="fs-lg font-bold mb-3 text-secondary">Functional Colors</h3>
+      <div class="grid grid-cols-5 gap-4 mb-6">
+        <div class="bg-surface rounded-lg p-4 text-center">
+          <p class="fs-base text-link font-bold">Link</p>
+          <p class="fs-xs text-muted">連結</p>
+        </div>
+        <div class="bg-surface rounded-lg p-4 text-center">
+          <p class="fs-base text-purple font-bold">Purple</p>
+          <p class="fs-xs text-muted">滲透測試</p>
+        </div>
+        <div class="bg-surface rounded-lg p-4 text-center">
+          <p class="fs-base text-cyan font-bold">Cyan</p>
+          <p class="fs-xs text-muted">SBOM</p>
+        </div>
+        <div class="bg-surface rounded-lg p-4 text-center">
+          <p class="fs-base text-pink font-bold">Pink</p>
+          <p class="fs-xs text-muted">Schema</p>
+        </div>
+        <div class="bg-surface rounded-lg p-4 text-center">
+          <p class="fs-base text-indigo font-bold">Indigo</p>
+          <p class="fs-xs text-muted">SGE</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Section 3: Quality Gate Cards ============ -->
+    <section class="mb-12">
+      <h2 class="fs-xl font-bold mb-4" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">Quality Gate Cards</h2>
+
+      <h3 class="fs-lg font-bold mb-3 text-secondary">PASS State</h3>
+      <div class="grid grid-cols-3 gap-4 mb-6">
+        <div class="card">
+          <p class="card-value qg-pass">PASS</p>
+          <p class="card-label">Quality Gate</p>
+        </div>
+        <div class="card">
+          <p class="card-value text-critical">0</p>
+          <p class="card-label">Critical</p>
+        </div>
+        <div class="card">
+          <p class="card-value text-high">0</p>
+          <p class="card-label">High</p>
+        </div>
+      </div>
+
+      <h3 class="fs-lg font-bold mb-3 text-secondary">FAIL State</h3>
+      <div class="grid grid-cols-3 gap-4 mb-6">
+        <div class="card">
+          <p class="card-value qg-fail">FAIL</p>
+          <p class="card-label">Quality Gate</p>
+        </div>
+        <div class="card">
+          <p class="card-value text-critical">3</p>
+          <p class="card-label">Critical</p>
+        </div>
+        <div class="card">
+          <p class="card-value text-high">7</p>
+          <p class="card-label">High</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Section 4: Project Summary Cards (5-col) ============ -->
+    <section class="mb-12">
+      <h2 class="fs-xl font-bold mb-4" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">Project Summary Cards (grid-cols-5)</h2>
+      <div class="grid grid-cols-5 gap-4 mb-6">
+        <div class="card">
+          <p class="card-value text-pass">8/10</p>
+          <p class="card-label">SSDLC</p>
+        </div>
+        <div class="card">
+          <p class="card-value text-warn">5</p>
+          <p class="card-label">SAST</p>
+        </div>
+        <div class="card">
+          <p class="card-value text-critical">2</p>
+          <p class="card-label">Critical</p>
+        </div>
+        <div class="card">
+          <p class="card-value text-high">4</p>
+          <p class="card-label">High</p>
+        </div>
+        <div class="card">
+          <p class="card-value text-cyan">156</p>
+          <p class="card-label">SBOM</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Section 5: SBOM Section ============ -->
+    <section class="mb-12">
+      <h2 class="fs-xl font-bold mb-4" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">SBOM Software Bill of Materials</h2>
+      <div class="grid grid-cols-3 gap-4">
+        <div class="card">
+          <p class="card-value text-info">156</p>
+          <p class="card-label">Total Components</p>
+        </div>
+        <div class="card">
+          <p class="card-value text-pass">132</p>
+          <p class="card-label">Node.js</p>
+        </div>
+        <div class="card">
+          <p class="card-value text-medium">24</p>
+          <p class="card-label">Python</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Section 6: Severity Badges ============ -->
+    <section class="mb-12">
+      <h2 class="fs-xl font-bold mb-4" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">Severity Badges</h2>
+      <div class="bg-surface rounded-lg p-6 space-x-3">
+        <span class="badge badge-critical">CRITICAL</span>
+        <span class="badge badge-high">HIGH</span>
+        <span class="badge badge-medium">MEDIUM</span>
+        <span class="badge badge-low">LOW</span>
+      </div>
+    </section>
+
+    <!-- ============ Section 7: Sample Scan Table ============ -->
+    <section class="mb-12">
+      <h2 class="fs-xl font-bold mb-4" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">Sample Scan Results Table</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Project</th>
+              <th>SSDLC</th>
+              <th>SAST</th>
+              <th>Vulnerability</th>
+              <th>Pentest</th>
+              <th>SBOM</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="font-medium">my-webapp</td>
+              <td><span class="text-pass">8/10</span></td>
+              <td><span class="text-warn">5</span></td>
+              <td><span class="text-critical">2</span>/<span class="text-high">4</span></td>
+              <td><span class="text-purple">12</span></td>
+              <td><span class="text-cyan">156</span></td>
+            </tr>
+            <tr>
+              <td class="font-medium">api-server</td>
+              <td><span class="text-pass">9/10</span></td>
+              <td><span class="text-pass">0</span></td>
+              <td><span class="text-pass">0</span>/<span class="text-pass">0</span></td>
+              <td><span class="text-purple">3</span></td>
+              <td><span class="text-cyan">89</span></td>
+            </tr>
+            <tr>
+              <td class="font-medium">mobile-app</td>
+              <td><span class="text-warn">6/10</span></td>
+              <td><span class="text-high">8</span></td>
+              <td><span class="text-critical">1</span>/<span class="text-high">3</span></td>
+              <td><span class="text-muted">-</span></td>
+              <td><span class="text-cyan">203</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ Section 8: SSDLC Check Table ============ -->
+    <section class="mb-12">
+      <h2 class="fs-xl font-bold mb-4" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">SSDLC Check Table</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Check Item</th>
+              <th>Status</th>
+              <th>Detail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>.gitignore</td>
+              <td class="status-pass">pass</td>
+              <td class="text-secondary">.gitignore found</td>
+            </tr>
+            <tr>
+              <td>README.md</td>
+              <td class="status-pass">pass</td>
+              <td class="text-secondary">README.md found (2.4 KB)</td>
+            </tr>
+            <tr>
+              <td>LICENSE</td>
+              <td class="status-fail">fail</td>
+              <td class="text-secondary">No license file found</td>
+            </tr>
+            <tr>
+              <td>CI/CD Pipeline</td>
+              <td class="status-pass">pass</td>
+              <td class="text-secondary">.github/workflows found</td>
+            </tr>
+            <tr>
+              <td>SECURITY.md</td>
+              <td class="status-warn">warn</td>
+              <td class="text-secondary">No vulnerability disclosure policy</td>
+            </tr>
+            <tr>
+              <td>Sensitive Files</td>
+              <td class="status-pass">pass</td>
+              <td class="text-secondary">No sensitive files detected</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ Section 9: WP Security Table ============ -->
+    <section class="mb-12">
+      <h2 class="fs-xl font-bold mb-4" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">WP Security Check Table</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:90px">Severity</th>
+              <th style="width:60px">Status</th>
+              <th>Check Item</th>
+              <th>Detail</th>
+              <th>Remediation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-critical">CRITICAL</span></td>
+              <td class="status-fail">fail</td>
+              <td>wp-config.php exposed</td>
+              <td class="text-secondary">HTTP 200 returned</td>
+              <td class="text-secondary">Block access via .htaccess</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-high">HIGH</span></td>
+              <td class="status-fail">fail</td>
+              <td>XML-RPC enabled</td>
+              <td class="text-secondary">xmlrpc.php is active</td>
+              <td class="text-secondary">Disable XML-RPC if not needed</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-medium">MEDIUM</span></td>
+              <td class="status-warn">warn</td>
+              <td>User enumeration</td>
+              <td class="text-secondary">REST API exposes user list</td>
+              <td class="text-secondary">Restrict /wp-json/wp/v2/users</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-low">LOW</span></td>
+              <td class="status-pass">pass</td>
+              <td>Security headers</td>
+              <td class="text-secondary">HSTS, X-Frame-Options present</td>
+              <td class="text-secondary">-</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ Section 10: Code Block ============ -->
+    <section class="mb-12">
+      <h2 class="fs-xl font-bold mb-4" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">Code Block (Scan Output)</h2>
+      <div class="bg-surface rounded-lg p-4">
+        <pre><code>[ERROR] src/auth/login.ts:42
+  Potential SQL injection in query parameter
+  Rule: owasp.top-ten.a03.injection
+
+[WARNING] src/api/users.ts:128
+  Missing input validation on user ID
+  Rule: typescript.security.input-validation</code></pre>
+      </div>
+    </section>
+
+    <!-- ============ Section 11: Full Report Simulation ============ -->
+    <section class="mb-12">
+      <h2 class="fs-xl font-bold mb-4" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">Full Report Header Simulation</h2>
+
+      <!-- Simulated report header -->
+      <header class="mb-6">
+        <h1 class="fs-3xl font-bold mb-2">Security Scan Report</h1>
+        <p class="text-secondary">Project: <span class="font-mono">my-webapp</span> (<a href="#">Scan History</a>)</p>
+        <p class="text-secondary">Scan ID: <span class="font-mono">20260413-153042</span></p>
+        <p class="text-muted fs-sm">Scan Time: 2026-04-13 15:30:42</p>
+      </header>
+
+      <!-- Quality Gate -->
+      <div class="grid grid-cols-3 gap-4 mb-6">
+        <div class="card">
+          <p class="card-value qg-fail">FAIL</p>
+          <p class="card-label">Quality Gate</p>
+        </div>
+        <div class="card">
+          <p class="card-value text-critical">2</p>
+          <p class="card-label">Critical</p>
+        </div>
+        <div class="card">
+          <p class="card-value text-high">4</p>
+          <p class="card-label">High</p>
+        </div>
+      </div>
+
+      <!-- Project Summary -->
+      <div class="grid grid-cols-5 gap-4 mb-6">
+        <div class="card">
+          <p class="card-value text-pass">8/10</p>
+          <p class="card-label">SSDLC</p>
+        </div>
+        <div class="card">
+          <p class="card-value text-warn">5</p>
+          <p class="card-label">SAST</p>
+        </div>
+        <div class="card">
+          <p class="card-value text-critical">2</p>
+          <p class="card-label">Critical</p>
+        </div>
+        <div class="card">
+          <p class="card-value text-high">4</p>
+          <p class="card-label">High</p>
+        </div>
+        <div class="card">
+          <p class="card-value text-cyan">156</p>
+          <p class="card-label">SBOM</p>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="mt-4">
+        <a href="#">&larr; Back to scan history</a> | <a href="#">Home</a>
+      </div>
+    </section>
+
+    <footer class="py-8 text-center text-muted fs-sm">
+      <p>OKLCH Light Theme Preview — System Integration Quality Control</p>
+    </footer>
+  </div>
+</body>
+</html>
