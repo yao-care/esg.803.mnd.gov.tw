@@ -179,6 +179,20 @@ function slugifySection(heading) {
 }
 
 /**
+ * Extract the type prefix from a document_id string.
+ * E.g. "POL-001" → "POL", "FRM-001" → "FRM".
+ * Returns '' if docId is falsy or has no matching prefix.
+ *
+ * @param {string} docId
+ * @returns {string}
+ */
+function extractPrefixFromDocId(docId) {
+  if (!docId) return '';
+  const match = docId.match(/^([A-Z]{2,5})-/);
+  return match ? match[1] : '';
+}
+
+/**
  * Chunk a markdown document into structured pieces.
  *
  * @param {string} md - Full markdown content including YAML frontmatter
@@ -193,7 +207,10 @@ function chunkMarkdown(md, docKey, config = {}) {
   const docId = frontmatter.document_id || frontmatter.doc_id || docKey;
   const title = frontmatter.title_zh || frontmatter.title_en || frontmatter.title || docKey;
   const version = frontmatter.version || '';
-  const group = frontmatter.group || '';
+  const group = frontmatter.type
+    || frontmatter.group
+    || extractPrefixFromDocId(frontmatter.document_id)
+    || '';
   const controls = Array.isArray(frontmatter.controls)
     ? frontmatter.controls
     : (Array.isArray(frontmatter.iso_27001_controls) ? frontmatter.iso_27001_controls : []);

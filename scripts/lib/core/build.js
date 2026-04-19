@@ -552,6 +552,18 @@ function substitutePlaceholders(html, config) {
 }
 
 /**
+ * Filter chunks by excluding specified document type groups.
+ *
+ * @param {Object[]} allChunks - Array of chunk objects (each with a `group` field)
+ * @param {string[]|null} excludeTypes - Array of group names to exclude, or null/[] to keep all
+ * @returns {Object[]} Filtered chunks
+ */
+function filterChunks(allChunks, excludeTypes) {
+  if (!excludeTypes || excludeTypes.length === 0) return allChunks;
+  return allChunks.filter(chunk => !excludeTypes.includes(chunk.group));
+}
+
+/**
  * Main build function. Can be called programmatically or from CLI.
  *
  * @param {Object} [overrides]
@@ -721,6 +733,7 @@ module.exports = {
   readReportedTables,
   replacePlaceholder,
   substitutePlaceholders,
+  filterChunks,
   build,
   // Internal helpers exported for testing
   findFiles,
