@@ -142,7 +142,7 @@ npm run qa-report -- --search-only
 ```bash
 # 1. 本月 QA 報告是否已產生
 MONTH=$(date +%Y%m)
-ls data/reports/qa-accuracy-report-${MONTH}*.md 2>/dev/null && echo "QA_REPORT=exists" || echo "QA_REPORT=missing"
+ls data/reports/assistant-report-${MONTH}*.md 2>/dev/null && echo "QA_REPORT=exists" || echo "QA_REPORT=missing"
 
 # 2. CI 最近狀態
 gh run list --limit 5 2>/dev/null
@@ -192,6 +192,9 @@ npm run qa-report -- --search-only
 
 # QA 驗證 — CI 模式（搜尋命中率 < 95% 時 exit 1）
 npm run qa-report -- --search-only --ci
+
+# QA 驗證（指定 profile）
+npm run qa-report -- --profile assistant --html
 
 # 分塊品質稽核
 npm run chunk-audit

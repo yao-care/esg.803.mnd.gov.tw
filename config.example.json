@@ -94,5 +94,13 @@
     "gitlab_endpoint": "",
     "auth_adapter": null,
     "auth_config": {}
+  },
+  "profiles": {
+    "assistant": {
+      "label": "知識助理",
+      "system_prompt_key": "system_prompt",
+      "exclude_types": [],
+      "qa_questions": "qa-questions.json"
+    }
   }
 }
