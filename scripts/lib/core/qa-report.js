@@ -52,6 +52,7 @@ const MiniSearch = require('minisearch');
 const { loadConfig, PROJECT_ROOT } = require('./config.js');   // [1]
 const { chunkMarkdown, chunkCollectedResult } = require('./chunk.js');
 const { buildSearchIndex, buildMetaIndex, chineseTokenize } = require('./search.js');
+const { filterChunks } = require('./build.js');
 
 let _allChunks = [];  // Module-level, set by main() after buildIndex
 
@@ -1112,8 +1113,12 @@ async function main() {
 
   console.log('[qa-report] Building index...');
   const { chunksMap, metaIndex, msInstance, allChunks } = buildIndex();
-  _allChunks = allChunks;
-  console.log(`[qa-report] ${Object.keys(chunksMap).length} chunks, ${metaIndex.length} meta entries`);
+
+  // Apply profile filter to chunks
+  const profileCfg = config.profiles?.[flags.profile] || {};
+  const filteredChunks = filterChunks(allChunks, profileCfg.exclude_types);
+  _allChunks = filteredChunks;
+  console.log(`[qa-report] ${Object.keys(chunksMap).length} chunks (${filteredChunks.length} after profile filter), ${metaIndex.length} meta entries`);
 
   // Load seed questions                                                  // [15]
   // Load profile-specific question file

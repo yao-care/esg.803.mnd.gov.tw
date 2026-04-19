@@ -571,10 +571,10 @@ function filterChunks(allChunks, excludeTypes) {
 
 /**
  * Main build function. Can be called programmatically or from CLI.
+ * Outputs one HTML per profile: {outputDir}/{profileName}.html
  *
  * @param {Object} [overrides]
  * @param {string} [overrides.outputDir] - Override output directory
- * @param {string} [overrides.destFile] - Override destination file path
  * @param {Object} [overrides.config] - Override config (skip loadConfig)
  */
 function build(overrides = {}) {
@@ -583,10 +583,6 @@ function build(overrides = {}) {
   const outputDir = overrides.outputDir
     ? path.resolve(overrides.outputDir)
     : PROJECT_ROOT;
-
-  const destFile = overrides.destFile
-    ? path.resolve(overrides.destFile)
-    : path.join(outputDir, 'assistant.html');
 
   const dataSources = config.data_sources || {};
   const domain = config.domain || {};
@@ -757,8 +753,8 @@ function build(overrides = {}) {
 // ---------------------------------------------------------------------------
 
 if (require.main === module) {
-  const [,, outputDir, destFile] = process.argv;
-  build({ outputDir, destFile });
+  const [,, outputDir] = process.argv;
+  build({ outputDir });
 }
 
 // ---------------------------------------------------------------------------

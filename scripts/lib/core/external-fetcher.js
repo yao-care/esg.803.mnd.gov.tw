@@ -6,6 +6,7 @@ const path = require('node:path');
 const os = require('node:os');
 const { execFileSync } = require('node:child_process');
 const { chunkMarkdown } = require('./chunk');
+const { renderMarkdownToHtml } = require('./build');
 
 function matchGlob(name, pattern) {
   const regex = new RegExp('^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
@@ -99,7 +100,7 @@ function readExternalDocuments(tmpDir, source, metadataFilename = 'merge.yaml') 
     // Simple HTML rendering for document viewer
     const titleMatch = yamlContent.match(/^title_zh:\s*(.+)$/m);
     const title = titleMatch ? titleMatch[1].trim() : documentId;
-    renderedDocs[docKey] = `<h1>${title}</h1>`;
+    renderedDocs[docKey] = renderMarkdownToHtml(md, title);
   }
 
   return { chunks, renderedDocs };

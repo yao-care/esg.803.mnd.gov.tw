@@ -12,11 +12,12 @@ const PROJECT_ROOT = path.resolve(__dirname, '..');
 describe('integration: full build pipeline', () => {
   const configPath = path.join(PROJECT_ROOT, 'config.json');
   const configBackup = configPath + '.bak';
+  let outputDir;
   let destFile;
 
   before(() => {
-    // Use a temp file for output so we don't overwrite the real assistant.html
-    destFile = path.join(os.tmpdir(), `assistant-integration-test-${Date.now()}.html`);
+    // Use a temp directory for output so we don't overwrite the real assistant.html
+    outputDir = path.join(os.tmpdir(), `akora-integration-test-${Date.now()}`);
 
     // Backup existing config
     if (fs.existsSync(configPath)) {
@@ -78,15 +79,15 @@ describe('integration: full build pipeline', () => {
       fs.unlinkSync(configPath);
     }
 
-    // Clean up temp output file
-    if (destFile && fs.existsSync(destFile)) {
-      fs.unlinkSync(destFile);
+    // Clean up temp output directory
+    if (outputDir && fs.existsSync(outputDir)) {
+      fs.rmSync(outputDir, { recursive: true, force: true });
     }
   });
 
   it('build completes without error and produces output file', () => {
-    const result = execSync(
-      `node scripts/lib/core/build.js "${PROJECT_ROOT}" "${destFile}"`,
+    execSync(
+      `node scripts/lib/core/build.js "${outputDir}"`,
       {
         cwd: PROJECT_ROOT,
         encoding: 'utf8',
@@ -94,6 +95,8 @@ describe('integration: full build pipeline', () => {
       }
     );
 
+    // Profile system outputs {profileName}.html; default profile is "assistant"
+    destFile = path.join(outputDir, 'assistant.html');
     assert.ok(fs.existsSync(destFile), `Output file should exist at ${destFile}`);
   });
 
