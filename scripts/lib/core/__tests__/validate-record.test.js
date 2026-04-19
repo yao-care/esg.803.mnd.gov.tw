@@ -1,6 +1,7 @@
 // scripts/lib/core/__tests__/validate-record.test.js
-const { describe, it } = require('node:test');
+const { describe, it, after } = require('node:test');
 const assert = require('node:assert');
+const fs = require('node:fs');
 const path = require('node:path');
 
 const { validateRecord, validateRecordFile } = require('../validate-record');
@@ -13,6 +14,10 @@ describe('validate-record', () => {
   // Generate schemas first (depends on Task 2)
   const { generateAllSchemas } = require('../generate-schemas');
   generateAllSchemas(path.join(FIXTURES, 'knowledge'), schemasDir);
+
+  after(() => {
+    fs.rmSync(schemasDir, { recursive: true, force: true });
+  });
 
   it('validates a correct record', () => {
     const record = JSON.parse(
