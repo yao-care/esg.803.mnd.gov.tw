@@ -77,7 +77,7 @@ fi
 
 # 執行 collectors（如有設定）
 if [ "$HAS_COLLECTORS" = "true" ]; then
-  COLLECTORS_SCRIPT="$SCRIPT_DIR/collectors/run-all.sh"
+  COLLECTORS_SCRIPT="$PROJECT_ROOT/collectors/run-all.sh"
   if [ -f "$COLLECTORS_SCRIPT" ]; then
     echo "Running collectors..."
     "$COLLECTORS_SCRIPT"

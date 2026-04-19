@@ -54,21 +54,21 @@ echo "Generated: $SUCCESS / $TOTAL documents"
 [ -n "$FAIL_LIST" ] && echo "Failed:$FAIL_LIST"
 
 # Copy scan reports
-if [ -d "$PROJECT_ROOT/docs/scans" ]; then
-  cp -r "$PROJECT_ROOT/docs/scans/"* "$OUTPUT/scans/" 2>/dev/null || true
+if [ -d "$PROJECT_ROOT/$COLLECTED_PATH" ]; then
+  cp -r "$PROJECT_ROOT/$COLLECTED_PATH"* "$OUTPUT/scans/" 2>/dev/null || true
   echo "Copied scan reports"
 fi
 
 # Copy project dashboards
-if [ -d "$PROJECT_ROOT/docs/projects" ]; then
+if [ -d "$PROJECT_ROOT/$PROJECTS_PATH" ]; then
   mkdir -p "$OUTPUT/projects"
-  cp -r "$PROJECT_ROOT/docs/projects/"* "$OUTPUT/projects/" 2>/dev/null || true
+  cp -r "$PROJECT_ROOT/$PROJECTS_PATH"* "$OUTPUT/projects/" 2>/dev/null || true
 fi
 
 # Generate project dashboards
-if [ -d "$PROJECT_ROOT/docs/projects" ]; then
+if [ -d "$PROJECT_ROOT/$PROJECTS_PATH" ]; then
   echo "Generating project dashboards..."
-  for proj_dir in "$PROJECT_ROOT/docs/projects"/*/; do
+  for proj_dir in "$PROJECT_ROOT/$PROJECTS_PATH"*/; do
     [ ! -d "$proj_dir" ] && continue
     proj_name=$(basename "$proj_dir")
     mkdir -p "$OUTPUT/projects/$proj_name"

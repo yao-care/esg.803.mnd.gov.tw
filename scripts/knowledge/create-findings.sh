@@ -1,7 +1,7 @@
 #!/bin/bash
 # Create finding records from scan results
 # Usage: create-findings.sh <scan-dir> <project-name>
-# Output: docs/projects/<project-name>/findings/<finding-id>.json
+# Output: $PROJECTS_PATH/<project-name>/findings/<finding-id>.json
 set -e
 
 SCAN_DIR="$1"
@@ -16,7 +16,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$SCRIPT_DIR/../lib/shell-config.sh"
 
-FINDINGS_DIR="$PROJECT_ROOT/docs/projects/$PROJECT_NAME/findings"
+FINDINGS_DIR="$PROJECT_ROOT/$PROJECTS_PATH/$PROJECT_NAME/findings"
 SCAN_ID=$(basename "$SCAN_DIR")
 YEAR_MONTH=$(echo "$SCAN_ID" | cut -c1-6 | sed 's/\(....\)\(..\)/\1-\2/')
 CREATED=0
@@ -63,7 +63,7 @@ FJEOF
 echo "Creating findings from scan: $SCAN_ID"
 
 # Find the project subdirectory in the scan
-# Structure: docs/scans/<scan-id>/<project-subdir>/
+# Structure: $COLLECTED_PATH/<scan-id>/<project-subdir>/
 for project_dir in "$SCAN_DIR"/*/; do
   [ ! -d "$project_dir" ] && continue
   subname=$(basename "$project_dir")

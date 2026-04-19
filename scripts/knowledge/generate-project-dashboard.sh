@@ -1,9 +1,9 @@
 #!/bin/bash
 # Generate project dashboard HTML for findings tracking
 # Usage: generate-project-dashboard.sh <project-name> <output-dir>
-# Input:  docs/projects/<project-name>/findings/*.json
-#         docs/projects/<project-name>/notifications/*.json
-#         docs/scans/*/quality-gate.json + metadata.json (filtered by project)
+# Input:  $PROJECTS_PATH/<project-name>/findings/*.json
+#         $PROJECTS_PATH/<project-name>/notifications/*.json
+#         $COLLECTED_PATH/*/quality-gate.json + metadata.json (filtered by project)
 # Output: <output-dir>/dashboard.html
 set -e
 
@@ -19,9 +19,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$SCRIPT_DIR/../lib/shell-config.sh"
 
-FINDINGS_DIR="$PROJECT_ROOT/docs/projects/$PROJECT_NAME/findings"
-NOTIF_DIR="$PROJECT_ROOT/docs/projects/$PROJECT_NAME/notifications"
-SCANS_DIR="$PROJECT_ROOT/docs/scans"
+FINDINGS_DIR="$PROJECT_ROOT/$PROJECTS_PATH/$PROJECT_NAME/findings"
+NOTIF_DIR="$PROJECT_ROOT/$PROJECTS_PATH/$PROJECT_NAME/notifications"
+SCANS_DIR="$PROJECT_ROOT/$COLLECTED_PATH"
 
 mkdir -p "$OUTPUT_DIR"
 

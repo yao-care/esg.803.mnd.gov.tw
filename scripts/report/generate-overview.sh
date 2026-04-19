@@ -40,7 +40,7 @@ PASS_COUNT=$(jq '.summary.pass // 0' "$RESULT_FILE")
 FAIL_COUNT=$(jq '.summary.fail // 0' "$RESULT_FILE")
 WARN_COUNT=$(jq '.summary.warn // 0' "$RESULT_FILE")
 TOTAL_COUNT=$(jq '.summary.total // 0' "$RESULT_FILE")
-KB_FILES=$(jq '.summary.kb_files // .summary.isms_files // 0' "$RESULT_FILE")
+KB_FILES=$(jq '.summary.kb_files // 0' "$RESULT_FILE")
 
 # Build check rows and non-conformity items
 CHECKS_ROWS=""

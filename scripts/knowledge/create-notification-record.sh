@@ -14,14 +14,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$SCRIPT_DIR/../lib/shell-config.sh"
 
-NOTIF_DIR="$PROJECT_ROOT/docs/projects/$PROJECT_NAME/notifications"
+NOTIF_DIR="$PROJECT_ROOT/$PROJECTS_PATH/$PROJECT_NAME/notifications"
 
 mkdir -p "$NOTIF_DIR"
 
 RECORD_FILE="$NOTIF_DIR/$(date '+%Y-%m-%d')-scan-report.json"
 
 # Read finding summary from quality-gate.json if available
-SCAN_DIR="$PROJECT_ROOT/docs/scans/$SCAN_ID"
+SCAN_DIR="$PROJECT_ROOT/$COLLECTED_PATH/$SCAN_ID"
 CRITICAL=0; HIGH=0; MEDIUM=0
 if [ -f "$SCAN_DIR/quality-gate.json" ]; then
   CRITICAL=$(jq '.critical // 0' "$SCAN_DIR/quality-gate.json")
