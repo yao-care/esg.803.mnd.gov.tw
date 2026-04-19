@@ -513,7 +513,7 @@ function build(overrides = {}) {
   const miniSearchLib = readFileSafe(miniSearchPath) || '';
 
   const appConfig = {
-    api_key: api.key || '',
+    api_key: '',  // API key is entered by the user in the browser, never embedded
     model: api.model || 'claude-sonnet-4-20250514',
     max_tokens_per_turn: 4096,
     locale: ui.locale || 'zh-TW',
