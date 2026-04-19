@@ -53,6 +53,8 @@ const { loadConfig, PROJECT_ROOT } = require('./config.js');   // [1]
 const { chunkMarkdown, chunkCollectedResult } = require('./chunk.js');
 const { buildSearchIndex, buildMetaIndex, chineseTokenize } = require('./search.js');
 
+let _allChunks = [];  // Module-level, set by main() after buildIndex
+
 // ---------------------------------------------------------------------------
 // Config helpers (loaded lazily so tests can swap config.json between calls)
 // ---------------------------------------------------------------------------
@@ -237,13 +239,29 @@ function evaluateAnswer(answer) {
 /**
  * Check if answer contains citation format matching config.domain.citation_pattern. // [12]
  *
+ * Rule 1: formatted citation matching the configured pattern.
+ * Rule 2: bare doc_key (short ID) mentioned anywhere in the response.
+ *
  * @param {string} answer
  * @returns {boolean}
  */
 function evaluateCitationFormat(answer) {
   const config = cfg();
-  const pattern = config.domain?.citation_pattern || '\\[來源:[^\\]]+\\]';  // [12]
-  return new RegExp(pattern).test(answer);
+  const pattern = config.domain?.citation_pattern || '\\[來源:[^\\]]+\\]';
+  // Rule 1: formatted citation
+  if (new RegExp(pattern).test(answer)) return true;
+
+  // Rule 2: bare doc_key mentioned in response
+  if (_allChunks.length > 0) {
+    const shortIds = [...new Set(
+      _allChunks.map(c => {
+        const m = (c.doc_key || '').match(/^([A-Za-z]+-\d+(?:-\d+[a-z]?)?)/);
+        return m ? m[1] : null;
+      }).filter(Boolean)
+    )];
+    return shortIds.some(id => answer.includes(id));
+  }
+  return false;
 }
 
 // ============================================================
@@ -1087,6 +1105,7 @@ async function main() {
 
   console.log('[qa-report] Building index...');
   const { chunksMap, metaIndex, msInstance, allChunks } = buildIndex();
+  _allChunks = allChunks;
   console.log(`[qa-report] ${Object.keys(chunksMap).length} chunks, ${metaIndex.length} meta entries`);
 
   // Load seed questions                                                  // [15]
