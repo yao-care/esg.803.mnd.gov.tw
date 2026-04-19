@@ -15,6 +15,7 @@
       "collected": { "enabled": false, "path": "data/collected/" },
       "reported": { "enabled": false, "path": "data/reported/" }
     },
+    "external": [],
     "imports": {
       "enabled": false,
       "path": "imports/",
