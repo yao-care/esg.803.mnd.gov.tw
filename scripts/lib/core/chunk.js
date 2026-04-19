@@ -279,6 +279,47 @@ function chunkCollectedResult(json, resultName, config = {}) {
   return [chunk];
 }
 
+/**
+ * Chunk a submitted form record into a searchable chunk.
+ * @param {Object} record - The record JSON (with record_id, fields, etc.)
+ * @param {Object} meta - { title_zh, document_id } from merge.yaml
+ * @returns {Array<Object>} Single-element array with the chunk
+ */
+function chunkReportedRecord(record, meta) {
+  const title = meta.title_zh || record.document_id;
+  const submittedDate = record.submitted_at ? record.submitted_at.slice(0, 10) : '';
+  const submitter = record.submitted_by?.name || '';
+
+  // Build searchable text from field values
+  const fieldLines = Object.entries(record.fields || {}).map(([key, val]) => {
+    if (Array.isArray(val)) return `${key}: ${val.join(', ')}`;
+    return `${key}: ${val}`;
+  });
+
+  const text = [
+    `[表單] ${title}`,
+    `[紀錄] ${record.record_id}`,
+    `[提交者] ${submitter}`,
+    `[提交日期] ${submittedDate}`,
+    `[狀態] ${record.status || 'submitted'}`,
+    '',
+    ...fieldLines,
+  ].join('\n');
+
+  return [{
+    chunk_id: `reported/${record.record_id}`,
+    doc_id: record.document_id,
+    doc_key: `reported/${record.record_id}`,
+    title,
+    section: `${submitter} ${submittedDate}`,
+    controls: [],
+    type: 'reported',
+    source_type: 'reported',
+    text,
+    char_count: text.length,
+  }];
+}
+
 module.exports = {
   parseYamlFrontmatter,
   stripFrontmatter,
@@ -286,4 +327,5 @@ module.exports = {
   splitByH3,
   chunkMarkdown,
   chunkCollectedResult,
+  chunkReportedRecord,
 };
