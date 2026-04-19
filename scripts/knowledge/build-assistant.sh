@@ -16,4 +16,4 @@ if [ ! -d "$PROJECT_ROOT/node_modules/minisearch" ]; then
 fi
 
 echo "Building assistant..."
-node "$PROJECT_ROOT/scripts/lib/audit-assistant/build.js" "$OUTPUT_DIR" "$DOCUMENTS_DIR"
+node "$PROJECT_ROOT/scripts/lib/core/build.js" "$OUTPUT_DIR" "$DOCUMENTS_DIR"

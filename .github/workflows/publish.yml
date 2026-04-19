@@ -21,9 +21,9 @@ jobs:
       - name: Build assistant
         run: npm run build:assistant
       - name: Generate index
-        run: npm run generate-index
+        run: bash scripts/report/generate-index.sh
       - name: Publish
-        run: bash scripts/publish.sh
+        run: bash scripts/knowledge/publish.sh
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
       - name: Commit results

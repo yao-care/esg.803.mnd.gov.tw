@@ -8,6 +8,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+source "$PROJECT_ROOT/scripts/lib/shell-config.sh"
 
 ISSUE_NUMBER="$1"
 COMMENT_ID="$2"
@@ -60,7 +61,7 @@ fi
 # === Phase 2: LLM Content Review ===
 if [ "$PASS" = "true" ] && command -v claude &>/dev/null; then
   AI_RESULT=$(claude -p "$(cat << PROMPT
-你是 ISMS 演練審核員。請審核以下演練步驟回報，輸出 JSON：
+你是 ${KB_NAME} 演練審核員。請審核以下演練步驟回報，輸出 JSON：
 
 【回報內容】
 ${COMMENT_BODY}

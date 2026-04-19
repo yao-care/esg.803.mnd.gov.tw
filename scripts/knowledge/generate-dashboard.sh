@@ -90,8 +90,8 @@ $APPENDIX_ROWS
 </table>
 
 <div style="margin-top:2rem;padding:1.5rem;background:#ecedf0;border-radius:8px;text-align:center;">
-  <a href="audit-assistant.html" target="_blank" style="font-size:24px;font-weight:700;color:#1e5ab8;text-decoration:none;">AI 稽核助理</a>
-  <p style="margin-top:0.5rem;font-size:16px;color:#5e6070;">AI 輔助的稽核 Q&amp;A 與模擬稽核演練</p>
+  <a href="assistant.html" target="_blank" style="font-size:24px;font-weight:700;color:#1e5ab8;text-decoration:none;">$(cfg 'ui.assistant_title' 'AI 知識助理')</a>
+  <p style="margin-top:0.5rem;font-size:16px;color:#5e6070;">AI 輔助的 Q&amp;A 與模擬評鑑演練</p>
 </div>
 
 <footer style="margin-top:3rem;padding-top:1rem;border-top:1px solid #dfe0e5;font-size:14px;color:#8a8c98;">

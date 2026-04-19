@@ -106,9 +106,11 @@ APPROVED_BY=$(echo "$FRONTMATTER_JSON" | jq -r '.approved_by // ""')
 EFFECTIVE_DATE=$(echo "$FRONTMATTER_JSON" | jq -r '.effective_date // ""')
 NEXT_REVIEW_DATE=$(echo "$FRONTMATTER_JSON" | jq -r '.next_review_date // ""')
 
-# ISO controls — join array into comma-separated string
+# Controls — join array into comma-separated string (supports 'controls' with fallback to 'iso_27001_controls')
 ISO_CONTROLS=$(echo "$FRONTMATTER_JSON" | jq -r '
-  if .iso_27001_controls then
+  if .controls then
+    (.controls | if type == "array" then join(", ") else . end)
+  elif .iso_27001_controls then
     (.iso_27001_controls | if type == "array" then join(", ") else . end)
   else
     ""
@@ -143,10 +145,10 @@ fi
 
 # ── Step 4: Determine template ──
 if [[ "$DOCUMENT_ID" == FRM-* ]]; then
-  TEMPLATE_FILE="$REPO_ROOT/templates/isms-form.html"
+  TEMPLATE_FILE="$REPO_ROOT/templates/form.html"
   echo "[merge] Using form template (FRM document)"
 else
-  TEMPLATE_FILE="$REPO_ROOT/templates/isms-document.html"
+  TEMPLATE_FILE="$REPO_ROOT/templates/document.html"
   echo "[merge] Using document template"
 fi
 
