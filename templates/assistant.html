@@ -442,6 +442,37 @@
       font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
     }
 
+    .msg-ai h1, .msg-ai h2, .msg-ai h3, .msg-ai h4 {
+      font-size: var(--text-sm);
+      font-weight: 700;
+      margin: 10px 0 4px 0;
+      line-height: 1.4;
+    }
+    .msg-ai h1 { font-size: var(--text-base); }
+    .msg-ai h2 { font-size: var(--text-sm); }
+    .msg-ai h3, .msg-ai h4 { font-size: var(--text-xs); }
+
+    .msg-ai blockquote {
+      border-left: 3px solid var(--border);
+      padding-left: 10px;
+      margin: 6px 0;
+      color: var(--text-secondary);
+      font-size: var(--text-xs);
+    }
+
+    .msg-ai table {
+      border-collapse: collapse;
+      font-size: var(--text-xs);
+      margin: 6px 0;
+      width: 100%;
+    }
+    .msg-ai th, .msg-ai td {
+      border: 1px solid var(--border);
+      padding: 4px 8px;
+      text-align: left;
+    }
+    .msg-ai th { background: var(--bg-overlay); font-weight: 600; }
+
     .msg-ai strong { font-weight: 700; }
     .msg-ai em { font-style: italic; }
 
