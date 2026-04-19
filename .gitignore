@@ -4,3 +4,6 @@ tracking.db
 *.log
 .work/
 config.json
+assistant.html
+data/reports/qa-export.json
+data/reports/*.html
