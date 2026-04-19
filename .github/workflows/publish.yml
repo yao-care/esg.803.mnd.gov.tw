@@ -18,14 +18,16 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '20' }
       - run: npm ci
-      - name: Build assistant
-        run: npm run build:assistant
-      - name: Generate index
-        run: bash scripts/report/generate-index.sh
       - name: Publish
         run: bash scripts/knowledge/publish.sh
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+      - name: Validate records
+        run: npm run validate-records || true
+      - name: Build assistant
+        run: npm run build:assistant
+      - name: Generate index
+        run: bash scripts/report/generate-index.sh
       - name: Commit results
         run: |
           git config user.name "github-actions[bot]"

@@ -87,5 +87,12 @@
     "provider": "anthropic",
     "model": "claude-sonnet-4-20250514",
     "key_env_var": "ANTHROPIC_API_KEY"
+  },
+  "form_submission": {
+    "api_endpoint": "",
+    "repo": "",
+    "gitlab_endpoint": "",
+    "auth_adapter": null,
+    "auth_config": {}
   }
 }
