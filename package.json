@@ -9,6 +9,9 @@
     "chunk-audit": "node scripts/lib/core/chunk-audit.js"
   },
   "dependencies": {
-    "minisearch": "^7.1.1"
+    "mammoth": "^1.8.0",
+    "minisearch": "^7.1.1",
+    "pdf-parse": "^1.1.1",
+    "xlsx": "^0.18.5"
   }
 }
