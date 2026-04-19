@@ -35,9 +35,12 @@ const fs   = require('fs');
 const path = require('path');
 
 const { loadConfig, PROJECT_ROOT } = require('./config.js');
-const { chunkMarkdown, chunkCollectedResult } = require('./chunk.js');
+const { chunkMarkdown, chunkCollectedResult, chunkReportedRecord } = require('./chunk.js');
 const { buildSearchIndex, buildMetaIndex }     = require('./search.js');
 const { renderCollectedHtml }                  = require('./render.js');
+const { generateAllSchemas }                   = require('./generate-schemas');
+const { postProcessForms }                     = require('./form-processor');
+const { renderRecords }                        = require('./record-renderer');
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -472,17 +475,27 @@ function readReportedTables(reportedDir, renderedDocs, displayNames = {}) {
       continue;
     }
 
-    const chunkArr = chunkCollectedResult(json, baseName, { displayName });
-    // Override source_type to 'reported'
-    for (const c of chunkArr) {
-      c.source_type = 'reported';
-      c.type = 'reported';
-      c.doc_key = `reported/${baseName}`;
-      c.chunk_id = `reported/${baseName}`;
+    // Detect form records vs legacy collected-style data
+    if (json.record_id && json.fields) {
+      // Form submission record — use record-specific chunker
+      const meta = { title_zh: displayName, document_id: json.document_id || baseName };
+      const recordChunks = chunkReportedRecord(json, meta);
+      reportedChunks.push(...recordChunks);
+      if (recordChunks.length > 0) {
+        renderedDocs[`reported/${baseName}`] = `<p>紀錄 ${json.record_id}</p>`;
+      }
+    } else {
+      // Legacy format — use existing collected result chunker
+      const chunkArr = chunkCollectedResult(json, baseName, { displayName });
+      for (const c of chunkArr) {
+        c.source_type = 'reported';
+        c.type = 'reported';
+        c.doc_key = `reported/${baseName}`;
+        c.chunk_id = `reported/${baseName}`;
+      }
+      reportedChunks.push(...chunkArr);
+      renderedDocs[`reported/${baseName}`] = renderCollectedHtml(json, baseName, displayName);
     }
-    reportedChunks.push(...chunkArr);
-
-    renderedDocs[`reported/${baseName}`] = renderCollectedHtml(json, baseName, displayName);
   }
 
   console.log(`[build] Reported: ${reportedChunks.length} chunks from ${jsonFiles.length} files`);
@@ -599,6 +612,16 @@ function build(overrides = {}) {
     allChunks.push(...reportedChunks);
   }
 
+  // ---- Step 2c: Generate JSON schemas from FRM fields ----
+  const knowledgeDir = docsPath || path.join(PROJECT_ROOT, 'knowledge');
+  if (reportedConfig.enabled !== false) {
+    const schemasDir = path.join(PROJECT_ROOT, 'data', 'schemas');
+    const generated = generateAllSchemas(knowledgeDir, schemasDir, domain.metadata_filename);
+    if (generated.length > 0) {
+      console.log(`[build] Generated ${generated.length} form schemas`);
+    }
+  }
+
   console.log(`[build] Total chunks: ${allChunks.length}`);
 
   // ---- Step 3: Build indexes ----
@@ -666,6 +689,17 @@ function build(overrides = {}) {
 
   const sizeMB = (fs.statSync(destFile).size / (1024 * 1024)).toFixed(2);
   console.log(`[build] Output: ${destFile} (${sizeMB} MB)`);
+
+  // ---- Step 8: Post-process form pages ----
+  if (reportedConfig.enabled !== false) {
+    const formCount = postProcessForms(outputDir, PROJECT_ROOT, config, domain.metadata_filename);
+    if (formCount > 0) console.log(`[build] Post-processed ${formCount} form pages`);
+
+    // Render record pages
+    const reportedDir = path.resolve(PROJECT_ROOT, reportedConfig.path || 'data/reported');
+    const recordCount = renderRecords(reportedDir, outputDir, knowledgeDir, domain.metadata_filename);
+    if (recordCount > 0) console.log(`[build] Rendered ${recordCount} record pages`);
+  }
 }
 
 // ---------------------------------------------------------------------------
