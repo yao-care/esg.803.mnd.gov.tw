@@ -1,0 +1,35 @@
+name: Publish
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'knowledge/**'
+      - 'data/**'
+      - 'imports/**'
+      - '_meta/**'
+      - 'templates/**'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm ci
+      - name: Build assistant
+        run: npm run build:assistant
+      - name: Generate index
+        run: npm run generate-index
+      - name: Publish
+        run: bash scripts/publish.sh
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --cached --quiet || git commit -m "publish: render $(date +%Y%m%d-%H%M%S)"
+          git push

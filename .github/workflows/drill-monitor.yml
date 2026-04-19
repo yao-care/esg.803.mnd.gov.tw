@@ -1,0 +1,27 @@
+name: Drill Monitor
+on:
+  schedule:
+    - cron: '0 7 * * *'  # Wizard will customize cron schedule
+  workflow_dispatch:
+
+jobs:
+  drill-monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm ci
+      - name: Drill notify
+        run: bash scripts/monitor/drill-notify.sh
+      - name: Drill review
+        run: bash scripts/monitor/drill-review.sh
+      - name: Drill harvest
+        run: bash scripts/monitor/drill-harvest.sh
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git diff --cached --quiet || git commit -m "drill: monitor $(date +%Y%m%d)"
+          git push
