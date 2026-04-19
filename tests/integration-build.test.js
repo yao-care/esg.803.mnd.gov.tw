@@ -135,3 +135,42 @@ describe('integration: full build pipeline', () => {
     );
   });
 });
+
+describe('form closed-loop pipeline', () => {
+  it('generates schema for FRM fixtures', () => {
+    const { generateAllSchemas } = require('../scripts/lib/core/generate-schemas');
+    const schemasDir = path.join(PROJECT_ROOT, 'tests', 'tmp-integration-schemas');
+    const generated = generateAllSchemas(
+      path.join(PROJECT_ROOT, 'tests', 'fixtures', 'knowledge'),
+      schemasDir
+    );
+    assert.ok(generated.includes('FRM-TEST'));
+    fs.rmSync(schemasDir, { recursive: true, force: true });
+  });
+
+  it('validates fixture record against generated schema', () => {
+    const { generateAllSchemas } = require('../scripts/lib/core/generate-schemas');
+    const { validateRecordFile } = require('../scripts/lib/core/validate-record');
+    const schemasDir = path.join(PROJECT_ROOT, 'tests', 'tmp-integration-schemas');
+    generateAllSchemas(
+      path.join(PROJECT_ROOT, 'tests', 'fixtures', 'knowledge'),
+      schemasDir
+    );
+    const result = validateRecordFile(
+      path.join(PROJECT_ROOT, 'tests', 'fixtures', 'reported', 'FRM-TEST-20260315-143022-a7f3.json'),
+      schemasDir
+    );
+    assert.strictEqual(result.valid, true, `Validation errors: ${result.errors.join(', ')}`);
+    fs.rmSync(schemasDir, { recursive: true, force: true });
+  });
+
+  it('chunks reported record for search index', () => {
+    const { chunkReportedRecord } = require('../scripts/lib/core/chunk');
+    const record = JSON.parse(fs.readFileSync(
+      path.join(PROJECT_ROOT, 'tests', 'fixtures', 'reported', 'FRM-TEST-20260315-143022-a7f3.json'), 'utf8'
+    ));
+    const chunks = chunkReportedRecord(record, { title_zh: '測試表單', document_id: 'FRM-TEST' });
+    assert.strictEqual(chunks.length, 1);
+    assert.ok(chunks[0].text.includes('類別A'));
+  });
+});
