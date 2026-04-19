@@ -1,0 +1,1713 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>__ASSISTANT_TITLE__</title>
+  <style>
+    /* ── OKLCH Design System (Dense Tool UI) ── */
+    :root {
+      --bg-base:     oklch(0.97 0.005 250);
+      --bg-surface:  oklch(0.94 0.005 250);
+      --bg-overlay:  oklch(0.90 0.008 250);
+      --bg-hover:    oklch(0.92 0.005 250);
+
+      --text-primary:   oklch(0.20 0.01 250);
+      --text-secondary: oklch(0.45 0.01 250);
+      --text-muted:     oklch(0.60 0.008 250);
+
+      --color-critical: oklch(0.55 0.22 25);
+      --color-high:     oklch(0.55 0.16 55);
+      --color-medium:   oklch(0.52 0.14 80);
+      --color-low:      oklch(0.52 0.13 240);
+
+      --color-pass:    oklch(0.48 0.16 150);
+      --color-fail:    oklch(0.55 0.22 25);
+      --color-warn:    oklch(0.52 0.14 80);
+      --color-info:    oklch(0.52 0.13 240);
+
+      --color-link:    oklch(0.48 0.15 250);
+      --color-blue:    oklch(0.48 0.15 250);
+      --color-purple:  oklch(0.50 0.17 300);
+      --color-cyan:    oklch(0.48 0.10 200);
+      --color-pink:    oklch(0.52 0.17 340);
+      --color-indigo:  oklch(0.48 0.15 280);
+
+      --border-subtle: oklch(0.85 0.005 250);
+
+      /* Font sizes — minimum 18px, per design-tokens spec */
+      --text-xs:   1.125rem;  /* 18px — badges, labels, smallest text */
+      --text-sm:   1.25rem;   /* 20px — table content */
+      --text-base: 1.5rem;    /* 24px — body text */
+      --text-lg:   1.75rem;   /* 28px — emphasis */
+      --text-xl:   2rem;      /* 32px — section headings */
+      --text-2xl:  3rem;      /* 48px — summary card numbers */
+      --text-3xl:  3.5rem;    /* 56px — report title */
+    }
+
+    @supports not (color: oklch(0 0 0)) {
+      :root {
+        --bg-base:        #f5f6f8;
+        --bg-surface:     #ecedf0;
+        --bg-overlay:     #dfe0e5;
+        --bg-hover:       #e5e6ea;
+        --text-primary:   #1e2030;
+        --text-secondary: #5e6070;
+        --text-muted:     #8a8c98;
+        --color-critical: #c93135;
+        --color-high:     #b86a2a;
+        --color-medium:   #8a7020;
+        --color-low:      #2a6bb8;
+        --color-pass:     #1e8050;
+        --color-fail:     #c93135;
+        --color-warn:     #8a7020;
+        --color-info:     #2a6bb8;
+        --color-link:     #1e5ab8;
+        --color-blue:     #1e5ab8;
+        --color-purple:   #7830b8;
+        --color-cyan:     #1e7a8a;
+        --color-pink:     #b8306a;
+        --color-indigo:   #4830b8;
+        --border-subtle:  #d5d6da;
+      }
+    }
+
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: var(--text-base);
+      color: var(--text-primary);
+      background: var(--bg-base);
+    }
+
+    /* ── Three-Panel Layout ── */
+    #app {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Left Panel */
+    #panel-left {
+      width: 10%;
+      min-width: 320px;
+      max-width: 420px;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow: hidden;
+      transition: transform 0.25s ease;
+      z-index: 10;
+    }
+
+    #panel-left-header {
+      padding: 8px;
+      background: var(--bg-overlay);
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #doc-search {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      font-size: var(--text-xs);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      outline: none;
+    }
+    #doc-search:focus {
+      border-color: var(--color-blue);
+      box-shadow: 0 0 0 2px oklch(0.48 0.15 250 / 0.15);
+    }
+
+    #doc-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 0;
+    }
+
+    .doc-group-label {
+      padding: 6px 10px 3px;
+      font-size: var(--text-xs);
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .doc-item {
+      display: block;
+      width: 100%;
+      padding: 5px 10px;
+      font-size: var(--text-xs);
+      color: var(--text-primary);
+      background: none;
+      border: none;
+      border-left: 3px solid transparent;
+      text-align: left;
+      cursor: pointer;
+      white-space: normal;
+      word-break: break-word;
+      line-height: 1.4;
+    }
+    .doc-item:hover {
+      background: var(--bg-hover);
+    }
+    .doc-item.active {
+      border-left-color: var(--color-blue);
+      background: oklch(0.48 0.15 250 / 0.08);
+      color: var(--color-blue);
+      font-weight: 600;
+    }
+    .doc-item-id {
+      display: inline-block;
+      font-size: var(--text-xs);
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-right: 2px;
+    }
+    .doc-item.active .doc-item-id { color: var(--color-blue); }
+    .doc-item-ver {
+      display: inline-block;
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+      margin-left: 4px;
+    }
+
+    /* Center Panel */
+    #panel-center {
+      flex: 45;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-right: 1px solid var(--border-subtle);
+    }
+
+    #panel-center-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      min-height: 48px;
+      background: var(--bg-overlay);
+      border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+
+    #sidebar-toggle {
+      background: none;
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      padding: 3px 7px;
+      cursor: pointer;
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      line-height: 1;
+    }
+    #sidebar-toggle:hover {
+      background: var(--bg-hover);
+    }
+
+    #center-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-secondary);
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #doc-iframe {
+      flex: 1;
+      border: none;
+      background: #fff;
+      display: block;
+    }
+
+    #doc-placeholder {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: var(--text-sm);
+      gap: 8px;
+    }
+    #doc-placeholder .placeholder-icon {
+      font-size: 2.5rem;
+      opacity: 0.4;
+    }
+
+    /* Right Panel */
+    #panel-right {
+      flex: 45;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg-base);
+    }
+
+    #panel-right-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 12px;
+      min-height: 48px;
+      background: var(--bg-overlay);
+      border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .mode-btn {
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      font-size: var(--text-xs);
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .mode-btn.active {
+      background: var(--color-blue);
+      color: #fff;
+      border-color: var(--color-blue);
+    }
+    .mode-btn:hover:not(.active) {
+      background: var(--bg-hover);
+    }
+
+    /* Drill Scope Selector */
+    #drill-scope {
+      width: 100%;
+      padding: 10px 12px;
+      background: oklch(0.48 0.15 250 / 0.05);
+      border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+
+    #drill-scope.hidden { display: none; }
+
+    .drill-scope-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .drill-scope-row label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: var(--text-xs);
+      cursor: pointer;
+    }
+
+    #drill-domain-row {
+      display: none;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    #drill-domain-row label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: var(--text-xs);
+      cursor: pointer;
+    }
+
+    #drill-start-btn {
+      padding: 5px 14px;
+      background: var(--color-blue);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: var(--text-xs);
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #drill-start-btn:hover {
+      opacity: 0.88;
+    }
+
+    #drill-summary {
+      padding: 6px 12px;
+      background: oklch(0.48 0.16 150 / 0.08);
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: var(--text-xs);
+      color: var(--color-pass);
+      flex-shrink: 0;
+    }
+    #drill-summary.hidden { display: none; }
+
+    /* Chat Messages */
+    #chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .msg {
+      max-width: 88%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: var(--text-sm);
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .msg-user {
+      align-self: flex-end;
+      background: var(--color-blue);
+      color: #fff;
+      border-bottom-right-radius: 2px;
+    }
+
+    .msg-ai {
+      align-self: flex-start;
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      border-bottom-left-radius: 2px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .msg-system {
+      align-self: center;
+      background: var(--bg-overlay);
+      color: var(--text-secondary);
+      font-size: var(--text-xs);
+      text-align: center;
+      max-width: 100%;
+      border-radius: 4px;
+      padding: 6px 10px;
+    }
+
+    .msg-streaming { opacity: 0.85; }
+
+    /* Verdict colors in drill */
+    .verdict-pass { color: var(--color-pass); font-weight: 700; }
+    .verdict-partial { color: var(--color-warn); font-weight: 700; }
+    .verdict-fail { color: var(--color-fail); font-weight: 700; }
+
+    /* Citation badges */
+    .citation {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: oklch(0.48 0.15 250 / 0.12);
+      color: var(--color-blue);
+      border: 1px solid oklch(0.48 0.15 250 / 0.3);
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: var(--text-xs);
+      cursor: pointer;
+      font-weight: 500;
+      vertical-align: baseline;
+      white-space: nowrap;
+    }
+    .citation:hover {
+      background: oklch(0.48 0.15 250 / 0.2);
+      text-decoration: none;
+    }
+
+    /* Inline code in AI messages */
+    .msg-ai code {
+      background: var(--bg-overlay);
+      border-radius: 3px;
+      padding: 0 4px;
+      font-size: var(--text-xs);
+      font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+    }
+
+    .msg-ai strong { font-weight: 700; }
+    .msg-ai em { font-style: italic; }
+
+    .msg-ai p { margin-bottom: 6px; }
+    .msg-ai p:last-child { margin-bottom: 0; }
+
+    .msg-ai ul, .msg-ai ol {
+      padding-left: 1.2em;
+      margin: 4px 0;
+    }
+
+    .msg-ai li { margin-bottom: 2px; }
+
+    /* Token estimate (inline in api-settings) */
+    #token-estimate {
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* Chat Input Area */
+    #chat-input-area {
+      display: flex;
+      gap: 6px;
+      padding: 8px;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+      align-items: flex-end;
+    }
+
+    #chat-input {
+      flex: 1;
+      padding: 7px 10px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      font-size: var(--text-sm);
+      font-family: inherit;
+      resize: none;
+      min-height: 36px;
+      max-height: 120px;
+      overflow-y: auto;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      outline: none;
+      line-height: 1.4;
+    }
+    #chat-input:focus {
+      border-color: var(--color-blue);
+      box-shadow: 0 0 0 2px oklch(0.48 0.15 250 / 0.12);
+    }
+
+    #send-btn {
+      padding: 7px 14px;
+      background: var(--color-blue);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+      align-self: flex-end;
+    }
+    #send-btn:hover:not(:disabled) { opacity: 0.88; }
+    #send-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* API Settings Footer */
+    #api-settings {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      background: var(--bg-overlay);
+      border-top: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    #api-settings label {
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    #api-key-input {
+      flex: 1;
+      min-width: 0;
+      padding: 3px 6px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      font-size: var(--text-xs);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      outline: none;
+      font-family: monospace;
+    }
+    #api-key-input:focus { border-color: var(--color-blue); }
+
+    #api-key-status {
+      font-size: var(--text-xs);
+      white-space: nowrap;
+    }
+    #api-key-status.ok { color: var(--color-pass); }
+    #api-key-status.err { color: var(--color-fail); }
+    #api-key-status.none { color: var(--text-muted); }
+
+
+    /* Responsive: left panel becomes overlay at <1200px */
+    @media (max-width: 1200px) {
+      #panel-left {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(-100%);
+        box-shadow: 2px 0 12px oklch(0.20 0.01 250 / 0.15);
+      }
+      #panel-left.open {
+        transform: translateX(0);
+      }
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-subtle);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    /* Drill progress badge */
+    #drill-progress-badge {
+      display: inline-block;
+      padding: 1px 6px;
+      background: oklch(0.48 0.15 250 / 0.12);
+      color: var(--color-blue);
+      border-radius: 10px;
+      font-size: var(--text-xs);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <!-- LEFT PANEL: Document Navigation -->
+  <div id="panel-left">
+    <div id="panel-left-header">
+      <span>📁</span>
+      <input type="text" id="doc-search" placeholder="搜尋文件…" autocomplete="off" spellcheck="false">
+    </div>
+    <nav id="doc-nav" role="navigation" aria-label="文件清單">
+      <!-- Populated by renderDocNav() -->
+    </nav>
+  </div>
+
+  <!-- CENTER PANEL: Document Viewer -->
+  <div id="panel-center">
+    <div id="panel-center-header">
+      <button id="sidebar-toggle" title="開關側邊欄" aria-label="開關側邊欄">☰</button>
+      <span id="center-title">選擇左側文件以檢視</span>
+    </div>
+    <iframe
+      id="doc-iframe"
+      sandbox="allow-same-origin allow-scripts"
+      style="display:none;"
+      title="文件檢視區"
+    ></iframe>
+    <div id="doc-placeholder">
+      <div class="placeholder-icon">📄</div>
+      <div>選擇左側文件以在此檢視</div>
+      <div style="font-size:var(--text-xs);color:var(--text-muted);">或在右側向 AI 助理提問</div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: AI Chat -->
+  <div id="panel-right">
+    <div id="panel-right-header">
+      <button class="mode-btn active" data-mode="qa" id="btn-mode-qa">💬 Q&amp;A</button>
+      <button class="mode-btn" data-mode="drill" id="btn-mode-drill" style="display:none;">🎯 模擬評鑑</button>
+    </div>
+
+    <!-- Drill Scope Selector (hidden when no assessment controls configured) -->
+    <div id="drill-scope" class="hidden">
+      <div class="drill-scope-row">
+        <span style="font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);">評鑑範圍：</span>
+        <label id="drill-scope-covered"><input type="radio" name="drill-scope" value="covered" checked> 已覆蓋的控制項</label>
+        <label id="drill-scope-all"><input type="radio" name="drill-scope" value="all"> 全部控制項</label>
+        <label id="drill-scope-domain" style="display:none;"><input type="radio" name="drill-scope" value="domain"> 依領域選擇</label>
+      </div>
+      <div id="drill-domain-row">
+        <!-- Domain checkboxes are dynamically generated from ASSESSMENT_CONTROLS_ALL -->
+      </div>
+      <div class="drill-scope-row">
+        <button id="drill-start-btn">開始模擬評鑑</button>
+      </div>
+    </div>
+
+    <!-- Drill Summary Line -->
+    <div id="drill-summary" class="hidden">
+      評鑑進行中：<span id="drill-progress-badge">0/0</span>
+    </div>
+
+    <!-- Messages -->
+    <div id="chat-messages" role="log" aria-live="polite" aria-label="對話訊息">
+      <!-- Populated by renderMessages() -->
+    </div>
+
+    <!-- Input -->
+    <div id="chat-input-area">
+      <textarea
+        id="chat-input"
+        rows="1"
+        placeholder="輸入問題…（Enter 送出，Shift+Enter 換行）"
+        aria-label="輸入訊息"
+      ></textarea>
+      <button id="send-btn" disabled>送出</button>
+    </div>
+
+    <!-- API Settings -->
+    <div id="api-settings">
+      <label for="api-key-input">API Key</label>
+      <input
+        type="password"
+        id="api-key-input"
+        placeholder="sk-ant-…"
+        autocomplete="off"
+        spellcheck="false"
+      >
+      <span id="api-key-status" class="none">未設定</span>
+      <span id="token-estimate"></span>
+    </div>
+  </div>
+</div>
+
+<!-- MiniSearch library (injected at build time) -->
+<script>/*__MINISEARCH_LIB__*/</script>
+
+<!-- Data (replaced at build time) -->
+<script>
+const CHUNKS       = /*__CHUNKS__*/{};
+const META_INDEX   = /*__META_INDEX__*/[];
+const SEARCH_INDEX = /*__SEARCH_INDEX__*/"{}";
+const RENDERED_DOCS = /*__RENDERED_DOCS__*/{};
+const APP_CONFIG   = /*__APP_CONFIG__*/{"api_key":"","model":"claude-sonnet-4-20250514","max_tokens_per_turn":4096,"locale":"zh-TW"};
+</script>
+
+<!-- Application -->
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+  mode: 'qa',            // 'qa' | 'drill'
+  currentDocKey: null,
+  qaMessages: [],
+  drillMessages: [],
+  drillScope: null,
+  drillControls: [],
+  drillIndex: 0,
+  apiKey: '',
+  sending: false,
+  apiErrors: 0
+};
+
+// ============================================================
+// ASSESSMENT CONTROLS DATA (injected at build time)
+// ============================================================
+const ASSESSMENT_CONTROLS_COVERED = __ASSESSMENT_CONTROLS_COVERED__;
+const ASSESSMENT_CONTROLS_ALL = __ASSESSMENT_CONTROLS_ALL__;
+const DOC_GROUP_LABELS = __DOC_GROUP_LABELS__;
+
+// ============================================================
+// SYSTEM PROMPTS (injected at build time)
+// ============================================================
+const QA_SYSTEM_PROMPT = __QA_SYSTEM_PROMPT__;
+
+const DRILL_SYSTEM_PROMPT_BASE = __DRILL_SYSTEM_PROMPT__;
+
+function drillSystemPrompt(controls) {
+  const controlList = controls.map(c => `- ${c.id} ${c.name}`).join('\n');
+  // Inject control list into the base prompt template
+  return DRILL_SYSTEM_PROMPT_BASE.replace('{{CONTROL_LIST}}', controlList);
+}
+
+// ============================================================
+// CHINESE TOKENIZER (for MiniSearch)
+// ============================================================
+function chineseTokenize(text) {
+  if (!text) return [];
+  // Try Intl.Segmenter (modern browsers)
+  if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+    try {
+      const segmenter = new Intl.Segmenter('zh-Hant', { granularity: 'word' });
+      const segments = [...segmenter.segment(text)];
+      return segments
+        .filter(s => s.isWordLike && s.segment.trim().length > 0)
+        .map(s => s.segment.toLowerCase());
+    } catch (_) { /* fall through */ }
+  }
+  // Fallback: bigrams for CJK, whitespace split for ASCII
+  const tokens = [];
+  const words = text.split(/\s+/);
+  for (const word of words) {
+    if (/[\u4e00-\u9fff\u3400-\u4dbf]/.test(word)) {
+      for (let i = 0; i < word.length - 1; i++) {
+        tokens.push(word.slice(i, i + 2));
+      }
+      if (word.length === 1) tokens.push(word);
+    } else if (word.length > 0) {
+      tokens.push(word.toLowerCase());
+    }
+  }
+  return tokens;
+}
+
+// ============================================================
+// DOCUMENT NAV RENDERING
+// ============================================================
+function renderDocNav(filter) {
+  const nav = document.getElementById('doc-nav');
+  const q = (filter || '').trim().toLowerCase();
+
+  // Deduplicate META_INDEX by doc_key, pick first occurrence
+  const seen = new Set();
+  const docs = [];
+  for (const entry of META_INDEX) {
+    if (!seen.has(entry.doc_key)) {
+      seen.add(entry.doc_key);
+      docs.push(entry);
+    }
+  }
+
+  // Filter
+  const filtered = q
+    ? docs.filter(d => {
+        const hay = [
+          d.doc_key || '',
+          d.title || '',
+          d.doc_id || '',
+          ...(d.iso_controls || [])
+        ].join(' ').toLowerCase();
+        return hay.includes(q);
+      })
+    : docs;
+
+  // Group
+  const groups = {
+    document: filtered.filter(d => d.type === 'document'),
+    collected: filtered.filter(d => d.type === 'collected'),
+    reported: filtered.filter(d => d.type === 'reported'),
+  };
+
+  nav.innerHTML = '';
+
+  for (const [groupKey, items] of Object.entries(groups)) {
+    if (items.length === 0) continue;
+
+    const label = document.createElement('div');
+    label.className = 'doc-group-label';
+    label.textContent = DOC_GROUP_LABELS[groupKey] || groupKey;
+    nav.appendChild(label);
+
+    for (const doc of items) {
+      const btn = document.createElement('button');
+      btn.className = 'doc-item' + (state.currentDocKey === doc.doc_key ? ' active' : '');
+      const id = doc.doc_id || '';
+      const title = doc.title || doc.doc_key;
+      const ver = doc.version ? ` v${doc.version}` : '';
+      btn.innerHTML = id
+        ? `<span class="doc-item-id">${id}</span> ${title}<span class="doc-item-ver">${ver}</span>`
+        : title;
+      btn.title = `${id} ${title}${ver}`;
+      btn.dataset.docKey = doc.doc_key;
+      btn.addEventListener('click', () => showDocument(doc.doc_key, null));
+      nav.appendChild(btn);
+    }
+  }
+
+  if (filtered.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'padding:12px 10px;font-size:var(--text-xs);color:var(--text-muted);';
+    empty.textContent = '無符合結果';
+    nav.appendChild(empty);
+  }
+}
+
+// ============================================================
+// DOCUMENT VIEWER
+// ============================================================
+function showDocument(docKey, sectionId) {
+  state.currentDocKey = docKey;
+
+  // Update nav highlight
+  document.querySelectorAll('.doc-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.docKey === docKey);
+  });
+
+  const iframe = document.getElementById('doc-iframe');
+  const placeholder = document.getElementById('doc-placeholder');
+  const centerTitle = document.getElementById('center-title');
+
+  const html = RENDERED_DOCS[docKey];
+  if (!html) {
+    // No rendered doc available — show placeholder with message
+    iframe.style.display = 'none';
+    placeholder.style.display = 'flex';
+    placeholder.querySelector('div:last-child').textContent = `文件 "${docKey}" 尚未嵌入`;
+    centerTitle.textContent = docKey;
+    return;
+  }
+
+  // Find title from META_INDEX
+  const meta = META_INDEX.find(m => m.doc_key === docKey);
+  centerTitle.textContent = (meta && meta.title) ? meta.title : docKey;
+
+  placeholder.style.display = 'none';
+  iframe.style.display = 'block';
+  iframe.srcdoc = html;
+
+  if (sectionId) {
+    iframe.onload = () => {
+      try {
+        const iDoc = iframe.contentDocument;
+        // Find heading containing sectionId text
+        const headings = iDoc.querySelectorAll('h1,h2,h3,h4,h5,h6');
+        for (const h of headings) {
+          if (h.textContent.includes(sectionId) || (h.id && h.id.includes(sectionId))) {
+            h.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            break;
+          }
+        }
+        // Also try by id
+        const el = iDoc.getElementById(sectionId);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (_) { /* cross-origin or file:// */ }
+      iframe.onload = null;
+    };
+  }
+
+  // On small screens, close sidebar after navigation
+  if (window.innerWidth <= 1200) {
+    document.getElementById('panel-left').classList.remove('open');
+  }
+}
+
+// ============================================================
+// CITATION PARSING
+// ============================================================
+function parseCitations(text) {
+  // Replace [來源:doc_key#section] with clickable badges
+  return text.replace(/\[來源:([^\]#]+?)(?:#([^\]]*?))?\]/g, (match, docPart, sectionPart) => {
+    // Strip common directory prefixes — RENDERED_DOCS keys are bare folder names
+    const docKey = docPart.replace(/^(isms|knowledge)\//, '');
+    const sectionAttr = sectionPart ? ` data-section="${escapeAttr(sectionPart)}"` : '';
+    const label = sectionPart
+      ? `📄 ${docKey} §${sectionPart}`
+      : `📄 ${docKey}`;
+    return `<span class="citation" data-doc="${escapeAttr(docKey)}"${sectionAttr} role="button" tabindex="0">${label}</span>`;
+  });
+}
+
+function escapeAttr(s) {
+  return s.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ============================================================
+// MINIMAL MARKDOWN RENDERER
+// ============================================================
+function renderMarkdown(text) {
+  // Handle citations first (don't escape them)
+  const withCitations = parseCitations(text);
+
+  // Split into lines for processing
+  let html = withCitations
+    // Headings (must come before bold/italic)
+    .replace(/^#{1,6}\s+(.+)$/gm, (m, content) => {
+      const level = m.match(/^(#+)/)[1].length;
+      return `<h${level} style="margin:8px 0 4px;font-weight:700;">${content}</h${level}>`;
+    })
+    // Bold
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // Italic
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    // Inline code
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    // Verdict markers
+    .replace(/✅/g, '<span class="verdict-pass">✅</span>')
+    .replace(/⚠️/g, '<span class="verdict-partial">⚠️</span>')
+    .replace(/❌/g, '<span class="verdict-fail">❌</span>');
+
+  // Convert list items and tables
+  const lines = html.split('\n');
+  const result = [];
+  let inList = false;
+  let inTable = false;
+  let headerParsed = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const listMatch = line.match(/^[-*]\s+(.+)/);
+    const numMatch  = line.match(/^\d+\.\s+(.+)/);
+
+    // Table handling
+    if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
+      if (inList) { result.push(`</${inList}>`); inList = false; }
+      const cells = line.trim().slice(1, -1).split('|').map(c => c.trim());
+      // Skip separator row (e.g. |---|---|)
+      if (cells.every(c => /^[-:]+$/.test(c))) {
+        continue;
+      }
+      if (!inTable) {
+        result.push('<table style="width:100%;border-collapse:collapse;margin:8px 0;font-size:var(--text-xs);">');
+        inTable = true;
+        headerParsed = false;
+      }
+      const tag = !headerParsed ? 'th' : 'td';
+      const bgStyle = !headerParsed ? 'background:var(--bg-secondary);font-weight:700;' : '';
+      result.push('<tr>' + cells.map(c =>
+        `<${tag} style="border:1px solid var(--border);padding:6px 10px;text-align:left;${bgStyle}">${c}</${tag}>`
+      ).join('') + '</tr>');
+      if (!headerParsed) headerParsed = true;
+    } else {
+      if (inTable) { result.push('</table>'); inTable = false; headerParsed = false; }
+
+      if (listMatch) {
+        if (!inList) { result.push('<ul>'); inList = 'ul'; }
+        result.push(`<li>${listMatch[1]}</li>`);
+      } else if (numMatch) {
+        if (!inList) { result.push('<ol>'); inList = 'ol'; }
+        result.push(`<li>${numMatch[1]}</li>`);
+      } else {
+        if (inList) { result.push(`</${inList}>`); inList = false; }
+        if (line.trim() === '') {
+          result.push('<br>');
+        } else {
+          result.push(`<p>${line}</p>`);
+        }
+      }
+    }
+  }
+  if (inList) result.push(`</${inList}>`);
+  if (inTable) result.push('</table>');
+
+  return result.join('');
+}
+
+// ============================================================
+// MINISEARCH INIT (loaded once)
+// ============================================================
+
+let miniSearchInstance = null;
+
+function initMiniSearch() {
+  if (typeof MiniSearch !== 'undefined' && SEARCH_INDEX && SEARCH_INDEX !== '{}') {
+    try {
+      miniSearchInstance = MiniSearch.loadJSON(SEARCH_INDEX, {
+        fields: ['text', 'title', 'section'],
+        storeFields: ['chunk_id', 'doc_key', 'title', 'section'],
+        idField: 'chunk_id',
+        tokenize: chineseTokenize
+      });
+    } catch(e) { console.warn('MiniSearch init failed:', e); }
+  }
+}
+
+// ============================================================
+// RETRIEVAL ENGINE
+// ============================================================
+
+function structuredSearch(query) {
+  const results = [];
+  // Match ISO control IDs like A.8.28, A.5.1
+  const isoMatches = [...query.matchAll(/A\.\d+\.\d+/gi)].map(m => m[0].toUpperCase());
+  // Match doc IDs like FRM-001, GDL-AI, MTX-001
+  const docMatches = [...query.matchAll(/[A-Z]{2,5}-[A-Z0-9\-]+/gi)].map(m => m[0].toUpperCase());
+
+  for (const entry of META_INDEX) {
+    let matched = false;
+    for (const ctrl of isoMatches) {
+      if ((entry.iso_controls || []).some(c => c.toUpperCase() === ctrl)) {
+        matched = true; break;
+      }
+    }
+    if (!matched) {
+      for (const did of docMatches) {
+        if ((entry.doc_id || '').toUpperCase().includes(did)) {
+          matched = true; break;
+        }
+      }
+    }
+    if (matched) {
+      const chunk = CHUNKS[entry.chunk_id];
+      if (chunk) results.push(chunk);
+    }
+  }
+  return results;
+}
+
+function fullTextSearch(query, topK = 5) {
+  if (!miniSearchInstance) return [];
+  try {
+    const results = miniSearchInstance.search(query, {
+      tokenize: chineseTokenize,
+      processTerm: t => t.toLowerCase(),
+      fuzzy: 0.2,
+      prefix: true
+    });
+    return results
+      .slice(0, topK)
+      .map(r => CHUNKS[r.chunk_id])
+      .filter(Boolean);
+  } catch (e) {
+    console.warn('MiniSearch error:', e);
+    return [];
+  }
+}
+
+async function twoPassFallback(query) {
+  if (!state.apiKey || META_INDEX.length === 0) return [];
+  // First pass: ask Claude which chunk IDs are relevant given the meta index
+  const metaSummary = META_INDEX.slice(0, 80).map(m =>
+    `${m.chunk_id}: [${(m.iso_controls||[]).join(',')}] ${m.title} - ${m.section || ''}`
+  ).join('\n');
+
+  const prompt = `根據以下文件索引，找出與問題「${query}」最相關的 chunk_id（最多5個），只輸出 JSON 陣列格式，例如 ["chunk_01","chunk_02"]。
+
+文件索引：
+${metaSummary}`;
+
+  try {
+    const resp = await callClaude(
+      [{ role: 'user', content: prompt }],
+      '你是文件檢索助手，只輸出 JSON 陣列。',
+      512
+    );
+    const ids = JSON.parse(resp.match(/\[[\s\S]*?\]/)[0]);
+    return getChunksByIds(ids);
+  } catch (_) {
+    return [];
+  }
+}
+
+function getChunksByIds(ids) {
+  return ids.map(id => CHUNKS[id]).filter(Boolean);
+}
+
+async function findRelevantChunks(query) {
+  // 1. Structured search
+  const structured = structuredSearch(query);
+  if (structured.length > 0) return structured.slice(0, 6);
+
+  // 2. Full text search
+  const ft = fullTextSearch(query, 6);
+  if (ft.length > 0) return ft;
+
+  // 3. Two-pass fallback via Claude
+  return await twoPassFallback(query);
+}
+
+// ============================================================
+// CLAUDE API
+// ============================================================
+
+async function callClaude(messages, systemPrompt, maxTokens) {
+  if (!state.apiKey) throw new Error('API Key 未設定');
+  if (state.apiErrors >= 3) {
+    throw new Error('連續 3 次 API 錯誤，請檢查 API Key 和網路連線後重試');
+  }
+
+  const body = {
+    model: APP_CONFIG.model || 'claude-sonnet-4-20250514',
+    max_tokens: maxTokens || APP_CONFIG.max_tokens_per_turn || 4096,
+    system: systemPrompt,
+    messages
+  };
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': state.apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!resp.ok) {
+    const errText = await resp.text();
+    state.apiErrors++;
+    throw new Error(`Claude API error ${resp.status}: ${errText}`);
+  }
+
+  state.apiErrors = 0;
+  const data = await resp.json();
+  return data.content[0]?.text || '';
+}
+
+async function callClaudeStream(messages, systemPrompt, onChunk) {
+  if (!state.apiKey) throw new Error('API Key 未設定');
+  if (state.apiErrors >= 3) {
+    throw new Error('連續 3 次 API 錯誤，請檢查 API Key 和網路連線後重試');
+  }
+
+  const body = {
+    model: APP_CONFIG.model || 'claude-sonnet-4-20250514',
+    max_tokens: APP_CONFIG.max_tokens_per_turn || 4096,
+    system: systemPrompt,
+    messages,
+    stream: true
+  };
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': state.apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!resp.ok) {
+    const errText = await resp.text();
+    state.apiErrors++;
+    throw new Error(`Claude API error ${resp.status}: ${errText}`);
+  }
+
+  state.apiErrors = 0;
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let accumulated = '';
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop(); // keep incomplete line
+
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const data = line.slice(6).trim();
+      if (data === '[DONE]') continue;
+      try {
+        const evt = JSON.parse(data);
+        if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+          accumulated += evt.delta.text;
+          onChunk(accumulated);
+        }
+      } catch (_) { /* ignore parse errors */ }
+    }
+  }
+
+  return accumulated;
+}
+
+// ============================================================
+// MESSAGE BUILDERS
+// ============================================================
+
+function buildApiMessages(messages, context, maxTokens) {
+  // Build context prefix if provided
+  const contextPrefix = context && context.length > 0
+    ? `以下是相關文件內容：\n\n${context.map(c => `【${c.title || c.doc_key}】（引用鍵：${c.doc_key}）\n${c.text || c.content || ''}`).join('\n\n---\n\n')}\n\n---\n\n`
+    : '';
+
+  // Convert messages, injecting context into first user message
+  const apiMsgs = messages.map((m, i) => {
+    if (i === 0 && m.role === 'user' && contextPrefix) {
+      return { role: 'user', content: contextPrefix + m.content };
+    }
+    return { role: m.role, content: m.content };
+  });
+
+  // Rough token budget trimming (1 token ≈ 4 chars)
+  const budget = (maxTokens || 100000) * 4;
+  let totalChars = apiMsgs.reduce((acc, m) => acc + m.content.length, 0);
+  while (totalChars > budget && apiMsgs.length > 2) {
+    const removed = apiMsgs.splice(1, 1); // remove oldest (after first)
+    totalChars -= removed[0].content.length;
+  }
+
+  return apiMsgs;
+}
+
+// ============================================================
+// CHAT UI
+// ============================================================
+
+function appendMessage(role, htmlContent, id) {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg msg-' + role;
+  if (id) div.id = id;
+  div.innerHTML = htmlContent;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  return div;
+}
+
+function updateTokenEstimate() {
+  const msgs = state.mode === 'qa' ? state.qaMessages : state.drillMessages;
+  const totalChars = msgs.reduce((acc, m) => acc + (m.content || '').length, 0);
+  const est = Math.ceil(totalChars / 4);
+  document.getElementById('token-estimate').textContent = `約 ${est.toLocaleString()} tokens`;
+}
+
+function renderMessages() {
+  const container = document.getElementById('chat-messages');
+  container.innerHTML = '';
+
+  const msgs = state.mode === 'qa' ? state.qaMessages : state.drillMessages;
+
+  if (msgs.length === 0) {
+    const welcome = state.mode === 'qa'
+      ? '__WELCOME_MESSAGE__'
+      : '__DRILL_WELCOME_MESSAGE__';
+    appendMessage('system', escapeHtml(welcome));
+  } else {
+    for (const m of msgs) {
+      const html = m.role === 'user'
+        ? escapeHtml(m.content)
+        : renderMarkdown(m.content);
+      appendMessage(m.role === 'user' ? 'user' : 'ai', html);
+    }
+  }
+  updateTokenEstimate();
+}
+
+async function handleSend() {
+  if (state.sending) return;
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  if (!state.apiKey) {
+    showApiKeyError();
+    return;
+  }
+  // Reset consecutive error counter on new send attempt
+  state.apiErrors = 0;
+
+  input.value = '';
+  input.style.height = 'auto';
+
+  state.sending = true;
+  updateSendButton();
+
+  // Add user message
+  const userDiv = appendMessage('user', escapeHtml(text));
+  const msgs = state.mode === 'qa' ? state.qaMessages : state.drillMessages;
+  msgs.push({ role: 'user', content: text });
+
+  // Add AI placeholder
+  const aiId = 'msg-ai-' + Date.now();
+  const aiDiv = appendMessage('ai', '<em style="color:var(--text-muted)">思考中…</em>', aiId);
+  aiDiv.classList.add('msg-streaming');
+
+  try {
+    if (state.mode === 'qa') {
+      await handleQA(text, aiDiv, msgs);
+    } else {
+      await handleDrillAnswer(text, aiDiv, msgs);
+    }
+  } catch (e) {
+    aiDiv.innerHTML = `<span style="color:var(--color-fail)">錯誤：${escapeHtml(e.message)}</span>`;
+  } finally {
+    aiDiv.classList.remove('msg-streaming');
+    state.sending = false;
+    updateSendButton();
+    updateTokenEstimate();
+    document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+  }
+}
+
+async function handleQA(query, aiDiv, msgs) {
+  // Retrieve relevant chunks
+  const chunks = await findRelevantChunks(query);
+
+  // Build API messages (inject context into first message)
+  const apiMsgs = buildApiMessages(msgs, chunks, 80000);
+
+  let fullText = '';
+  await callClaudeStream(apiMsgs, QA_SYSTEM_PROMPT, (accumulated) => {
+    fullText = accumulated;
+    aiDiv.innerHTML = renderMarkdown(accumulated);
+    document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+  });
+
+  // Save to state
+  msgs.push({ role: 'assistant', content: fullText });
+
+  // Wire up citation clicks
+  wireUpCitations(aiDiv);
+}
+
+async function handleDrillAnswer(answer, aiDiv, msgs) {
+  const apiMsgs = buildApiMessages(msgs, [], 80000);
+
+  let fullText = '';
+  await callClaudeStream(apiMsgs, drillSystemPrompt(state.drillControls), (accumulated) => {
+    fullText = accumulated;
+    aiDiv.innerHTML = renderMarkdown(accumulated);
+    document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+  });
+
+  msgs.push({ role: 'assistant', content: fullText });
+
+  // Update drill progress
+  state.drillIndex++;
+  updateDrillProgress();
+
+  wireUpCitations(aiDiv);
+}
+
+function wireUpCitations(container) {
+  container.querySelectorAll('.citation').forEach(el => {
+    el.addEventListener('click', () => {
+      const docKey = el.dataset.doc;
+      const section = el.dataset.section || null;
+      if (docKey) showDocument(docKey, section);
+    });
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        el.click();
+      }
+    });
+  });
+}
+
+// ============================================================
+// DRILL MODE
+// ============================================================
+
+function getDrillControls(scope, domains) {
+  if (scope === 'covered') return [...ASSESSMENT_CONTROLS_COVERED];
+  if (scope === 'all') return [...ASSESSMENT_CONTROLS_ALL];
+  if (scope === 'domain') {
+    return ASSESSMENT_CONTROLS_ALL.filter(c => domains.includes(c.domain));
+  }
+  return [...ASSESSMENT_CONTROLS_COVERED];
+}
+
+async function startDrill() {
+  const scopeEl = document.querySelector('input[name="drill-scope"]:checked');
+  const scope = scopeEl ? scopeEl.value : 'covered';
+
+  const domains = [...document.querySelectorAll('input[name="drill-domain"]:checked')]
+    .map(el => el.value);
+
+  const controls = getDrillControls(scope, domains);
+  if (controls.length === 0) {
+    alert('請至少選擇一個領域');
+    return;
+  }
+
+  state.drillControls = controls;
+  state.drillIndex = 0;
+  state.drillMessages = [];
+
+  // Collapse scope selector
+  document.getElementById('drill-scope').classList.add('hidden');
+
+  // Show summary
+  const summary = document.getElementById('drill-summary');
+  summary.classList.remove('hidden');
+  updateDrillProgress();
+
+  // Clear chat
+  document.getElementById('chat-messages').innerHTML = '';
+  appendMessage('system', `🎯 開始模擬評鑑，共 ${controls.length} 個控制項`);
+
+  // Start with initial drill message
+  if (!state.apiKey) {
+    showApiKeyError();
+    return;
+  }
+
+  state.sending = true;
+  updateSendButton();
+
+  const aiId = 'msg-ai-drill-start-' + Date.now();
+  const aiDiv = appendMessage('ai', '<em style="color:var(--text-muted)">準備評鑑問題…</em>', aiId);
+  aiDiv.classList.add('msg-streaming');
+
+  try {
+    await sendDrillStart(controls, aiDiv);
+  } catch (e) {
+    aiDiv.innerHTML = `<span style="color:var(--color-fail)">錯誤：${escapeHtml(e.message)}</span>`;
+  } finally {
+    aiDiv.classList.remove('msg-streaming');
+    state.sending = false;
+    updateSendButton();
+  }
+}
+
+async function sendDrillStart(controls, aiDiv) {
+  // Load context for the first few controls
+  const firstCtrl = controls[0];
+  const relatedChunks = META_INDEX
+    .filter(m => (m.iso_controls || []).some(c => c === firstCtrl.id))
+    .map(m => CHUNKS[m.chunk_id])
+    .filter(Boolean)
+    .slice(0, 3);
+
+  const startMsg = { role: 'user', content: '請開始評鑑訪談。' };
+  state.drillMessages.push(startMsg);
+
+  const apiMsgs = buildApiMessages([startMsg], relatedChunks, 80000);
+
+  let fullText = '';
+  await callClaudeStream(apiMsgs, drillSystemPrompt(controls), (accumulated) => {
+    fullText = accumulated;
+    aiDiv.innerHTML = renderMarkdown(accumulated);
+    document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+  });
+
+  state.drillMessages.push({ role: 'assistant', content: fullText });
+  wireUpCitations(aiDiv);
+  updateTokenEstimate();
+}
+
+function updateDrillProgress() {
+  const badge = document.getElementById('drill-progress-badge');
+  if (badge) {
+    badge.textContent = `${state.drillIndex}/${state.drillControls.length}`;
+  }
+}
+
+// ============================================================
+// API KEY
+// ============================================================
+
+function showApiKeyError() {
+  const status = document.getElementById('api-key-status');
+  status.textContent = '請先設定 API Key';
+  status.className = 'err';
+  document.getElementById('api-key-input').focus();
+}
+
+function updateApiKeyStatus() {
+  const status = document.getElementById('api-key-status');
+  if (state.apiKey && state.apiKey.startsWith('sk-ant-')) {
+    status.textContent = '✓ 已設定';
+    status.className = 'ok';
+  } else if (state.apiKey) {
+    status.textContent = '⚠ 格式可疑';
+    status.className = 'err';
+  } else {
+    status.textContent = '未設定';
+    status.className = 'none';
+  }
+  updateSendButton();
+}
+
+// ============================================================
+// SEND BUTTON STATE
+// ============================================================
+
+function updateSendButton() {
+  const btn = document.getElementById('send-btn');
+  btn.disabled = state.sending || !state.apiKey;
+}
+
+// ============================================================
+// MODE SWITCHING
+// ============================================================
+
+function switchMode(mode) {
+  state.mode = mode;
+
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+
+  const drillScope = document.getElementById('drill-scope');
+  const drillSummary = document.getElementById('drill-summary');
+
+  if (mode === 'drill') {
+    drillScope.classList.remove('hidden');
+    // Only show summary if drill is already running
+    if (state.drillControls.length > 0) {
+      drillSummary.classList.remove('hidden');
+    }
+  } else {
+    drillScope.classList.add('hidden');
+    drillSummary.classList.add('hidden');
+  }
+
+  renderMessages();
+}
+
+// ============================================================
+// EXPORT
+// ============================================================
+
+function exportChat() {
+  const msgs = state.mode === 'qa' ? state.qaMessages : state.drillMessages;
+  const modeLabel = state.mode === 'qa' ? 'QA 問答' : '模擬評鑑';
+
+  let md = `# __ASSISTANT_TITLE__ — ${modeLabel} 對話記錄\n\n`;
+  md += `匯出時間：${new Date().toLocaleString('zh-TW')}\n\n---\n\n`;
+
+  for (const m of msgs) {
+    const role = m.role === 'user' ? '**使用者**' : '**AI 助理**';
+    md += `${role}\n\n${m.content}\n\n---\n\n`;
+  }
+
+  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `kb-chat-${Date.now()}.md`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Load API key
+  const savedKey = localStorage.getItem('kb_assistant_api_key');
+  if (savedKey) {
+    try { state.apiKey = atob(savedKey); } catch(_) { state.apiKey = savedKey; }
+  } else {
+    state.apiKey = APP_CONFIG.api_key || '';
+  }
+  document.getElementById('api-key-input').value = state.apiKey;
+  updateApiKeyStatus();
+
+  // Try fetch config.json (HTTP mode only — graceful fail on file://)
+  fetch('config.json')
+    .then(r => r.ok ? r.json() : null)
+    .then(cfg => {
+      if (cfg && cfg.api_key && !state.apiKey) {
+        state.apiKey = cfg.api_key;
+        document.getElementById('api-key-input').value = cfg.api_key;
+        updateApiKeyStatus();
+      }
+    })
+    .catch(() => { /* file:// or no config.json — ignore */ });
+
+  // Init MiniSearch index once
+  initMiniSearch();
+
+  // Conditionally show drill/assessment UI when controls are configured
+  const hasAssessment = ASSESSMENT_CONTROLS_ALL.length > 0 || ASSESSMENT_CONTROLS_COVERED.length > 0;
+  if (hasAssessment) {
+    document.getElementById('btn-mode-drill').style.display = '';
+
+    // Update scope label counts
+    const coveredLabel = document.getElementById('drill-scope-covered');
+    if (coveredLabel && ASSESSMENT_CONTROLS_COVERED.length > 0) {
+      coveredLabel.querySelector('input').nextSibling.textContent =
+        ` 已覆蓋的控制項 (${ASSESSMENT_CONTROLS_COVERED.length}項)`;
+    }
+    const allLabel = document.getElementById('drill-scope-all');
+    if (allLabel && ASSESSMENT_CONTROLS_ALL.length > 0) {
+      allLabel.querySelector('input').nextSibling.textContent =
+        ` 全部控制項 (${ASSESSMENT_CONTROLS_ALL.length}項)`;
+    }
+
+    // Generate domain checkboxes dynamically from control domains
+    const domains = [...new Set(ASSESSMENT_CONTROLS_ALL.map(c => c.domain).filter(Boolean))];
+    if (domains.length > 1) {
+      document.getElementById('drill-scope-domain').style.display = '';
+      const domainRow = document.getElementById('drill-domain-row');
+      for (const d of domains) {
+        const label = document.createElement('label');
+        label.innerHTML = `<input type="checkbox" name="drill-domain" value="${d}" checked> ${d}`;
+        domainRow.appendChild(label);
+      }
+    }
+  }
+
+  // Render initial UI
+  renderDocNav('');
+  renderMessages();
+
+  // Domain radio toggle
+  document.querySelectorAll('input[name="drill-scope"]').forEach(el => {
+    el.addEventListener('change', () => {
+      const domainRow = document.getElementById('drill-domain-row');
+      domainRow.style.display = el.value === 'domain' ? 'flex' : 'none';
+    });
+  });
+
+  // Doc search
+  document.getElementById('doc-search').addEventListener('input', e => {
+    renderDocNav(e.target.value);
+  });
+
+  // Doc nav click (delegated to renderDocNav — buttons already wired)
+
+  // Citation clicks on chat-messages (delegation for dynamically added messages)
+  document.getElementById('chat-messages').addEventListener('click', e => {
+    const citation = e.target.closest('.citation');
+    if (citation) {
+      const docKey = citation.dataset.doc;
+      const section = citation.dataset.section || null;
+      if (docKey) showDocument(docKey, section);
+    }
+  });
+
+  // Mode buttons
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchMode(btn.dataset.mode));
+  });
+
+  // Drill start
+  document.getElementById('drill-start-btn').addEventListener('click', startDrill);
+
+  // Send button
+  document.getElementById('send-btn').addEventListener('click', handleSend);
+
+  // Chat input: Enter to send, Shift+Enter for newline
+  // Guard against IME composition (注音/倉頡 etc.) — isComposing is true while
+  // the user is selecting characters, and keyCode 229 is the legacy signal.
+  document.getElementById('chat-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) {
+      e.preventDefault();
+      handleSend();
+    }
+  });
+
+  // Chat input: auto-resize
+  document.getElementById('chat-input').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+  });
+
+  // API key input
+  document.getElementById('api-key-input').addEventListener('change', function() {
+    state.apiKey = this.value.trim();
+    localStorage.setItem('kb_assistant_api_key', btoa(state.apiKey));
+    updateApiKeyStatus();
+  });
+  document.getElementById('api-key-input').addEventListener('input', function() {
+    state.apiKey = this.value.trim();
+    updateApiKeyStatus();
+  });
+
+
+  // Sidebar toggle
+  document.getElementById('sidebar-toggle').addEventListener('click', () => {
+    document.getElementById('panel-left').classList.toggle('open');
+  });
+});
+</script>
+</body>
+</html>
