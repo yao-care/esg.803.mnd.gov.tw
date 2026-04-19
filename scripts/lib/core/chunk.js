@@ -237,6 +237,17 @@ function chunkMarkdown(md, docKey, config = {}) {
     };
   });
 
+  // Deduplicate chunk IDs: append -2, -3, ... for repeated IDs
+  const idCount = {};
+  for (const chunk of chunks) {
+    if (idCount[chunk.chunk_id]) {
+      idCount[chunk.chunk_id]++;
+      chunk.chunk_id = `${chunk.chunk_id}-${idCount[chunk.chunk_id]}`;
+    } else {
+      idCount[chunk.chunk_id] = 1;
+    }
+  }
+
   return chunks;
 }
 
