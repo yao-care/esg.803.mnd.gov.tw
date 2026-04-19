@@ -255,7 +255,8 @@ function evaluateCitationFormat(answer) {
   if (_allChunks.length > 0) {
     const shortIds = [...new Set(
       _allChunks.map(c => {
-        const m = (c.doc_key || '').match(/^([A-Za-z]+-\d+(?:-\d+[a-z]?)?)/);
+        const rawDocKey = (c.doc_key || '').replace(/^external\/[^/]+\//, '');
+        const m = rawDocKey.match(/^([A-Za-z]+-\d+(?:-\d+[a-z]?)?)/);
         return m ? m[1] : null;
       }).filter(Boolean)
     )];
