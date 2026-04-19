@@ -414,6 +414,63 @@ function filterChunks(allChunks, excludeTypes) {
 }
 
 /**
+ * Generate an index.html listing all profile entry points.
+ * @param {string} outputDir - Directory where profile HTMLs were written
+ * @param {Object} profiles - The profiles config object
+ * @param {Object} config - Full config object for KB info
+ */
+function generateProfileIndex(outputDir, profiles, config) {
+  const kb = config.knowledge_body || {};
+  const profileEntries = Object.entries(profiles);
+
+  if (profileEntries.length <= 1) return; // No index needed for single profile
+
+  const rows = profileEntries.map(([name, p]) => {
+    return `<tr>
+      <td><a href="${name}.html" style="color:#2a6bb8;font-weight:600;text-decoration:none;">${name}</a></td>
+      <td>${p.label || name}</td>
+      <td>${(p.exclude_types || []).length > 0 ? p.exclude_types.join(', ') : '（全部）'}</td>
+    </tr>`;
+  }).join('\n');
+
+  const html = `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${kb.name || ''} — 知識助理</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f6f8; color: #1e2030; margin: 0; padding: 2rem; }
+.wrapper { max-width: 800px; margin: 0 auto; }
+h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+.subtitle { color: #5e6070; margin-bottom: 2rem; }
+table { width: 100%; border-collapse: collapse; background: #ecedf0; border-radius: 8px; overflow: hidden; }
+th { background: #dfe0e5; padding: 10px 14px; text-align: left; font-size: 14px; font-weight: 600; }
+td { padding: 10px 14px; border-top: 1px solid #dfe0e5; }
+footer { margin-top: 2rem; font-size: 14px; color: #8a8c98; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+<h1>${kb.name || '知識助理'}</h1>
+<p class="subtitle">${kb.organization || ''}</p>
+<table>
+<thead><tr><th>Profile</th><th>名稱</th><th>排除類型</th></tr></thead>
+<tbody>
+${rows}
+</tbody>
+</table>
+<footer>Generated: ${new Date().toISOString().slice(0, 19).replace('T', ' ')}</footer>
+</div>
+</body>
+</html>`;
+
+  const indexPath = path.join(outputDir, 'index.html');
+  fs.writeFileSync(indexPath, html);
+  console.log(`[build] Profile index: ${indexPath}`);
+}
+
+/**
  * Main build function. Can be called programmatically or from CLI.
  * Outputs one HTML per profile: {outputDir}/{profileName}.html
  *
@@ -586,6 +643,9 @@ function build(overrides = {}) {
     console.log(`[build] Profile "${profileName}": ${profileChunks.length} chunks → ${profileDestFile} (${sizeMB} MB)`);
   }
 
+  // Generate profile index (only if multiple profiles)
+  generateProfileIndex(outputDir, profiles, config);
+
   // ---- Step 8: Post-process form pages ----
   if (reportedConfig.enabled !== false) {
     const formCount = postProcessForms(outputDir, PROJECT_ROOT, config, domain.metadata_filename);
@@ -618,6 +678,7 @@ module.exports = {
   replacePlaceholder,
   substitutePlaceholders,
   filterChunks,
+  generateProfileIndex,
   build,
   // Internal helpers exported for testing
   findFiles,
