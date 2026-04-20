@@ -214,6 +214,8 @@ function findRelevantChunks(query, chunksMap, metaIndex, msInstance) {
  * @returns {boolean}
  */
 function evaluateSearchHit(results, expectedDocKey) {
+  // __NONE__ = expect zero results (gate test)
+  if (expectedDocKey === '__NONE__') return results.length === 0;
   return results.some(r => r.doc_key === expectedDocKey);
 }
 
@@ -1080,11 +1082,45 @@ ${identityRows}
 }
 
 // ============================================================
+// GLOSSARY EXPANSION
+// ============================================================
+
+function expandGlossary(query, glossary) {
+  if (!glossary || typeof glossary !== 'object') return query;
+  const expansions = [];
+  const sorted = Object.entries(glossary)
+    .sort((a, b) => b[0].length - a[0].length);
+  for (const [term, expansion] of sorted) {
+    const termLower = term.toLowerCase();
+    const queryLower = query.toLowerCase();
+    if (queryLower.includes(termLower)) {
+      expansions.push(expansion);
+    }
+  }
+  if (expansions.length === 0) return query;
+  return query + ' ' + expansions.join(' ');
+}
+
+// ============================================================
 // MAIN
 // ============================================================
 
 async function main() {
   const config = cfg();
+
+  // Load glossary for Layer 1 expansion
+  const glossaryPath = path.join(PROJECT_ROOT, '_meta', 'glossary.json');
+  let glossary = {};
+  if (fs.existsSync(glossaryPath)) {
+    try {
+      glossary = JSON.parse(fs.readFileSync(glossaryPath, 'utf8'));
+    } catch (e) {
+      console.warn('[qa-report] glossary.json is not valid JSON, skipping');
+    }
+  }
+
+  const noResultMessage = config.ui?.no_result_message || '根據目前知識庫的文件，查無相關資料。';
+
   const args = process.argv.slice(2);
   const flags = {
     seedOnly: args.includes('--seed-only'),
@@ -1240,7 +1276,8 @@ async function main() {
     console.log(`[${i + 1}/${questions.length}] ${q.question.substring(0, 50)}...`);
 
     // Search
-    const searchResults = findRelevantChunks(q.question, chunksMap, metaIndex, msInstance);
+    const expandedQuestion = expandGlossary(q.question, glossary);
+    const searchResults = findRelevantChunks(expandedQuestion, chunksMap, metaIndex, msInstance);
     const searchDocKeys = [...new Set(searchResults.map(r => r.doc_key))];
     const searchHit = evaluateSearchHit(searchResults, q.expected_doc_key);
 
@@ -1250,45 +1287,53 @@ async function main() {
     let hasCitationFormat = false;
 
     if (!flags.searchOnly && apiKey) {
-      // Build context
-      const context = searchResults
-        .map(r => `【${r.title || r.doc_key}】（引用鍵：${r.doc_key}）\n${r.text || ''}`)
-        .join('\n\n---\n\n');
+      // Layer 3: Hard gate — skip LLM if no search results
+      if (searchResults.length === 0) {
+        answer = noResultMessage;
+        hasAnswer = false;
+        citationCorrect = (q.expected_doc_key === '__NONE__');
+        hasCitationFormat = (q.expected_doc_key === '__NONE__');
+      } else {
+        // Build context
+        const context = searchResults
+          .map(r => `【${r.title || r.doc_key}】（引用鍵：${r.doc_key}）\n${r.text || ''}`)
+          .join('\n\n---\n\n');
 
-      try {
-        const resp = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
-          },
-          body: JSON.stringify({
-            model,                                                       // [5]
-            max_tokens: 1000,
-            system: systemPrompt,
-            messages: [{
-              role: 'user',
-              content: context
-                ? `參考資料：\n${context}\n\n問題：${q.question}`
-                : `問題：${q.question}\n\n（無相關參考資料）`,
-            }],
-          }),
-        });
+        try {
+          const resp = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': apiKey,
+              'anthropic-version': '2023-06-01',
+            },
+            body: JSON.stringify({
+              model,                                                       // [5]
+              max_tokens: 1000,
+              system: systemPrompt,
+              messages: [{
+                role: 'user',
+                content: context
+                  ? `參考資料：\n${context}\n\n問題：${q.question}`
+                  : `問題：${q.question}\n\n（無相關參考資料）`,
+              }],
+            }),
+          });
 
-        if (resp.ok) {
-          const data = await resp.json();
-          answer = data.content[0]?.text || '';
-        } else {
-          console.warn(`  API error: ${resp.status}`);
+          if (resp.ok) {
+            const data = await resp.json();
+            answer = data.content[0]?.text || '';
+          } else {
+            console.warn(`  API error: ${resp.status}`);
+          }
+        } catch (err) {
+          console.warn(`  Error: ${err.message}`);
         }
-      } catch (err) {
-        console.warn(`  Error: ${err.message}`);
-      }
 
-      hasAnswer = evaluateAnswer(answer);
-      hasCitationFormat = evaluateCitationFormat(answer);
-      citationCorrect = searchHit || answer.includes(q.expected_doc_key);
+        hasAnswer = evaluateAnswer(answer);
+        hasCitationFormat = evaluateCitationFormat(answer);
+        citationCorrect = searchHit || answer.includes(q.expected_doc_key);
+      }
 
       // Rate limit
       await new Promise(r => setTimeout(r, 500));
