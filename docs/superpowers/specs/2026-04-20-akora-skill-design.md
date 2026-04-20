@@ -142,7 +142,7 @@ Skill 根據驗收條件的動詞和名詞推斷類型：
 
 ### 5.1 config.json
 
-根據萃取結果填入：
+讀取 `config.example.json` 的完整內容作為基礎，覆寫以下欄位（**保留所有未列出的欄位的預設值**）：
 
 ```json
 {
@@ -158,22 +158,22 @@ Skill 根據驗收條件的動詞和名詞推斷類型：
       "path": "knowledge/",
       "types": ["{萃取的類型代碼陣列}"]
     },
-    "tables": {
-      "collected": { "enabled": false, "path": "data/collected/" },
-      "reported": { "enabled": false, "path": "data/reported/" }
-    },
-    "external": [],
-    "imports": { "enabled": false, "path": "imports/", "parsers": ["pdf", "office", "image"] }
+    "external": ["{Step 2f 外部來源陣列，無則留空}"]
   },
   "domain": {
     "form_prefix": "FRM",
     "metadata_filename": "merge.yaml",
-    "system_prompt": "{嚴格版 prompt，包含領域特定引導}"
+    "system_prompt": "{嚴格版 prompt，包含領域特定引導}",
+    "citation_pattern": "\\[來源:[^\\]]+\\]"
+  },
+  "ui": {
+    "assistant_title": "{領域}知識助理",
+    "doc_group_labels": {"{類型代碼}": "{類型中文名}"}
   }
 }
 ```
 
-其餘欄位沿用 config.example.json 的預設值。
+保留預設值的欄位：`data_sources.tables`、`data_sources.imports`、`targets`、`collectors`、`event_collectors`、`monitor`、`exercises`、`notify`、`qa`、`git`、`api`、`form_submission`、`profiles`，以及 `domain` 中的 `control_id_pattern`、`control_name`、`identity_doc_map`、`drill_system_prompt`、`assessment_controls`、`assessment_controls_covered`。
 
 ### 5.2 _meta/ 檔案
 
@@ -231,7 +231,7 @@ next_review_date: ""
 change_history:
   - version: "0.1"
     date: "2026-04-20"
-    author: "AKORA Wizard"
+    author: "AKORA Skill"
     description: "初始骨架"
 ---
 
@@ -265,7 +265,7 @@ change_history:
 
 ### 5.4 qa-questions.json
 
-每個驗收項目至少一題，涵蓋搜尋命中驗證：
+每個驗收項目至少一題，**總數至少 20 題**（與 CLAUDE.md 嚮導的 20~50 題門檻一致），涵蓋搜尋命中驗證：
 
 ```json
 [
@@ -354,3 +354,17 @@ Skill 內容必須包含：
 - 自動上傳標案附件（PDF 等）到 knowledge/
 - 追蹤標案進度或截止日
 - 與其他系統（procurement-filter 等）整合
+
+## 9. 已知限制（Real-World Validation）
+
+以 `agent.follower`（23 repos, 803 文件產業情報平台）驗證後發現：
+
+1. **外部來源支援（已解決）** — Skill Step 2f 已加入外部來源判斷與收集邏輯，支援 `data_sources.external` 設定。真實專案可 100% 依賴外部 repo 文件。
+
+2. **external-fetcher 巢狀目錄（已解決）** — `external-fetcher.js` 的 `findDocumentDirs()` 已實作遞迴掃描，Intel repos 的巢狀結構（`docs/daily/{date}/{type}/merge.yaml`，深度 3-4）可正常運作。此限制已解除。
+
+3. **QA doc_key 前綴** — 外部文件的 doc_key 為 `external/{source_name}/{document_id}`（由 `buildExternalDocKey()` 產生），QA 種子題的 `expected_doc_key` 必須匹配此格式。
+
+4. **類型推斷表** — 目前的關鍵詞表僅適用政府採購場景。非採購領域（金融情報、產業分析等）需要生成領域專屬代碼。
+
+5. **glossary 格式** — AKORA 的 `expandGlossary()` 要求 `{"縮寫": "全稱"}` 扁平格式。外部專案若有結構化 glossary 需先攤平。

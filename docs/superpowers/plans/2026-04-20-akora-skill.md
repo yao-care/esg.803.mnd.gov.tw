@@ -33,7 +33,7 @@
 
 建立 `~/.claude/skills/akora.md`，完整內容如下：
 
-```markdown
+````markdown
 ---
 name: akora
 description: 從專案描述（標案公告、驗收條件等）自動建立 AKORA 知識體 repo。萃取領域、文件類型、驗收項目、術語，產出完整骨架並驗證。
@@ -98,6 +98,8 @@ description: 從專案描述（標案公告、驗收條件等）自動建立 AKO
 
 找不到匹配時，預設為 `DOC`（一般文件）。
 
+**非政府採購領域：** 上述關鍵詞表針對政府標案/合規交付物設計。若萃取的領域明顯不同（如金融情報、產業分析、研究文獻），應根據該領域的慣例生成專屬類型代碼（如產業分析領域可能用 `WR`=週報、`CP`=產能價格、`FH`=財務健康等），而非全部回退到 `DOC`。
+
 ### 2c. 驗收項目萃取
 
 從驗收條件、交付物清單、服務項目中萃取每個獨立交付物：
@@ -122,6 +124,35 @@ description: 從專案描述（標案公告、驗收條件等）自動建立 AKO
 - 範例：`mohw-sustainability-2026`
 - 全小寫、用 `-` 分隔、不超過 40 字元
 
+### 2f. 外部資料來源判斷
+
+判斷專案是否需要從外部 Git repos 拉取文件。線索包括：
+- 專案描述提及「多個資料來源」、「跨 repo」、「外部文件」
+- 列出的資料涵蓋多個產業/領域（各自有獨立 repo）
+- 文件產出頻率暗示自動化收集（每日、每週、每月）
+
+若判斷有外部來源，詢問用戶：
+
+> 這個專案看起來需要從外部 Git repos 拉取文件。請提供：
+> 1. 外部 repo 清單（格式：`owner/repo`）
+> 2. 每個 repo 中文件所在路徑（如 `docs/`）
+> 3. 是否需要 token（私有 repo 需要 `PAT_TOKEN`）
+
+每個外部來源生成一筆 config entry：
+
+```json
+{
+  "name": "{repo-短名}",
+  "repo": "{owner/repo}",
+  "path": "{文件路徑}",
+  "ref": "main",
+  "include": ["*"],
+  "token_env": "PAT_TOKEN"
+}
+```
+
+**備註：** AKORA 的 `external-fetcher.js` 使用 `findDocumentDirs()` 遞迴掃描 `path` 下所有層級的子目錄，自動找到包含 `merge.yaml` 的目錄。巢狀目錄結構（如 `docs/daily/{date}/{type}/merge.yaml`）可以正常運作，無需前置處理。
+
 ## Step 3 — 向用戶確認
 
 向用戶展示萃取結果，格式如下：
@@ -140,21 +171,32 @@ description: 從專案描述（標案公告、驗收條件等）自動建立 AKO
 |------|------|------|
 | RPT | 報告 | 溫室氣體盤查報告等 |
 | PLN | 計畫 | 節能計畫等 |
-| ... | ... | ... |
+（列出全部萃取的類型）
 
 ### 知識體目錄結構
 
 knowledge/
 ├── RPT-001/ — 溫室氣體盤查報告書
-│   章節：政府機關簡介、盤查邊界設定、排放源鑑別...
+│   章節：政府機關簡介、盤查邊界設定、排放源鑑別
 ├── ASM-001/ — 節能診斷與評估報告
-│   章節：設備盤點、照明密度分析、空調最佳化...
-└── ...
+│   章節：設備盤點、照明密度分析、空調最佳化
+（列出全部驗收項目）
 
-確認以上內容？可以修改 repo 名稱、調整類型代碼、增刪項目。
+### 外部資料來源（若有）
+
+| 來源 | Repo | 路徑 | Token |
+|------|------|------|-------|
+| memory-intel | weiqi-kids/memory-intel | docs/ | PAT_TOKEN |
+（列出全部外部來源）
+
+確認以上內容？可以修改 repo 名稱、調整類型代碼、增刪項目、修改外部來源。
 ```
 
 等待用戶確認或修改。**不要跳過此步驟。**
+
+**邊界情況：**
+- 若用戶要求刪除所有萃取的文件類型或驗收項目 → 詢問用戶是否要重新貼入專案描述，或手動指定文件類型
+- 若用戶全面否決萃取結果 → 回到 Step 1 重新收集
 
 ## Step 4 — Clone AKORA 模板
 
@@ -166,13 +208,20 @@ npm install
 
 確認 clone 成功且 `npm install` 無錯誤。
 
+**錯誤處理：**
+- `git clone` 失敗 → 檢查網路連線和 GitHub 可用性，提示用戶確認能否存取 `github.com`
+- `npm install` 失敗 → 檢查 Node.js 版本（需 >= 18），嘗試刪除 `node_modules` 後重新安裝
+- 目標目錄已存在 → 詢問用戶是否刪除後重建，或使用不同名稱
+
 ## Step 5 — 產出所有檔案
 
 在新 repo 中產出以下檔案。**參考 `reference/iso27001-example.md` 作為格式範本**（僅參考格式結構，不照抄內容）。
 
 ### 5a. config.json
 
-以 `config.example.json` 為基礎，填入萃取的值：
+**做法：** 讀取 `config.example.json` 的完整內容作為基礎，然後覆寫以下欄位。**保留所有未列出的欄位**（`targets`、`collectors`、`event_collectors`、`monitor`、`exercises`、`notify`、`qa`、`git`、`api`、`form_submission`、`profiles` 等）的預設值，確保未來新增欄位不會遺漏。
+
+**必須覆寫的欄位：**
 
 ```json
 {
@@ -188,23 +237,38 @@ npm install
       "path": "knowledge/",
       "types": ["{萃取的類型代碼陣列}"]
     },
-    "tables": {
-      "collected": { "enabled": false, "path": "data/collected/" },
-      "reported": { "enabled": false, "path": "data/reported/" }
-    },
-    "external": [],
-    "imports": { "enabled": false, "path": "imports/", "parsers": ["pdf", "office", "image"] }
+    "external": [
+      "{Step 2f 萃取的外部來源陣列，無則留空陣列}"
+    ]
   },
   "domain": {
-    "form_prefix": "FRM",
+    "form_prefix": "{萃取的表單類型代碼，預設 FRM}",
     "metadata_filename": "merge.yaml",
     "system_prompt": "{嚴格版 prompt — 見下方模板}",
     "citation_pattern": "\\[來源:[^\\]]+\\]"
+  },
+  "ui": {
+    "assistant_title": "{領域}知識助理",
+    "welcome_message": "你好！請輸入問題，我將根據{knowledge_body.name}的文件回答。",
+    "doc_group_labels": {"{每個萃取的類型代碼}": "{類型中文名}"},
+    "no_result_message": "根據目前{knowledge_body.name}的文件，查無相關資料。建議嘗試不同關鍵詞描述，或洽詢承辦人員。"
   }
 }
 ```
 
-其餘欄位（targets, collectors, monitor, exercises, notify, qa, git, ui, api, form_submission, profiles）沿用 config.example.json 的預設值。
+**保留預設值的欄位：** `data_sources.tables`、`data_sources.imports`、`targets`、`collectors`、`event_collectors`、`monitor`、`exercises`、`notify`、`qa`、`git`、`api`、`form_submission`、`profiles`，以及 `domain` 中的 `control_id_pattern`（留空字串）、`control_name`（留空字串）、`identity_doc_map`（留空物件）、`drill_system_prompt`（留空字串）、`assessment_controls`（留空陣列）、`assessment_controls_covered`（留空陣列）。
+
+若 Step 2f 有外部來源，`external` 陣列格式：
+```json
+{
+  "name": "memory-intel",
+  "repo": "weiqi-kids/memory-intel",
+  "path": "docs",
+  "ref": "main",
+  "include": ["*"],
+  "token_env": "PAT_TOKEN"
+}
+```
 
 **system_prompt 模板：**
 
@@ -292,12 +356,12 @@ change_history:
 
 （待填寫）
 
-...（依此類推）
+（依序產出全部章節，不省略）
 ```
 
 ### 5d. qa-questions.json
 
-每個驗收項目至少產出一題，放在 `scripts/lib/core/qa-questions.json`：
+每個驗收項目至少產出一題，**總數至少 20 題**（與 CLAUDE.md 嚮導的 20~50 題門檻一致）。若驗收項目不足 20 個，則為較重要的項目多產幾題（不同角度的問題）。放在 `scripts/lib/core/qa-questions.json`：
 
 ```json
 [
@@ -311,13 +375,30 @@ change_history:
 ]
 ```
 
-**重要：** `expected_doc_key` 是 knowledge/ 下的**子目錄名**（如 `RPT-001`），不是 document_id。
+**重要：**
+- 本地文件：`expected_doc_key` 是 knowledge/ 下的**子目錄名**（如 `RPT-001`），不是 document_id。
+- 外部來源文件：`expected_doc_key` 必須使用 `external/{source_name}/{document_id}` 格式（如 `external/memory-intel/CP-MEM-LIVE`），對應 `external-fetcher.js` 的 `buildExternalDocKey()` 產出格式。
 
-### 5e. 執行 setup-org.sh
+### 5e. 其他檔案（依需求）
+
+根據萃取的領域和用戶確認的設定，判斷是否需要產出以下檔案。若領域不需要（例如純文件知識體不需要收集器），則跳過。
+
+| 檔案 | 條件 | 說明 |
+|------|------|------|
+| `collectors/*.sh` | 領域需要自動化資料收集時 | 每個收集器一個骨架腳本（含 `#!/bin/bash`、參數解析、TODO 標記） |
+| `.github/ISSUE_TEMPLATE/*.yml` | 領域需要手動表單（如事件通報、變更申請）時 | GitHub Issue 模板 |
+| `.github/workflows/*.yml` | config 中啟用了收集器、監控或演練時 | 客製化現有 workflow 的 cron 排程 |
+
+若產出了收集器，同步更新 `config.json` 的 `collectors` 陣列。
+
+### 5f. 執行 setup-org.sh 與設定 remote
 
 ```bash
 bash scripts/setup-org.sh
-git remote add template https://github.com/weiqi-kids/akora.git
+
+# origin 目前指向 AKORA 模板 repo（clone 來源）
+# 重新命名為 template，之後用戶建立自己的 repo 時再設定 origin
+git remote rename origin template
 ```
 
 ## Step 6 — 驗證
@@ -336,6 +417,7 @@ npm run qa-report -- --search-only
 ## Step 7 — Commit 並報告
 
 ```bash
+# 初始化 commit 使用 git add -A（因為所有檔案都是新產出的，不含敏感檔案）
 git add -A
 git commit -m "init: {案名} 知識體初始化"
 ```
@@ -356,7 +438,7 @@ QA 種子題: {M} 題
 3. 填寫後執行 npm run build:assistant 重新建置
 4. 執行 npm run qa-report -- --html 產出品質報告
 ```
-```
+````
 
 - [ ] **Step 2: 驗證 skill 檔案存在且可讀**
 
@@ -395,5 +477,16 @@ git commit -m "docs: add /akora skill reference copy"
 | 5.3 knowledge/ 結構 | Skill Step 5c |
 | 5.4 qa-questions.json | Skill Step 5d |
 | 5.5 glossary.json | Skill Step 5b |
+| CLAUDE.md collectors/workflows/templates | Skill Step 5e（依需求） |
 | 6. Skill 檔案格式 | Task 1 (frontmatter + markdown) |
 | 7. 與嚮導關係 | Skill 產出 config.json → 嚮導不觸發 |
+
+## Real-World Validation Notes
+
+以 `agent.follower`（23 repos, 803 文件產業情報平台）為真實案例驗證後，記錄以下已知限制：
+
+1. **external-fetcher 已支援遞迴掃描** — `external-fetcher.js` 的 `findDocumentDirs()` 已實作遞迴掃描，intel repos 的巢狀結構（如 `docs/daily/{date}/{type}/merge.yaml`，深度 3-4）可以正常被掃描。此限制已解除。
+
+2. **glossary 格式轉換** — 真實專案可能有自己的結構化 glossary（含 `description`、按產業分組等）。AKORA 的 `expandGlossary()` 僅接受 `{"縮寫": "全稱"}` 扁平格式。Skill 產出的 `_meta/glossary.json` 格式正確，但若需從外部專案匯入術語，需自行攤平。
+
+3. **QA 題目 expected_doc_key 格式** — 外部來源的 doc_key 帶有 `external/{source_name}/` 前綴（由 `buildExternalDocKey()` 產生），QA 種子題的 `expected_doc_key` 必須使用此完整路徑，否則 `qa-report.js` 的搜尋命中驗證會失敗。
