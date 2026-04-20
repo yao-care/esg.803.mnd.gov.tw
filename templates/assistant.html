@@ -1256,31 +1256,6 @@ function fullTextSearch(query, topK = 5) {
   }
 }
 
-async function twoPassFallback(query) {
-  if (!state.apiKey || META_INDEX.length === 0) return [];
-  // First pass: ask Claude which chunk IDs are relevant given the meta index
-  const metaSummary = META_INDEX.slice(0, 80).map(m =>
-    `${m.chunk_id}: [${(m.controls||[]).join(',')}] ${m.title} - ${m.section || ''}`
-  ).join('\n');
-
-  const prompt = `根據以下文件索引，找出與問題「${query}」最相關的 chunk_id（最多5個），只輸出 JSON 陣列格式，例如 ["chunk_01","chunk_02"]。
-
-文件索引：
-${metaSummary}`;
-
-  try {
-    const resp = await callClaude(
-      [{ role: 'user', content: prompt }],
-      '你是文件檢索助手，只輸出 JSON 陣列。',
-      512
-    );
-    const ids = JSON.parse(resp.match(/\[[\s\S]*?\]/)[0]);
-    return getChunksByIds(ids);
-  } catch (_) {
-    return [];
-  }
-}
-
 function getChunksByIds(ids) {
   return ids.map(id => CHUNKS[id]).filter(Boolean);
 }
