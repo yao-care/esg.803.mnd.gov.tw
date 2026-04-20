@@ -12,11 +12,12 @@ const PROJECT_ROOT = path.resolve(__dirname, '..');
 describe('integration: full build pipeline', () => {
   const configPath = path.join(PROJECT_ROOT, 'config.json');
   const configBackup = configPath + '.bak';
+  let outputDir;
   let destFile;
 
   before(() => {
-    // Use a temp file for output so we don't overwrite the real assistant.html
-    destFile = path.join(os.tmpdir(), `assistant-integration-test-${Date.now()}.html`);
+    // Use a temp directory for output so we don't overwrite the real assistant.html
+    outputDir = path.join(os.tmpdir(), `akora-integration-test-${Date.now()}`);
 
     // Backup existing config
     if (fs.existsSync(configPath)) {
@@ -78,15 +79,15 @@ describe('integration: full build pipeline', () => {
       fs.unlinkSync(configPath);
     }
 
-    // Clean up temp output file
-    if (destFile && fs.existsSync(destFile)) {
-      fs.unlinkSync(destFile);
+    // Clean up temp output directory
+    if (outputDir && fs.existsSync(outputDir)) {
+      fs.rmSync(outputDir, { recursive: true, force: true });
     }
   });
 
   it('build completes without error and produces output file', () => {
-    const result = execSync(
-      `node scripts/lib/core/build.js "${PROJECT_ROOT}" "${destFile}"`,
+    execSync(
+      `node scripts/lib/core/build.js "${outputDir}"`,
       {
         cwd: PROJECT_ROOT,
         encoding: 'utf8',
@@ -94,6 +95,8 @@ describe('integration: full build pipeline', () => {
       }
     );
 
+    // Profile system outputs {profileName}.html; default profile is "assistant"
+    destFile = path.join(outputDir, 'assistant.html');
     assert.ok(fs.existsSync(destFile), `Output file should exist at ${destFile}`);
   });
 
@@ -133,5 +136,75 @@ describe('integration: full build pipeline', () => {
       html.includes('claude-sonnet-4-20250514'),
       'Output should contain the configured model name'
     );
+  });
+});
+
+describe('form closed-loop pipeline', () => {
+  it('generates schema for FRM fixtures', () => {
+    const { generateAllSchemas } = require('../scripts/lib/core/generate-schemas');
+    const schemasDir = path.join(PROJECT_ROOT, 'tests', 'tmp-integration-schemas');
+    const generated = generateAllSchemas(
+      path.join(PROJECT_ROOT, 'tests', 'fixtures', 'knowledge'),
+      schemasDir
+    );
+    assert.ok(generated.includes('FRM-TEST'));
+    fs.rmSync(schemasDir, { recursive: true, force: true });
+  });
+
+  it('validates fixture record against generated schema', () => {
+    const { generateAllSchemas } = require('../scripts/lib/core/generate-schemas');
+    const { validateRecordFile } = require('../scripts/lib/core/validate-record');
+    const schemasDir = path.join(PROJECT_ROOT, 'tests', 'tmp-integration-schemas');
+    generateAllSchemas(
+      path.join(PROJECT_ROOT, 'tests', 'fixtures', 'knowledge'),
+      schemasDir
+    );
+    const result = validateRecordFile(
+      path.join(PROJECT_ROOT, 'tests', 'fixtures', 'reported', 'FRM-TEST-20260315-143022-a7f3.json'),
+      schemasDir
+    );
+    assert.strictEqual(result.valid, true, `Validation errors: ${result.errors.join(', ')}`);
+    fs.rmSync(schemasDir, { recursive: true, force: true });
+  });
+
+  it('chunks reported record for search index', () => {
+    const { chunkReportedRecord } = require('../scripts/lib/core/chunk');
+    const record = JSON.parse(fs.readFileSync(
+      path.join(PROJECT_ROOT, 'tests', 'fixtures', 'reported', 'FRM-TEST-20260315-143022-a7f3.json'), 'utf8'
+    ));
+    const chunks = chunkReportedRecord(record, { title_zh: '測試表單', document_id: 'FRM-TEST' });
+    assert.strictEqual(chunks.length, 1);
+    assert.ok(chunks[0].text.includes('類別A'));
+  });
+});
+
+describe('glossary integration', () => {
+  it('expandGlossary expands known abbreviations', () => {
+    function expandGlossary(query, glossary) {
+      if (!glossary || typeof glossary !== 'object') return query;
+      const expansions = [];
+      const sorted = Object.entries(glossary)
+        .sort((a, b) => b[0].length - a[0].length);
+      for (const [term, expansion] of sorted) {
+        const termLower = term.toLowerCase();
+        const queryLower = query.toLowerCase();
+        if (queryLower.includes(termLower)) {
+          expansions.push(expansion);
+        }
+      }
+      if (expansions.length === 0) return query;
+      return query + ' ' + expansions.join(' ');
+    }
+
+    const glossary = { '管審會': '管理委員會' };
+    const result = expandGlossary('管審會成員', glossary);
+    assert.ok(result.includes('管理委員會'), 'Should expand abbreviation');
+    assert.ok(result.includes('管審會'), 'Should preserve original query');
+  });
+
+  it('evaluateSearchHit handles __NONE__ expected_doc_key', () => {
+    const { evaluateSearchHit } = require('../scripts/lib/core/qa-report');
+    assert.strictEqual(evaluateSearchHit([], '__NONE__'), true, '__NONE__ with empty results should be a hit');
+    assert.strictEqual(evaluateSearchHit([{ doc_key: 'test' }], '__NONE__'), false, '__NONE__ with results should not be a hit');
   });
 });

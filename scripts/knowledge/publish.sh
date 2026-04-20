@@ -33,9 +33,10 @@ for folder in "$DOCS_DIR"/*/; do
 
   TOTAL=$((TOTAL+1))
 
-  # FRM → forms/, others → documents/
+  # form_prefix → forms/, others → documents/
   type_prefix=$(echo "$doc_id" | sed 's/-[0-9]*//')
-  if [ "$type_prefix" = "FRM" ]; then
+  doc_type=$(grep "^type:" "$folder/$METADATA_FILENAME" 2>/dev/null | sed 's/^type: *//' || true)
+  if [ "$type_prefix" = "$FORM_PREFIX" ] || [ "$doc_type" = "$FORM_PREFIX" ]; then
     out_dir="$OUTPUT/forms/$bname"
   else
     out_dir="$OUTPUT/documents/$bname"

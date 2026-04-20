@@ -1,0 +1,94 @@
+openapi: '3.0.3'
+info:
+  title: AKORA Form Submission API
+  version: '1.0.0'
+  description: 接收表單提交，驗證後 commit 到 git repo 或開 PR/MR。
+
+paths:
+  /submit:
+    post:
+      summary: 提交表單紀錄
+      operationId: submitRecord
+      security:
+        - apiKey: []
+      parameters:
+        - name: X-Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [document_id, submitted_by, fields]
+              properties:
+                document_id:
+                  type: string
+                  example: FRM-001
+                submitted_by:
+                  type: object
+                  required: [name]
+                  properties:
+                    name:
+                      type: string
+                    title:
+                      type: string
+                fields:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '200':
+          description: 提交成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  record_id:
+                    type: string
+                  status:
+                    type: string
+                    enum: [submitted, pending_review]
+                  pr_url:
+                    type: string
+        '400':
+          description: 驗證失敗
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum: [validation_failed]
+                  details:
+                    type: array
+                    items:
+                      type: string
+        '401':
+          description: API key 無效
+        '409':
+          description: 冪等性重複
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum: [duplicate_submission]
+                  existing_record_id:
+                    type: string
+                  idempotency_key:
+                    type: string
+
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key

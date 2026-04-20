@@ -52,6 +52,7 @@ const MiniSearch = require('minisearch');
 const { loadConfig, PROJECT_ROOT } = require('./config.js');   // [1]
 const { chunkMarkdown, chunkCollectedResult } = require('./chunk.js');
 const { buildSearchIndex, buildMetaIndex, chineseTokenize } = require('./search.js');
+const { filterChunks } = require('./build.js');
 
 let _allChunks = [];  // Module-level, set by main() after buildIndex
 
@@ -213,6 +214,8 @@ function findRelevantChunks(query, chunksMap, metaIndex, msInstance) {
  * @returns {boolean}
  */
 function evaluateSearchHit(results, expectedDocKey) {
+  // __NONE__ = expect zero results (gate test)
+  if (expectedDocKey === '__NONE__') return results.length === 0;
   return results.some(r => r.doc_key === expectedDocKey);
 }
 
@@ -255,7 +258,8 @@ function evaluateCitationFormat(answer) {
   if (_allChunks.length > 0) {
     const shortIds = [...new Set(
       _allChunks.map(c => {
-        const m = (c.doc_key || '').match(/^([A-Za-z]+-\d+(?:-\d+[a-z]?)?)/);
+        const rawDocKey = (c.doc_key || '').replace(/^external\/[^/]+\//, '');
+        const m = rawDocKey.match(/^([A-Za-z]+-\d+(?:-\d+[a-z]?)?)/);
         return m ? m[1] : null;
       }).filter(Boolean)
     )];
@@ -1078,11 +1082,45 @@ ${identityRows}
 }
 
 // ============================================================
+// GLOSSARY EXPANSION
+// ============================================================
+
+function expandGlossary(query, glossary) {
+  if (!glossary || typeof glossary !== 'object') return query;
+  const expansions = [];
+  const sorted = Object.entries(glossary)
+    .sort((a, b) => b[0].length - a[0].length);
+  for (const [term, expansion] of sorted) {
+    const termLower = term.toLowerCase();
+    const queryLower = query.toLowerCase();
+    if (queryLower.includes(termLower)) {
+      expansions.push(expansion);
+    }
+  }
+  if (expansions.length === 0) return query;
+  return query + ' ' + expansions.join(' ');
+}
+
+// ============================================================
 // MAIN
 // ============================================================
 
 async function main() {
   const config = cfg();
+
+  // Load glossary for Layer 1 expansion
+  const glossaryPath = path.join(PROJECT_ROOT, '_meta', 'glossary.json');
+  let glossary = {};
+  if (fs.existsSync(glossaryPath)) {
+    try {
+      glossary = JSON.parse(fs.readFileSync(glossaryPath, 'utf8'));
+    } catch (e) {
+      console.warn('[qa-report] glossary.json is not valid JSON, skipping');
+    }
+  }
+
+  const noResultMessage = config.ui?.no_result_message || '根據目前知識庫的文件，查無相關資料。';
+
   const args = process.argv.slice(2);
   const flags = {
     seedOnly: args.includes('--seed-only'),
@@ -1101,15 +1139,28 @@ async function main() {
     identity: (args.find(a => a.startsWith('--identity=')) || '').replace('--identity=', ''),
     source: (args.find(a => a.startsWith('--source=')) || '').replace('--source=', ''),
     ci: args.includes('--ci'),
+    profile: (() => {
+      const eq = args.find(a => a.startsWith('--profile='));
+      if (eq) return eq.replace('--profile=', '');
+      const idx = args.indexOf('--profile');
+      return (idx !== -1 && args[idx + 1] && !args[idx + 1].startsWith('--')) ? args[idx + 1] : 'assistant';
+    })(),
   };
 
   console.log('[qa-report] Building index...');
   const { chunksMap, metaIndex, msInstance, allChunks } = buildIndex();
-  _allChunks = allChunks;
-  console.log(`[qa-report] ${Object.keys(chunksMap).length} chunks, ${metaIndex.length} meta entries`);
+
+  // Apply profile filter to chunks
+  const profileCfg = config.profiles?.[flags.profile] || {};
+  const filteredChunks = filterChunks(allChunks, profileCfg.exclude_types);
+  _allChunks = filteredChunks;
+  console.log(`[qa-report] ${Object.keys(chunksMap).length} chunks (${filteredChunks.length} after profile filter), ${metaIndex.length} meta entries`);
 
   // Load seed questions                                                  // [15]
-  const seedPath = path.join(__dirname, 'qa-questions.json');
+  // Load profile-specific question file
+  const profileConfig = config.profiles?.[flags.profile] || {};
+  const questionsFile = profileConfig.qa_questions || 'qa-questions.json';
+  const seedPath = path.join(__dirname, questionsFile);
   if (!fs.existsSync(seedPath)) {
     console.error(`Seed questions not found: ${seedPath}`);
     process.exit(1);
@@ -1119,14 +1170,14 @@ async function main() {
   // Validate expected_doc_keys
   const allDocKeys = new Set(metaIndex.map(m => m.doc_key));
   for (const q of questions) {
-    if (!allDocKeys.has(q.expected_doc_key)) {
+    if (q.expected_doc_key !== '__NONE__' && !allDocKeys.has(q.expected_doc_key)) {
       console.warn(`[qa-report] Question ${q.id}: expected_doc_key "${q.expected_doc_key}" not found in index`);
     }
   }
 
   // Dynamic questions
   if (!flags.seedOnly) {
-    const cachePath = path.join(__dirname, 'qa-dynamic-cache.json');
+    const cachePath = path.join(__dirname, `qa-dynamic-cache-${flags.profile}.json`);
     const dynamic = await generateDynamicQuestions(allChunks, questions, cachePath, flags.refreshDynamic);
     console.log(`[qa-report] Dynamic questions: ${dynamic.length}`);
     questions = [...questions, ...dynamic];
@@ -1155,7 +1206,8 @@ async function main() {
   if (flags.exportMode) {
     const searchResultsMap = {};
     for (const q of questions) {
-      const searchResults = findRelevantChunks(q.question, chunksMap, metaIndex, msInstance);
+      const expandedQuestion = expandGlossary(q.question, glossary);
+      const searchResults = findRelevantChunks(expandedQuestion, chunksMap, metaIndex, msInstance);
       const context = searchResults.map(r => `【${r.title || r.doc_key}】（引用鍵：${r.doc_key}）\n${r.text || ''}`).join('\n\n---\n\n');
       searchResultsMap[q.id] = {
         results: searchResults,
@@ -1177,7 +1229,8 @@ async function main() {
     const answersData = JSON.parse(fs.readFileSync(flags.evaluateFile, 'utf8'));
     const searchResultsMap = {};
     for (const q of questions) {
-      const searchResults = findRelevantChunks(q.question, chunksMap, metaIndex, msInstance);
+      const expandedQuestion = expandGlossary(q.question, glossary);
+      const searchResults = findRelevantChunks(expandedQuestion, chunksMap, metaIndex, msInstance);
       searchResultsMap[q.id] = {
         results: searchResults,
         searchHit: evaluateSearchHit(searchResults, q.expected_doc_key),
@@ -1186,7 +1239,8 @@ async function main() {
     }
     const evalResults = importAnswers(questions, searchResultsMap, answersData);
     const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
-    const outputPath = path.join(flags.outputDir, `qa-accuracy-report-${dateStr}.md`);
+    const reportBaseName = `${flags.profile}-report-${dateStr}`;
+    const outputPath = path.join(flags.outputDir, `${reportBaseName}.md`);
     generateReport(evalResults, outputPath);
     if (flags.html) {
       const htmlPath = outputPath.replace(/\.md$/, '.html');
@@ -1224,7 +1278,8 @@ async function main() {
     console.log(`[${i + 1}/${questions.length}] ${q.question.substring(0, 50)}...`);
 
     // Search
-    const searchResults = findRelevantChunks(q.question, chunksMap, metaIndex, msInstance);
+    const expandedQuestion = expandGlossary(q.question, glossary);
+    const searchResults = findRelevantChunks(expandedQuestion, chunksMap, metaIndex, msInstance);
     const searchDocKeys = [...new Set(searchResults.map(r => r.doc_key))];
     const searchHit = evaluateSearchHit(searchResults, q.expected_doc_key);
 
@@ -1234,45 +1289,53 @@ async function main() {
     let hasCitationFormat = false;
 
     if (!flags.searchOnly && apiKey) {
-      // Build context
-      const context = searchResults
-        .map(r => `【${r.title || r.doc_key}】（引用鍵：${r.doc_key}）\n${r.text || ''}`)
-        .join('\n\n---\n\n');
+      // Layer 3: Hard gate — skip LLM if no search results
+      if (searchResults.length === 0) {
+        answer = noResultMessage;
+        hasAnswer = false;
+        citationCorrect = (q.expected_doc_key === '__NONE__');
+        hasCitationFormat = (q.expected_doc_key === '__NONE__');
+      } else {
+        // Build context
+        const context = searchResults
+          .map(r => `【${r.title || r.doc_key}】（引用鍵：${r.doc_key}）\n${r.text || ''}`)
+          .join('\n\n---\n\n');
 
-      try {
-        const resp = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
-          },
-          body: JSON.stringify({
-            model,                                                       // [5]
-            max_tokens: 1000,
-            system: systemPrompt,
-            messages: [{
-              role: 'user',
-              content: context
-                ? `參考資料：\n${context}\n\n問題：${q.question}`
-                : `問題：${q.question}\n\n（無相關參考資料）`,
-            }],
-          }),
-        });
+        try {
+          const resp = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': apiKey,
+              'anthropic-version': '2023-06-01',
+            },
+            body: JSON.stringify({
+              model,                                                       // [5]
+              max_tokens: 1000,
+              system: systemPrompt,
+              messages: [{
+                role: 'user',
+                content: context
+                  ? `參考資料：\n${context}\n\n問題：${q.question}`
+                  : `問題：${q.question}\n\n（無相關參考資料）`,
+              }],
+            }),
+          });
 
-        if (resp.ok) {
-          const data = await resp.json();
-          answer = data.content[0]?.text || '';
-        } else {
-          console.warn(`  API error: ${resp.status}`);
+          if (resp.ok) {
+            const data = await resp.json();
+            answer = data.content[0]?.text || '';
+          } else {
+            console.warn(`  API error: ${resp.status}`);
+          }
+        } catch (err) {
+          console.warn(`  Error: ${err.message}`);
         }
-      } catch (err) {
-        console.warn(`  Error: ${err.message}`);
-      }
 
-      hasAnswer = evaluateAnswer(answer);
-      hasCitationFormat = evaluateCitationFormat(answer);
-      citationCorrect = searchHit || answer.includes(q.expected_doc_key);
+        hasAnswer = evaluateAnswer(answer);
+        hasCitationFormat = evaluateCitationFormat(answer);
+        citationCorrect = searchHit || answer.includes(q.expected_doc_key);
+      }
 
       // Rate limit
       await new Promise(r => setTimeout(r, 500));
@@ -1297,7 +1360,8 @@ async function main() {
 
   // Generate report
   const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
-  const outputPath = path.join(flags.outputDir, `qa-accuracy-report-${dateStr}.md`);
+  const reportBaseName = `${flags.profile}-report-${dateStr}`;
+  const outputPath = path.join(flags.outputDir, `${reportBaseName}.md`);
   generateReport(results, outputPath);
 
   if (flags.html) {

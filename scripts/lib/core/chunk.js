@@ -179,6 +179,20 @@ function slugifySection(heading) {
 }
 
 /**
+ * Extract the type prefix from a document_id string.
+ * E.g. "POL-001" → "POL", "FRM-001" → "FRM".
+ * Returns '' if docId is falsy or has no matching prefix.
+ *
+ * @param {string} docId
+ * @returns {string}
+ */
+function extractPrefixFromDocId(docId) {
+  if (!docId) return '';
+  const match = docId.match(/^([A-Z]{2,5})-/);
+  return match ? match[1] : '';
+}
+
+/**
  * Chunk a markdown document into structured pieces.
  *
  * @param {string} md - Full markdown content including YAML frontmatter
@@ -193,7 +207,10 @@ function chunkMarkdown(md, docKey, config = {}) {
   const docId = frontmatter.document_id || frontmatter.doc_id || docKey;
   const title = frontmatter.title_zh || frontmatter.title_en || frontmatter.title || docKey;
   const version = frontmatter.version || '';
-  const group = frontmatter.group || '';
+  const group = frontmatter.type
+    || frontmatter.group
+    || extractPrefixFromDocId(frontmatter.document_id)
+    || '';
   const controls = Array.isArray(frontmatter.controls)
     ? frontmatter.controls
     : (Array.isArray(frontmatter.iso_27001_controls) ? frontmatter.iso_27001_controls : []);
@@ -279,6 +296,47 @@ function chunkCollectedResult(json, resultName, config = {}) {
   return [chunk];
 }
 
+/**
+ * Chunk a submitted form record into a searchable chunk.
+ * @param {Object} record - The record JSON (with record_id, fields, etc.)
+ * @param {Object} meta - { title_zh, document_id } from merge.yaml
+ * @returns {Array<Object>} Single-element array with the chunk
+ */
+function chunkReportedRecord(record, meta) {
+  const title = meta.title_zh || record.document_id;
+  const submittedDate = record.submitted_at ? record.submitted_at.slice(0, 10) : '';
+  const submitter = record.submitted_by?.name || '';
+
+  // Build searchable text from field values
+  const fieldLines = Object.entries(record.fields || {}).map(([key, val]) => {
+    if (Array.isArray(val)) return `${key}: ${val.join(', ')}`;
+    return `${key}: ${val}`;
+  });
+
+  const text = [
+    `[表單] ${title}`,
+    `[紀錄] ${record.record_id}`,
+    `[提交者] ${submitter}`,
+    `[提交日期] ${submittedDate}`,
+    `[狀態] ${record.status || 'submitted'}`,
+    '',
+    ...fieldLines,
+  ].join('\n');
+
+  return [{
+    chunk_id: `reported/${record.record_id}`,
+    doc_id: record.document_id,
+    doc_key: `reported/${record.record_id}`,
+    title,
+    section: `${submitter} ${submittedDate}`,
+    controls: [],
+    type: 'reported',
+    source_type: 'reported',
+    text,
+    char_count: text.length,
+  }];
+}
+
 module.exports = {
   parseYamlFrontmatter,
   stripFrontmatter,
@@ -286,4 +344,5 @@ module.exports = {
   splitByH3,
   chunkMarkdown,
   chunkCollectedResult,
+  chunkReportedRecord,
 };

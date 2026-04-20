@@ -40,14 +40,18 @@ ls config.json 2>/dev/null && echo "MODE=normal" || echo "MODE=wizard"
 
 **2a. 文件類型（Document Types）**
 
-列出該領域典型的文件類型。例如 ISO 27001 會有政策、程序書、記錄表單、風險評鑑表等；ISO 9001 會有品質手冊、作業指導書、矯正措施報告等。每個類型一行，格式：
+列出該領域典型的文件類型。每個類型必須定義一個 **2-5 字母大寫代碼**（用作 document_id 前綴和 merge.yaml 的 `type:` 欄位）。例如 ISO 27001 會有 POL（政策）、PRO（程序書）、FRM（表單）等；ISO 9001 可能有 QM（品質手冊）、WI（作業指導書）、CAR（矯正措施報告）等。
+
+每個類型一行，格式：`代碼 — 類型名稱（說明）`
 
 ```
-✅ policy — 政策文件（組織層級的方針宣告）
-✅ procedure — 程序書（具體作業流程）
-✅ form — 表單（記錄用）
-❓ guideline — 指引（非強制性參考）
+✅ POL — 政策文件（組織層級的方針宣告）
+✅ PRO — 程序書（具體作業流程）
+✅ FRM — 表單（可填寫、提交、追蹤紀錄）
+❓ GDL — 指引（非強制性參考）
 ```
+
+**代碼規則：** 代碼將用於 document_id 命名（如 `POL-001`）和 merge.yaml 的 `type:` 欄位。其中表單類型代碼必須與 `config.json` 的 `domain.form_prefix` 一致（預設 `FRM`）。
 
 **2b. 收集器（Collectors）**
 
@@ -101,16 +105,37 @@ ls config.json 2>/dev/null && echo "MODE=normal" || echo "MODE=wizard"
 | `_meta/writer.md` | 該領域的文件撰寫指引（用語、格式、必要章節） |
 | `_meta/reviewer.md` | 該領域的文件審查標準（合規檢查點、常見缺失） |
 | `_meta/types/*.md` | 每個文件類型一個檔案（定義 YAML schema、必要欄位、範本） |
+| `_meta/glossary.json` | 從文件中擷取縮寫/俗稱對照表（LLM 自動產出） |
 | `collectors/*.sh` | 每個收集器一個骨架腳本（含 `#!/bin/bash`、參數解析、TODO 標記） |
 | `.github/ISSUE_TEMPLATE/*.yml` | 若需要手動表單（例如事件通報、變更申請），產出 GitHub Issue 模板 |
 | `.github/workflows/*.yml` | 根據 config 中啟用的功能，客製化現有 workflow 的 cron 排程 |
-| `knowledge/` | 依文件類型建立子目錄，每個目錄放一份骨架文件 |
+| `knowledge/` | 依文件類型建立子目錄，每個目錄放一份骨架 merge.yaml（**必須含 `type:` 欄位**）和 .md 文件 |
 | `scripts/lib/core/qa-questions.json` | 20~50 題領域專屬的種子題目（涵蓋各文件類型，用於 QA 驗證） |
+
+**骨架 merge.yaml 範例（每個 knowledge/ 子目錄必須包含）：**
+
+```yaml
+document_id: POL-001
+type: POL          # ← 必填！對應 Step 2a 定義的類型代碼
+title_zh: 資訊安全政策
+title_en: Information Security Policy
+main:
+  zh: 資訊安全政策.md
+```
+
+FRM 類型還需額外包含 `fields:` 定義（用於表單閉環系統）。
+
+**Glossary 產出流程：**
+
+掃描所有 `knowledge/` 文件，呼叫 LLM 擷取縮寫、俗稱、簡稱、英文縮寫及其全稱，輸出為 `_meta/glossary.json`。格式：`{"縮寫": "全稱", ...}`。
 
 產出完成後執行：
 
 ```bash
 bash scripts/setup-org.sh
+
+# 設定 upstream remote，日後可同步模板引擎更新
+git remote add template https://github.com/weiqi-kids/akora.git
 ```
 
 ### Step 6 — 驗證
@@ -142,7 +167,7 @@ npm run qa-report -- --search-only
 ```bash
 # 1. 本月 QA 報告是否已產生
 MONTH=$(date +%Y%m)
-ls data/reports/qa-accuracy-report-${MONTH}*.md 2>/dev/null && echo "QA_REPORT=exists" || echo "QA_REPORT=missing"
+ls data/reports/assistant-report-${MONTH}*.md 2>/dev/null && echo "QA_REPORT=exists" || echo "QA_REPORT=missing"
 
 # 2. CI 最近狀態
 gh run list --limit 5 2>/dev/null
@@ -155,6 +180,13 @@ grep -rh "^next_review_date:" knowledge/*/merge.yaml 2>/dev/null | head -20
 
 # 5. 動態題快取是否需要更新（檢查 knowledge/ 最新修改時間 vs cache 時間）
 stat -f '%m' scripts/lib/core/qa-dynamic-cache.json 2>/dev/null
+
+# 6. 模板引擎是否有更新（若有 template remote）
+git remote get-url template 2>/dev/null && git fetch template --quiet 2>/dev/null && git log --oneline HEAD..template/main -- scripts/ templates/ tests/ .github/ 2>/dev/null | head -10
+
+# 7. Glossary 是否需要更新
+KNOWLEDGE_MTIME=$(find knowledge/ -name '*.md' -newer _meta/glossary.json 2>/dev/null | head -1)
+[ -n "$KNOWLEDGE_MTIME" ] && echo "GLOSSARY=outdated" || echo "GLOSSARY=current"
 ```
 
 根據結果，推薦行動：
@@ -166,6 +198,8 @@ stat -f '%m' scripts/lib/core/qa-dynamic-cache.json 2>/dev/null
 | 有未推送的 commit | `git push origin main` |
 | 文件 30 天內到期 | 列出到期文件，提醒審查 |
 | knowledge/ 有變更但動態題 cache 未更新 | `npm run qa-report -- --refresh-dynamic` |
+| 模板引擎有更新 | 報告更新數量，建議 `git merge template/main`（參見 `docs/upstream-sync.md`） |
+| glossary 過時 | 重新掃描文件產出 `_meta/glossary.json` |
 | 全部正常 | 報告「系統狀態正常，無待處理事項」 |
 
 ---
@@ -193,8 +227,17 @@ npm run qa-report -- --search-only
 # QA 驗證 — CI 模式（搜尋命中率 < 95% 時 exit 1）
 npm run qa-report -- --search-only --ci
 
+# QA 驗證（指定 profile）
+npm run qa-report -- --profile assistant --html
+
 # 分塊品質稽核
 npm run chunk-audit
+
+# 驗證提交紀錄
+npm run validate-records
+
+# 產出表單 JSON Schema
+npm run generate-schemas
 ```
 
 ### 收集與掃描
@@ -327,4 +370,5 @@ gh release create "audit-$(date +%Y%m%d)" /tmp/Documents-$(date +%Y%m%d).zip \
 | `review.yml` | 文件稽核 |
 | `publish.yml` | 文件變更時自動渲染 + 部署至 audit branch |
 | `qa-report.yml` | 每月 AI 對答品質驗證報告 |
+| `record-status.yml` | PR merge/close 時自動更新 record 狀態 |
 | `remediation-verify.yml` | Issue 關閉時自動驗證修補 |

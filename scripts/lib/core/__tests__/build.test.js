@@ -161,7 +161,9 @@ describe('build.js', () => {
     assert.strictEqual(chunks[0].type, 'reported');
     assert.ok(renderedDocs['reported/incident-log'], 'Should produce rendered HTML');
 
-    fs.rmSync(reportedDir, { recursive: true, force: true });
+    // Only remove the test file we created, not the entire directory (it contains fixtures)
+    const testFile = path.join(reportedDir, 'incident-log.json');
+    if (fs.existsSync(testFile)) fs.unlinkSync(testFile);
   });
 
   it('exports all expected functions', () => {

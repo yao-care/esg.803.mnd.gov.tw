@@ -35,9 +35,14 @@ const fs   = require('fs');
 const path = require('path');
 
 const { loadConfig, PROJECT_ROOT } = require('./config.js');
-const { chunkMarkdown, chunkCollectedResult } = require('./chunk.js');
+const { chunkMarkdown, chunkCollectedResult, chunkReportedRecord } = require('./chunk.js');
 const { buildSearchIndex, buildMetaIndex }     = require('./search.js');
 const { renderCollectedHtml }                  = require('./render.js');
+const { generateAllSchemas }                   = require('./generate-schemas');
+const { postProcessForms }                     = require('./form-processor');
+const { renderRecords }                        = require('./record-renderer');
+const { fetchExternalSources }                 = require('./external-fetcher');
+const { renderMarkdownToHtml, convertNumbersToChinese, CHINESE_NUMBERS } = require('./markdown-renderer');
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -99,164 +104,6 @@ function extractZhPath(yamlContent) {
 function extractDocumentId(yamlContent) {
   const m = yamlContent.match(/^document_id:\s*(.+)$/m);
   return m ? m[1].trim() : null;
-}
-
-// ---------------------------------------------------------------------------
-// Markdown → HTML fallback renderer (for documents without pre-rendered HTML)
-// ---------------------------------------------------------------------------
-
-const CHINESE_NUMBERS = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十',
-  '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十'];
-
-/**
- * Convert numbered headings to Chinese-style numbering.
- * - `## 1. Title` → `## 一、Title`  (top-level sections)
- * - `### X.Y Title` → `### （Y中文）Title`  (sub-sections)
- *
- * This runs ONLY in renderMarkdownToHtml (display), NOT in chunkMarkdown (search).
- *
- * @param {string} markdown
- * @returns {string}
- */
-function convertNumbersToChinese(markdown) {
-  // Convert top-level: ## 1. Title → ## 一、Title
-  let result = markdown.replace(/^(## )(\d+)\. (.+)$/gm, (match, prefix, num, title) => {
-    const cn = CHINESE_NUMBERS[parseInt(num)] || num;
-    return `${prefix}${cn}、${title}`;
-  });
-
-  // Convert sub-sections: ### X.Y Title → ### （Y中文）Title
-  result = result.replace(/^(### )\d+\.(\d+) (.+)$/gm, (match, prefix, subNum, title) => {
-    const cn = CHINESE_NUMBERS[parseInt(subNum)] || subNum;
-    return `${prefix}（${cn}）${title}`;
-  });
-
-  return result;
-}
-
-/**
- * Escape HTML entities.
- *
- * @param {string} str
- * @returns {string}
- */
-function escHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-/**
- * Convert markdown text to a simple standalone HTML document.
- * Handles headings, bold, italic, code blocks, inline code, lists, tables,
- * horizontal rules, and paragraphs. Strips YAML front matter.
- *
- * @param {string} md - Markdown source
- * @param {string} title - Document title for the HTML <title>
- * @returns {string} Complete HTML document string
- */
-function renderMarkdownToHtml(md, title) {
-  // Strip YAML front matter
-  let body = md.replace(/^---[\s\S]*?---\s*/, '');
-
-  // Convert numbered headings to Chinese format (display only)
-  body = convertNumbersToChinese(body);
-
-  // Convert fenced code blocks first (before escaping)
-  const codeBlocks = [];
-  body = body.replace(/```(\w*)\n([\s\S]*?)```/g, (_m, _lang, code) => {
-    const idx = codeBlocks.length;
-    codeBlocks.push(`<pre style="background:#f0f1f3;padding:1rem;border-radius:0.5rem;overflow-x:auto;font-size:0.9em;line-height:1.5;"><code>${escHtml(code.trimEnd())}</code></pre>`);
-    return `\x00CODEBLOCK${idx}\x00`;
-  });
-
-  // Escape HTML in the remaining text
-  body = escHtml(body);
-
-  // Restore code blocks
-  body = body.replace(/\x00CODEBLOCK(\d+)\x00/g, (_m, idx) => codeBlocks[Number(idx)]);
-
-  // Tables: detect lines starting with |
-  body = body.replace(/((?:^|\n)\|.+\|(?:\n\|.+\|)+)/g, (tableBlock) => {
-    const rows = tableBlock.trim().split('\n').filter(r => r.trim());
-    // Skip separator row (contains ---)
-    const dataRows = rows.filter(r => !/^\|[\s\-:|]+\|$/.test(r));
-    if (dataRows.length === 0) return tableBlock;
-    const parseRow = (row) => row.split('|').slice(1, -1).map(c => c.trim());
-    const headerCells = parseRow(dataRows[0]);
-    const thead = `<thead><tr>${headerCells.map(c => `<th style="padding:0.5rem 1rem;text-align:left;font-weight:600;background:#ecedf0;">${c}</th>`).join('')}</tr></thead>`;
-    const tbody = dataRows.slice(1).map(r => {
-      const cells = parseRow(r);
-      return `<tr>${cells.map(c => `<td style="padding:0.5rem 1rem;border-top:1px solid #d5d6da;">${c}</td>`).join('')}</tr>`;
-    }).join('\n');
-    return `\n<table style="width:100%;border-collapse:collapse;background:#f5f6f8;border-radius:0.5rem;overflow:hidden;margin:1rem 0;">${thead}<tbody>${tbody}</tbody></table>\n`;
-  });
-
-  // Headings
-  body = body.replace(/^#{6}\s+(.+)$/gm, '<h6 style="margin:1rem 0 0.5rem;font-weight:700;">$1</h6>');
-  body = body.replace(/^#{5}\s+(.+)$/gm, '<h5 style="margin:1rem 0 0.5rem;font-weight:700;">$1</h5>');
-  body = body.replace(/^#{4}\s+(.+)$/gm, '<h4 style="margin:1rem 0 0.5rem;font-weight:700;">$1</h4>');
-  body = body.replace(/^#{3}\s+(.+)$/gm, '<h3 style="margin:1.2rem 0 0.5rem;font-weight:700;font-size:1.1em;">$1</h3>');
-  body = body.replace(/^#{2}\s+(.+)$/gm, '<h2 style="margin:1.5rem 0 0.5rem;font-weight:700;font-size:1.25em;">$1</h2>');
-  body = body.replace(/^#{1}\s+(.+)$/gm, '<h1 style="margin:1.5rem 0 0.5rem;font-weight:700;font-size:1.5em;">$1</h1>');
-
-  // Bold and italic
-  body = body.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  body = body.replace(/\*(.+?)\*/g, '<em>$1</em>');
-
-  // Inline code
-  body = body.replace(/`([^`]+)`/g, '<code style="background:#ecedf0;padding:0.15em 0.4em;border-radius:3px;font-size:0.9em;">$1</code>');
-
-  // Horizontal rule
-  body = body.replace(/^---+$/gm, '<hr style="border:none;border-top:1px solid #d5d6da;margin:1.5rem 0;">');
-
-  // Unordered lists
-  body = body.replace(/((?:^|\n)[ \t]*[-*]\s+.+(?:\n[ \t]*[-*]\s+.+)*)/g, (block) => {
-    const items = block.trim().split(/\n/).map(line => {
-      const content = line.replace(/^[ \t]*[-*]\s+/, '');
-      return `<li style="margin:0.25rem 0;">${content}</li>`;
-    });
-    return `\n<ul style="margin:0.5rem 0;padding-left:1.5rem;">${items.join('\n')}</ul>\n`;
-  });
-
-  // Ordered lists
-  body = body.replace(/((?:^|\n)[ \t]*\d+\.\s+.+(?:\n[ \t]*\d+\.\s+.+)*)/g, (block) => {
-    const items = block.trim().split(/\n/).map(line => {
-      const content = line.replace(/^[ \t]*\d+\.\s+/, '');
-      return `<li style="margin:0.25rem 0;">${content}</li>`;
-    });
-    return `\n<ol style="margin:0.5rem 0;padding-left:1.5rem;">${items.join('\n')}</ol>\n`;
-  });
-
-  // Paragraphs: wrap remaining text blocks
-  body = body.split(/\n{2,}/).map(block => {
-    const trimmed = block.trim();
-    if (!trimmed) return '';
-    // Don't wrap blocks that are already HTML elements
-    if (/^<(?:h[1-6]|ul|ol|li|table|thead|tbody|tr|td|th|pre|hr|div)/i.test(trimmed)) return trimmed;
-    return `<p style="margin:0.5rem 0;line-height:1.7;">${trimmed.replace(/\n/g, '<br>')}</p>`;
-  }).join('\n');
-
-  return `<!DOCTYPE html>
-<html lang="zh-TW">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${escHtml(title)}</title>
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: #f5f6f8; color: #1e2030;
-  padding: 2rem; line-height: 1.6; font-size: 1rem;
-  max-width: 800px;
-}
-</style>
-</head>
-<body>
-${body}
-</body>
-</html>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -323,7 +170,8 @@ function readDocuments(docsDir, options = {}) {
     const documentId = extractDocumentId(metaYaml) || '';
     let foundRendered = false;
     if (outputDir) {
-      const isForm = documentId.startsWith(formPrefix);
+      const docType = metaYaml.match(/^type:\s*(.+)$/m)?.[1]?.trim() || '';
+      const isForm = documentId.startsWith(formPrefix) || docType === formPrefix;
       const htmlPath = isForm
         ? path.join(outputDir, 'forms', folderName, 'index.html')
         : path.join(outputDir, 'documents', folderName, 'index.html');
@@ -472,17 +320,27 @@ function readReportedTables(reportedDir, renderedDocs, displayNames = {}) {
       continue;
     }
 
-    const chunkArr = chunkCollectedResult(json, baseName, { displayName });
-    // Override source_type to 'reported'
-    for (const c of chunkArr) {
-      c.source_type = 'reported';
-      c.type = 'reported';
-      c.doc_key = `reported/${baseName}`;
-      c.chunk_id = `reported/${baseName}`;
+    // Detect form records vs legacy collected-style data
+    if (json.record_id && json.fields) {
+      // Form submission record — use record-specific chunker
+      const meta = { title_zh: displayName, document_id: json.document_id || baseName };
+      const recordChunks = chunkReportedRecord(json, meta);
+      reportedChunks.push(...recordChunks);
+      if (recordChunks.length > 0) {
+        renderedDocs[`reported/${baseName}`] = `<p>紀錄 ${json.record_id}</p>`;
+      }
+    } else {
+      // Legacy format — use existing collected result chunker
+      const chunkArr = chunkCollectedResult(json, baseName, { displayName });
+      for (const c of chunkArr) {
+        c.source_type = 'reported';
+        c.type = 'reported';
+        c.doc_key = `reported/${baseName}`;
+        c.chunk_id = `reported/${baseName}`;
+      }
+      reportedChunks.push(...chunkArr);
+      renderedDocs[`reported/${baseName}`] = renderCollectedHtml(json, baseName, displayName);
     }
-    reportedChunks.push(...chunkArr);
-
-    renderedDocs[`reported/${baseName}`] = renderCollectedHtml(json, baseName, displayName);
   }
 
   console.log(`[build] Reported: ${reportedChunks.length} chunks from ${jsonFiles.length} files`);
@@ -516,15 +374,20 @@ function replacePlaceholder(template, marker, defaultPat, value) {
  * @param {Object} config - Full config object
  * @returns {string} HTML with placeholders replaced
  */
-function substitutePlaceholders(html, config) {
+function substitutePlaceholders(html, config, profile = null) {
   const ui = config.ui || {};
   const domain = config.domain || {};
   const kb = config.knowledge_body || {};
 
-  html = html.replace(/__ASSISTANT_TITLE__/g, ui.assistant_title || '');
+  // Profile overrides for title and system prompt
+  const effectiveTitle = profile?.label || ui.assistant_title || '';
+  const promptKey = profile?.system_prompt_key || 'system_prompt';
+  const effectivePrompt = domain[promptKey] || domain.system_prompt || '';
+
+  html = html.replace(/__ASSISTANT_TITLE__/g, effectiveTitle);
   html = html.replace(/__WELCOME_MESSAGE__/g, ui.welcome_message || '');
   html = html.replace(/__DRILL_WELCOME_MESSAGE__/g, ui.drill_welcome_message || '');
-  html = html.replace('__QA_SYSTEM_PROMPT__', JSON.stringify(domain.system_prompt || ''));
+  html = html.replace('__QA_SYSTEM_PROMPT__', JSON.stringify(effectivePrompt));
   html = html.replace('__DRILL_SYSTEM_PROMPT__', JSON.stringify(domain.drill_system_prompt || ''));
   html = html.replace('__ASSESSMENT_CONTROLS_COVERED__', JSON.stringify(domain.assessment_controls_covered || []));
   html = html.replace('__ASSESSMENT_CONTROLS_ALL__', JSON.stringify(domain.assessment_controls || []));
@@ -539,11 +402,80 @@ function substitutePlaceholders(html, config) {
 }
 
 /**
+ * Filter chunks by excluding specified document type groups.
+ *
+ * @param {Object[]} allChunks - Array of chunk objects (each with a `group` field)
+ * @param {string[]|null} excludeTypes - Array of group names to exclude, or null/[] to keep all
+ * @returns {Object[]} Filtered chunks
+ */
+function filterChunks(allChunks, excludeTypes) {
+  if (!excludeTypes || excludeTypes.length === 0) return allChunks;
+  return allChunks.filter(chunk => !excludeTypes.includes(chunk.group));
+}
+
+/**
+ * Generate an index.html listing all profile entry points.
+ * @param {string} outputDir - Directory where profile HTMLs were written
+ * @param {Object} profiles - The profiles config object
+ * @param {Object} config - Full config object for KB info
+ */
+function generateProfileIndex(outputDir, profiles, config) {
+  const kb = config.knowledge_body || {};
+  const profileEntries = Object.entries(profiles);
+
+  if (profileEntries.length <= 1) return; // No index needed for single profile
+
+  const rows = profileEntries.map(([name, p]) => {
+    return `<tr>
+      <td><a href="${name}.html" style="color:#2a6bb8;font-weight:600;text-decoration:none;">${name}</a></td>
+      <td>${p.label || name}</td>
+      <td>${(p.exclude_types || []).length > 0 ? p.exclude_types.join(', ') : '（全部）'}</td>
+    </tr>`;
+  }).join('\n');
+
+  const html = `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${kb.name || ''} — 知識助理</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f6f8; color: #1e2030; margin: 0; padding: 2rem; }
+.wrapper { max-width: 800px; margin: 0 auto; }
+h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+.subtitle { color: #5e6070; margin-bottom: 2rem; }
+table { width: 100%; border-collapse: collapse; background: #ecedf0; border-radius: 8px; overflow: hidden; }
+th { background: #dfe0e5; padding: 10px 14px; text-align: left; font-size: 14px; font-weight: 600; }
+td { padding: 10px 14px; border-top: 1px solid #dfe0e5; }
+footer { margin-top: 2rem; font-size: 14px; color: #8a8c98; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+<h1>${kb.name || '知識助理'}</h1>
+<p class="subtitle">${kb.organization || ''}</p>
+<table>
+<thead><tr><th>Profile</th><th>名稱</th><th>排除類型</th></tr></thead>
+<tbody>
+${rows}
+</tbody>
+</table>
+<footer>Generated: ${new Date().toISOString().slice(0, 19).replace('T', ' ')}</footer>
+</div>
+</body>
+</html>`;
+
+  const indexPath = path.join(outputDir, 'index.html');
+  fs.writeFileSync(indexPath, html);
+  console.log(`[build] Profile index: ${indexPath}`);
+}
+
+/**
  * Main build function. Can be called programmatically or from CLI.
+ * Outputs one HTML per profile: {outputDir}/{profileName}.html
  *
  * @param {Object} [overrides]
  * @param {string} [overrides.outputDir] - Override output directory
- * @param {string} [overrides.destFile] - Override destination file path
  * @param {Object} [overrides.config] - Override config (skip loadConfig)
  */
 function build(overrides = {}) {
@@ -552,10 +484,6 @@ function build(overrides = {}) {
   const outputDir = overrides.outputDir
     ? path.resolve(overrides.outputDir)
     : PROJECT_ROOT;
-
-  const destFile = overrides.destFile
-    ? path.resolve(overrides.destFile)
-    : path.join(outputDir, 'assistant.html');
 
   const dataSources = config.data_sources || {};
   const domain = config.domain || {};
@@ -599,22 +527,38 @@ function build(overrides = {}) {
     allChunks.push(...reportedChunks);
   }
 
-  console.log(`[build] Total chunks: ${allChunks.length}`);
-
-  // ---- Step 3: Build indexes ----
-  const metaIndex = buildMetaIndex(allChunks);
-  const searchIndexJson = buildSearchIndex(allChunks);
-
-  // Build chunksMap: { chunk_id: { text, doc_key, title } }
-  const chunksMap = {};
-  for (const chunk of allChunks) {
-    chunksMap[chunk.chunk_id] = { text: chunk.text, doc_key: chunk.doc_key, title: chunk.title };
+  // ---- Step 2c: Generate JSON schemas from FRM fields ----
+  const knowledgeDir = docsPath || path.join(PROJECT_ROOT, 'knowledge');
+  if (reportedConfig.enabled !== false) {
+    const schemasDir = path.join(PROJECT_ROOT, 'data', 'schemas');
+    const generated = generateAllSchemas(knowledgeDir, schemasDir, domain.metadata_filename);
+    if (generated.length > 0) {
+      console.log(`[build] Generated ${generated.length} form schemas`);
+    }
   }
 
-  console.log(`[build] Meta index: ${metaIndex.length} entries`);
+  // ---- Step 2d: External data sources ----
+  const externalResult = fetchExternalSources(config, domain.metadata_filename);
+  allChunks.push(...externalResult.chunks);
+  Object.assign(renderedDocs, externalResult.renderedDocs);
+  if (externalResult.chunks.length > 0) {
+    console.log(`[build] External: ${externalResult.chunks.length} chunks merged`);
+  }
 
-  // ---- Step 4: Read template and MiniSearch lib ----
-  const templatePath   = path.join(PROJECT_ROOT, 'templates', 'assistant.html');
+  console.log(`[build] Total chunks: ${allChunks.length}`);
+
+  // ---- Profile loop (Steps 3-7) ----
+  const profiles = config.profiles || {
+    assistant: {
+      label: ui.assistant_title || '知識助理',
+      system_prompt_key: 'system_prompt',
+      exclude_types: [],
+      qa_questions: 'qa-questions.json',
+    },
+  };
+
+  // Read template and MiniSearch lib once (shared across profiles)
+  const templatePath = path.join(PROJECT_ROOT, 'templates', 'assistant.html');
   const miniSearchPath = path.join(PROJECT_ROOT, 'node_modules', 'minisearch', 'dist', 'umd', 'index.js');
 
   if (!fs.existsSync(templatePath)) {
@@ -622,50 +566,110 @@ function build(overrides = {}) {
     process.exit(1);
   }
 
-  let template = fs.readFileSync(templatePath, 'utf8');
+  const templateHtml = fs.readFileSync(templatePath, 'utf8');
   const miniSearchLib = readFileSafe(miniSearchPath) || '';
 
-  // ---- Step 5: Build app config for the SPA ----
   const appConfig = {
-    api_key: api.key || '',
+    api_key: '',  // API key is entered by the user in the browser, never embedded
     model: api.model || 'claude-sonnet-4-20250514',
     max_tokens_per_turn: 4096,
     locale: ui.locale || 'zh-TW',
+    no_result_message: ui.no_result_message || '',
   };
 
-  // ---- Step 6: Assemble ----
-  // Replace data placeholders
-  template = replacePlaceholder(template, '__CHUNKS__', '{}', JSON.stringify(chunksMap));
-  template = replacePlaceholder(template, '__META_INDEX__', '[]', JSON.stringify(metaIndex));
-  template = replacePlaceholder(template, '__SEARCH_INDEX__', '"{}"', JSON.stringify(searchIndexJson));
+  for (const [profileName, profile] of Object.entries(profiles)) {
+    // Validate profile key format (spec 3.1)
+    if (!/^[a-z0-9-]+$/.test(profileName)) {
+      console.error(`[build] Invalid profile key "${profileName}" — must match [a-z0-9-]+, skipping`);
+      continue;
+    }
 
-  // Escape </script> inside embedded HTML to prevent breaking the outer <script> tag
-  const renderedJson = JSON.stringify(renderedDocs).replace(/<\/script>/gi, '<\\/script>');
-  template = replacePlaceholder(template, '__RENDERED_DOCS__', '{}', renderedJson);
+    // ---- Step 3: Filter chunks for this profile ----
+    const profileChunks = filterChunks(allChunks, profile.exclude_types);
 
-  // Replace APP_CONFIG
-  template = template.replace(
-    /\/\*__APP_CONFIG__\*\/\{[^\n]*\}/,
-    `/*__APP_CONFIG__*/${JSON.stringify(appConfig)}`
-  );
+    // ---- Step 4: Build indexes ----
+    const metaIndex = buildMetaIndex(profileChunks);
+    const searchIndexJson = buildSearchIndex(profileChunks);
 
-  // Replace MiniSearch lib
-  if (miniSearchLib) {
+    // Build chunksMap: { chunk_id: { text, doc_key, title } }
+    const chunksMap = {};
+    for (const chunk of profileChunks) {
+      chunksMap[chunk.chunk_id] = { text: chunk.text, doc_key: chunk.doc_key, title: chunk.title };
+    }
+
+    console.log(`[build] Profile "${profileName}": ${profileChunks.length} chunks, meta index: ${metaIndex.length} entries`);
+
+    // ---- Step 5: Filter rendered docs to only include matching doc_keys ----
+    const profileRenderedDocs = {};
+    const profileDocKeys = new Set(profileChunks.map(c => c.doc_key));
+    for (const [key, html] of Object.entries(renderedDocs)) {
+      if (profileDocKeys.has(key)) profileRenderedDocs[key] = html;
+    }
+
+    // ---- Step 6: Assemble HTML from template ----
+    let template = templateHtml;
+
+    // Replace MiniSearch lib
+    if (miniSearchLib) {
+      template = template.replace(
+        '<script>/*__MINISEARCH_LIB__*/</script>',
+        `<script>${miniSearchLib}</script>`
+      );
+    }
+
+    // Replace data placeholders
+    template = replacePlaceholder(template, '__CHUNKS__', '{}', JSON.stringify(chunksMap));
+    template = replacePlaceholder(template, '__META_INDEX__', '[]', JSON.stringify(metaIndex));
+    template = replacePlaceholder(template, '__SEARCH_INDEX__', '"{}"', JSON.stringify(searchIndexJson));
+
+    // Escape </script> inside embedded HTML to prevent breaking the outer <script> tag
+    const renderedJson = JSON.stringify(profileRenderedDocs).replace(/<\/script>/gi, '<\\/script>');
+    template = replacePlaceholder(template, '__RENDERED_DOCS__', '{}', renderedJson);
+
+    // Inject glossary (shared across all profiles)
+    const glossaryRaw = readFileSafe(path.join(PROJECT_ROOT, '_meta', 'glossary.json'));
+    let glossaryJson = '{}';
+    if (glossaryRaw) {
+      try {
+        JSON.parse(glossaryRaw);
+        glossaryJson = glossaryRaw;
+      } catch (e) {
+        console.warn('[build] glossary.json is not valid JSON, using empty {}');
+      }
+    }
+    template = replacePlaceholder(template, '__GLOSSARY__', '{}', glossaryJson);
+
+    // Replace APP_CONFIG
     template = template.replace(
-      '<script>/*__MINISEARCH_LIB__*/</script>',
-      `<script>${miniSearchLib}</script>`
+      /\/\*__APP_CONFIG__\*\/\{[^\n]*\}/,
+      `/*__APP_CONFIG__*/${JSON.stringify(appConfig)}`
     );
+
+    // Substitute UI/domain placeholders with profile overrides
+    template = substitutePlaceholders(template, config, profile);
+
+    // ---- Step 7: Write output ----
+    const profileDestFile = path.join(outputDir, `${profileName}.html`);
+    fs.mkdirSync(path.dirname(profileDestFile), { recursive: true });
+    fs.writeFileSync(profileDestFile, template, 'utf8');
+
+    const sizeMB = (fs.statSync(profileDestFile).size / (1024 * 1024)).toFixed(2);
+    console.log(`[build] Profile "${profileName}": ${profileChunks.length} chunks → ${profileDestFile} (${sizeMB} MB)`);
   }
 
-  // Substitute UI/domain placeholders
-  template = substitutePlaceholders(template, config);
+  // Generate profile index (only if multiple profiles)
+  generateProfileIndex(outputDir, profiles, config);
 
-  // ---- Step 7: Write output ----
-  fs.mkdirSync(path.dirname(destFile), { recursive: true });
-  fs.writeFileSync(destFile, template, 'utf8');
+  // ---- Step 8: Post-process form pages ----
+  if (reportedConfig.enabled !== false) {
+    const formCount = postProcessForms(outputDir, PROJECT_ROOT, config, domain.metadata_filename);
+    if (formCount > 0) console.log(`[build] Post-processed ${formCount} form pages`);
 
-  const sizeMB = (fs.statSync(destFile).size / (1024 * 1024)).toFixed(2);
-  console.log(`[build] Output: ${destFile} (${sizeMB} MB)`);
+    // Render record pages
+    const reportedDir = path.resolve(PROJECT_ROOT, reportedConfig.path || 'data/reported');
+    const recordCount = renderRecords(reportedDir, outputDir, knowledgeDir, domain.metadata_filename);
+    if (recordCount > 0) console.log(`[build] Rendered ${recordCount} record pages`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -673,8 +677,8 @@ function build(overrides = {}) {
 // ---------------------------------------------------------------------------
 
 if (require.main === module) {
-  const [,, outputDir, destFile] = process.argv;
-  build({ outputDir, destFile });
+  const [,, outputDir] = process.argv;
+  build({ outputDir });
 }
 
 // ---------------------------------------------------------------------------
@@ -687,6 +691,8 @@ module.exports = {
   readReportedTables,
   replacePlaceholder,
   substitutePlaceholders,
+  filterChunks,
+  generateProfileIndex,
   build,
   // Internal helpers exported for testing
   findFiles,

@@ -144,9 +144,10 @@ else
 fi
 
 # ── Step 4: Determine template ──
-if [[ "$DOCUMENT_ID" == FRM-* ]]; then
+DOC_TYPE=$(echo "$MERGE_JSON" | jq -r '.type // ""')
+if [[ "$DOCUMENT_ID" == ${FORM_PREFIX}-* ]] || [[ "$DOC_TYPE" == "$FORM_PREFIX" ]]; then
   TEMPLATE_FILE="$REPO_ROOT/templates/form.html"
-  echo "[merge] Using form template (FRM document)"
+  echo "[merge] Using form template (${FORM_PREFIX} document)"
 else
   TEMPLATE_FILE="$REPO_ROOT/templates/document.html"
   echo "[merge] Using document template"
@@ -155,6 +156,21 @@ fi
 if [ ! -f "$TEMPLATE_FILE" ]; then
   echo "Error: template not found: $TEMPLATE_FILE" >&2
   exit 1
+fi
+
+# ── Step 4b: Fields ↔ markdown consistency check (FRM only) ──
+if [[ "$DOCUMENT_ID" == ${FORM_PREFIX}-* ]] || [[ "$DOC_TYPE" == "$FORM_PREFIX" ]]; then
+  FIELDS_JSON=$(echo "$MERGE_JSON" | jq -r '.fields // []')
+  FIELD_COUNT=$(echo "$FIELDS_JSON" | jq 'length')
+  if [ "$FIELD_COUNT" -gt 0 ]; then
+    MD_CONTENT=$(cat "$MAIN_ZH_PATH")
+    for i in $(seq 0 $((FIELD_COUNT - 1))); do
+      FIELD_NAME=$(echo "$FIELDS_JSON" | jq -r ".[$i].name")
+      if ! echo "$MD_CONTENT" | grep -q "$FIELD_NAME"; then
+        echo "[merge] Warning: field '$FIELD_NAME' defined in $METADATA_FILENAME but not found in markdown"
+      fi
+    done
+  fi
 fi
 
 # ── Step 5: Generate status badge HTML ──
@@ -322,7 +338,7 @@ if [ -n "$GIT_LOG" ]; then
     # Escape HTML special chars in the commit message
     SAFE_MSG=$(python3 -c "import sys,html; print(html.escape(sys.argv[1]))" "$msg")
 
-    if [[ "$DOCUMENT_ID" == FRM-* ]]; then
+    if [[ "$DOCUMENT_ID" == ${FORM_PREFIX}-* ]] || [[ "$DOC_TYPE" == "$FORM_PREFIX" ]]; then
       # Form template uses table rows
       VERSION_HISTORY="${VERSION_HISTORY}<tr><td><code>${SHORT_HASH}</code></td><td>${DATE_ONLY}</td><td>git</td><td>${SAFE_MSG}</td></tr>"
     else
@@ -333,7 +349,7 @@ if [ -n "$GIT_LOG" ]; then
 fi
 
 if [ -z "$VERSION_HISTORY" ]; then
-  if [[ "$DOCUMENT_ID" == FRM-* ]]; then
+  if [[ "$DOCUMENT_ID" == ${FORM_PREFIX}-* ]] || [[ "$DOC_TYPE" == "$FORM_PREFIX" ]]; then
     VERSION_HISTORY='<tr><td colspan="4" style="color: var(--text-muted);">（尚無版本紀錄）</td></tr>'
   else
     VERSION_HISTORY='<div class="version-history-entry"><span class="version-history-date">—</span><span class="version-history-hash">—</span><span class="version-history-msg">（尚無版本紀錄）</span></div>'

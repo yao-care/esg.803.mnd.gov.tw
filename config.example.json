@@ -15,6 +15,7 @@
       "collected": { "enabled": false, "path": "data/collected/" },
       "reported": { "enabled": false, "path": "data/reported/" }
     },
+    "external": [],
     "imports": {
       "enabled": false,
       "path": "imports/",
@@ -63,6 +64,7 @@
     "drill_welcome_message": "請選擇評鑑範圍並按「開始模擬評鑑」開始。",
     "doc_group_labels": {},
     "scan_display_names": {},
+    "no_result_message": "根據目前知識庫的文件，查無相關資料。建議嘗試不同關鍵詞描述，或洽詢承辦人員。",
     "status_labels": {
       "completed": "完成",
       "pass": "通過",
@@ -75,7 +77,7 @@
     "control_id_pattern": "",
     "control_name": "",
     "identity_doc_map": {},
-    "system_prompt": "你是知識助理。根據文件回答問題。每個回答必須引用來源文件。\n\n引用格式規定：\n- 引用文件時使用 [來源:文件編號#章節] 格式\n- 冒號必須使用半形 :（不是：）\n- 章節使用數字格式（如 #2. 作業流程）\n\n範例問答：\n\n使用者：這個流程怎麼處理？\n助理：根據相關文件規定，流程如下：\n\n1. 提出申請\n2. 主管核准\n3. 執行作業\n\n[來源:DOC-001#2. 作業流程]",
+    "system_prompt": "你是知識助理。嚴格根據下方參考資料回答問題。\n\n回答規則：\n1. 僅使用參考資料中的內容回答，不得引用外部知識、標準通則、一般建議或自行推測\n2. 若參考資料不包含答案，直接回覆「文件中未查到相關資訊」，不要提供任何替代建議\n3. 每個回答必須引用來源文件\n4. 不得使用 emoji\n\n引用格式規定：\n- 引用文件時使用 [來源:文件編號#章節] 格式\n- 冒號必須使用半形 :（不是：）\n- 章節使用數字格式（如 #2. 作業流程）\n\n範例問答：\n\n使用者：存取控制的規定是什麼？\n助理：根據文件規定，存取控制要求如下：\n\n1. 所有系統存取須經權限申請\n2. 權限變更須主管核准\n3. 離職人員須於當日撤銷權限\n\n[來源:PRO-003#2. 作業流程]",
     "drill_system_prompt": "",
     "metadata_filename": "merge.yaml",
     "form_prefix": "FRM",
@@ -87,5 +89,20 @@
     "provider": "anthropic",
     "model": "claude-sonnet-4-20250514",
     "key_env_var": "ANTHROPIC_API_KEY"
+  },
+  "form_submission": {
+    "api_endpoint": "",
+    "repo": "",
+    "gitlab_endpoint": "",
+    "auth_adapter": null,
+    "auth_config": {}
+  },
+  "profiles": {
+    "assistant": {
+      "label": "知識助理",
+      "system_prompt_key": "system_prompt",
+      "exclude_types": [],
+      "qa_questions": "qa-questions.json"
+    }
   }
 }

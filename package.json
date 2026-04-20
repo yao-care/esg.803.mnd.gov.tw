@@ -6,7 +6,9 @@
     "test": "node --test-concurrency=1 --test scripts/lib/core/__tests__/*.test.js",
     "build:assistant": "node scripts/lib/core/build.js",
     "qa-report": "node scripts/lib/core/qa-report.js",
-    "chunk-audit": "node scripts/lib/core/chunk-audit.js"
+    "chunk-audit": "node scripts/lib/core/chunk-audit.js",
+    "generate-schemas": "node scripts/lib/core/generate-schemas.js",
+    "validate-records": "node scripts/lib/core/validate-record.js"
   },
   "dependencies": {
     "mammoth": "^1.8.0",

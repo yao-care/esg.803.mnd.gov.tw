@@ -540,6 +540,7 @@ Each folder contains:
 
 ```yaml
 document_id: PRO-006
+type: PRO
 title_zh: 採購與供應商管理程序
 title_en: Supplier Management Procedure
 main:
@@ -562,6 +563,17 @@ automation_source:
     - field: schedule
     - field: scan_depth
 ```
+
+**merge.yaml 必要欄位：**
+
+| 欄位 | 說明 | 範例 |
+|------|------|------|
+| `document_id` | 文件編號（`{TYPE}-NNN` 格式） | `PRO-006` |
+| `type` | 文件類型代碼（對應 `_meta/types/` 中的定義） | `PRO` |
+| `title_zh` | 中文標題 | `採購與供應商管理程序` |
+| `main.zh` | 中文主文件名 | `採購與供應商管理程序.md` |
+
+`type:` 欄位用於模板選擇（FRM 類型使用 form.html）、profile 篩選、chunk group 分類。即使 document_id 前綴已可推斷類型，仍**必須明確宣告**。
 
 ### YAML Frontmatter example (inside a `.md` document)
 

@@ -1,0 +1,31 @@
+{
+  "record_id": "FRM-TEST-20260315-143022-a7f3",
+  "document_id": "FRM-TEST",
+  "submitted_at": "2026-03-15T14:30:22+08:00",
+  "retained_until": "2027-03-15",
+  "submitted_by": {
+    "name": "測試員",
+    "title": "工程師",
+    "source": "ci",
+    "ip": "127.0.0.1"
+  },
+  "status": "submitted",
+  "classification": "internal",
+  "fields": {
+    "類別": "類別A",
+    "說明": "這是一筆測試紀錄",
+    "影響範圍": ["範圍一", "範圍二"],
+    "日期": "2026-03-15",
+    "數量": 5,
+    "聯絡信箱": "test@example.com",
+    "通報人": "測試員"
+  },
+  "audit_trail": [
+    {
+      "action": "submitted",
+      "at": "2026-03-15T14:30:22+08:00",
+      "by": "測試員",
+      "source": "ci"
+    }
+  ]
+}
