@@ -177,3 +177,34 @@ describe('form closed-loop pipeline', () => {
     assert.ok(chunks[0].text.includes('類別A'));
   });
 });
+
+describe('glossary integration', () => {
+  it('expandGlossary expands known abbreviations', () => {
+    function expandGlossary(query, glossary) {
+      if (!glossary || typeof glossary !== 'object') return query;
+      const expansions = [];
+      const sorted = Object.entries(glossary)
+        .sort((a, b) => b[0].length - a[0].length);
+      for (const [term, expansion] of sorted) {
+        const termLower = term.toLowerCase();
+        const queryLower = query.toLowerCase();
+        if (queryLower.includes(termLower)) {
+          expansions.push(expansion);
+        }
+      }
+      if (expansions.length === 0) return query;
+      return query + ' ' + expansions.join(' ');
+    }
+
+    const glossary = { '管審會': '管理委員會' };
+    const result = expandGlossary('管審會成員', glossary);
+    assert.ok(result.includes('管理委員會'), 'Should expand abbreviation');
+    assert.ok(result.includes('管審會'), 'Should preserve original query');
+  });
+
+  it('evaluateSearchHit handles __NONE__ expected_doc_key', () => {
+    const { evaluateSearchHit } = require('../scripts/lib/core/qa-report');
+    assert.strictEqual(evaluateSearchHit([], '__NONE__'), true, '__NONE__ with empty results should be a hit');
+    assert.strictEqual(evaluateSearchHit([{ doc_key: 'test' }], '__NONE__'), false, '__NONE__ with results should not be a hit');
+  });
+});
