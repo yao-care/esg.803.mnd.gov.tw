@@ -118,32 +118,28 @@ describe('importers/image.js — interface', () => {
 });
 
 // ---------------------------------------------------------------------------
-// XLSX in-memory workbook round-trip
+// XLSX in-memory workbook round-trip (using exceljs)
 // ---------------------------------------------------------------------------
 describe('importers/office.js — xlsx parser (in-memory workbook)', () => {
   it('parses an in-memory workbook created from array data', async () => {
-    let XLSX;
+    let ExcelJS;
     try {
-      XLSX = require('xlsx');
+      ExcelJS = require('exceljs');
     } catch (e) {
-      // Skip if xlsx not installed
+      // Skip if exceljs not installed
       return;
     }
 
     // Build an in-memory workbook from array data
-    const sheetData = [
-      ['Name', 'Score'],
-      ['Alice', 95],
-      ['Bob', 87],
-    ];
-    const ws = XLSX.utils.aoa_to_sheet(sheetData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Results');
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Results');
+    ws.addRow(['Name', 'Score']);
+    ws.addRow(['Alice', 95]);
+    ws.addRow(['Bob', 87]);
 
-    // Write to a temp buffer and parse via our importer
     const os = require('os');
     const tmpFile = path.join(os.tmpdir(), `test-workbook-${Date.now()}.xlsx`);
-    XLSX.writeFile(wb, tmpFile);
+    await wb.xlsx.writeFile(tmpFile);
 
     try {
       const result = await office.xlsx.parse(tmpFile);
@@ -169,20 +165,24 @@ describe('importers/office.js — xlsx parser (in-memory workbook)', () => {
   });
 
   it('parses a workbook with multiple sheets', async () => {
-    let XLSX;
+    let ExcelJS;
     try {
-      XLSX = require('xlsx');
+      ExcelJS = require('exceljs');
     } catch (e) {
       return;
     }
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['A', 'B'], [1, 2]]), 'Sheet1');
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['X', 'Y'], [3, 4]]), 'Sheet2');
+    const wb = new ExcelJS.Workbook();
+    const ws1 = wb.addWorksheet('Sheet1');
+    ws1.addRow(['A', 'B']);
+    ws1.addRow([1, 2]);
+    const ws2 = wb.addWorksheet('Sheet2');
+    ws2.addRow(['X', 'Y']);
+    ws2.addRow([3, 4]);
 
     const os = require('os');
     const tmpFile = path.join(os.tmpdir(), `test-multi-${Date.now()}.xlsx`);
-    XLSX.writeFile(wb, tmpFile);
+    await wb.xlsx.writeFile(tmpFile);
 
     try {
       const result = await office.xlsx.parse(tmpFile);

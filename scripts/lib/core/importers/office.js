@@ -5,7 +5,7 @@
  *
  * Dependencies:
  *   - mammoth  (docx)
- *   - xlsx     (xlsx/spreadsheets)
+ *   - exceljs  (xlsx/spreadsheets)
  *   - adm-zip  (pptx — optional, graceful degradation)
  */
 
@@ -51,31 +51,40 @@ async function parseDocx(filePath) {
 // ---------------------------------------------------------------------------
 
 /**
- * Parse a .xlsx (or .xls / .csv) file.
+ * Parse a .xlsx (or .xls / .csv) file using exceljs.
  * Each sheet becomes one page entry. Tables are included as 2-D arrays.
  * @param {string} filePath
  * @returns {Promise<object>}
  */
 async function parseXlsx(filePath) {
-  let XLSX;
+  let ExcelJS;
   try {
-    XLSX = require('xlsx');
+    ExcelJS = require('exceljs');
   } catch (e) {
     throw new Error(`[XLSX parser not available: ${e.message}]`);
   }
 
-  const workbook = XLSX.readFile(filePath);
-  const pages = workbook.SheetNames.map((sheetName, i) => {
-    const sheet = workbook.Sheets[sheetName];
-    const csv = XLSX.utils.sheet_to_csv(sheet);
-    const table = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(filePath);
 
-    return {
-      page: i + 1,
-      sheet_name: sheetName,
-      text: `[Sheet: ${sheetName}]\n${csv}`,
+  const pages = [];
+  workbook.eachSheet((worksheet, sheetIndex) => {
+    const table = [];
+    const csvLines = [];
+
+    worksheet.eachRow({ includeEmpty: false }, (row) => {
+      const rowValues = row.values.slice(1); // row.values is 1-indexed
+      const cells = rowValues.map(v => (v === null || v === undefined) ? '' : String(v));
+      table.push(cells);
+      csvLines.push(cells.join(','));
+    });
+
+    pages.push({
+      page: sheetIndex,
+      sheet_name: worksheet.name,
+      text: `[Sheet: ${worksheet.name}]\n${csvLines.join('\n')}`,
       tables: [table],
-    };
+    });
   });
 
   return {
