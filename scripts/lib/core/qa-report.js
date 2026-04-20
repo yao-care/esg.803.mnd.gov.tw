@@ -1170,7 +1170,7 @@ async function main() {
   // Validate expected_doc_keys
   const allDocKeys = new Set(metaIndex.map(m => m.doc_key));
   for (const q of questions) {
-    if (!allDocKeys.has(q.expected_doc_key)) {
+    if (q.expected_doc_key !== '__NONE__' && !allDocKeys.has(q.expected_doc_key)) {
       console.warn(`[qa-report] Question ${q.id}: expected_doc_key "${q.expected_doc_key}" not found in index`);
     }
   }
@@ -1206,7 +1206,8 @@ async function main() {
   if (flags.exportMode) {
     const searchResultsMap = {};
     for (const q of questions) {
-      const searchResults = findRelevantChunks(q.question, chunksMap, metaIndex, msInstance);
+      const expandedQuestion = expandGlossary(q.question, glossary);
+      const searchResults = findRelevantChunks(expandedQuestion, chunksMap, metaIndex, msInstance);
       const context = searchResults.map(r => `【${r.title || r.doc_key}】（引用鍵：${r.doc_key}）\n${r.text || ''}`).join('\n\n---\n\n');
       searchResultsMap[q.id] = {
         results: searchResults,
@@ -1228,7 +1229,8 @@ async function main() {
     const answersData = JSON.parse(fs.readFileSync(flags.evaluateFile, 'utf8'));
     const searchResultsMap = {};
     for (const q of questions) {
-      const searchResults = findRelevantChunks(q.question, chunksMap, metaIndex, msInstance);
+      const expandedQuestion = expandGlossary(q.question, glossary);
+      const searchResults = findRelevantChunks(expandedQuestion, chunksMap, metaIndex, msInstance);
       searchResultsMap[q.id] = {
         results: searchResults,
         searchHit: evaluateSearchHit(searchResults, q.expected_doc_key),
