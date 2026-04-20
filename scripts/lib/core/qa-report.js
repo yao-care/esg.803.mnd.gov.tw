@@ -477,7 +477,11 @@ async function generateDynamicQuestions(allChunks, seedQuestions, cachePath, for
     const apiKey = getApiKey();
     const envVar = config.api?.key_env_var || 'ANTHROPIC_API_KEY';
     if (!apiKey) {
-      console.warn(`[dynamic] No ${envVar} — skipping dynamic generation for ${docKey}`);  // [4]
+      if (!generateDynamicQuestions._warned) {
+        console.warn(`[dynamic] No ${envVar} — 跳過動態題產生。動態題需要 API key 才能自動產生，跳過不影響靜態種子題驗證。`);
+        console.warn(`[dynamic] 設定方式：export ${envVar}=your-key`);
+        generateDynamicQuestions._warned = true;
+      }
       continue;
     }
 

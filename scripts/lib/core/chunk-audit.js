@@ -49,11 +49,13 @@ function auditChunks(chunks, metaIndex) {
       continue;
     }
 
-    // Too-short check
-    if (content.length < 100) {
+    // Too-short check (intro chunks use lower threshold — content before first heading is naturally short)
+    const isIntro = /^[^#]*$/.test(chunk.section || '') || (chunk.section || '').includes('intro');
+    const minChars = isIntro ? 20 : 100;
+    if (content.length < minChars) {
       tooShort++;
       chunksWithIssues.add(chunk.chunk_id);
-      issues.push({ type: 'too_short', chunk_id: chunk.chunk_id, detail: `${content.length} chars` });
+      issues.push({ type: isIntro ? 'too_short_intro' : 'too_short', chunk_id: chunk.chunk_id, detail: `${content.length} chars (min: ${minChars})` });
     }
 
     // TOC check (>50% of non-empty lines contain consecutive dots)
@@ -169,7 +171,7 @@ if (require.main === module) {
   const report = auditChunks(allChunks, metaIndex);
   printReport(report);
 
-  process.exit(report.issues.filter(i => i.type !== 'too_short').length > 0 ? 1 : 0);
+  process.exit(report.issues.filter(i => !i.type.startsWith('too_short')).length > 0 ? 1 : 0);
 }
 
 module.exports = { auditChunks };
