@@ -730,6 +730,7 @@ const META_INDEX   = /*__META_INDEX__*/[];
 const SEARCH_INDEX = /*__SEARCH_INDEX__*/"{}";
 const RENDERED_DOCS = /*__RENDERED_DOCS__*/{};
 const APP_CONFIG   = /*__APP_CONFIG__*/{"api_key":"","model":"claude-sonnet-4-20250514","max_tokens_per_turn":4096,"locale":"zh-TW"};
+const GLOSSARY     = /*__GLOSSARY__*/{};
 </script>
 
 <!-- Application -->
@@ -1149,6 +1150,26 @@ function initMiniSearch() {
       });
     } catch(e) { console.warn('MiniSearch init failed:', e); }
   }
+}
+
+// ============================================================
+// GLOSSARY EXPANSION (Layer 1)
+// ============================================================
+
+function expandGlossary(query, glossary) {
+  if (!glossary || typeof glossary !== 'object') return query;
+  const expansions = [];
+  const sorted = Object.entries(glossary)
+    .sort((a, b) => b[0].length - a[0].length);
+  for (const [term, expansion] of sorted) {
+    const termLower = term.toLowerCase();
+    const queryLower = query.toLowerCase();
+    if (queryLower.includes(termLower)) {
+      expansions.push(expansion);
+    }
+  }
+  if (expansions.length === 0) return query;
+  return query + ' ' + expansions.join(' ');
 }
 
 // ============================================================

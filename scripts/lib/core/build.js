@@ -574,6 +574,7 @@ function build(overrides = {}) {
     model: api.model || 'claude-sonnet-4-20250514',
     max_tokens_per_turn: 4096,
     locale: ui.locale || 'zh-TW',
+    no_result_message: ui.no_result_message || '',
   };
 
   for (const [profileName, profile] of Object.entries(profiles)) {
@@ -624,6 +625,19 @@ function build(overrides = {}) {
     // Escape </script> inside embedded HTML to prevent breaking the outer <script> tag
     const renderedJson = JSON.stringify(profileRenderedDocs).replace(/<\/script>/gi, '<\\/script>');
     template = replacePlaceholder(template, '__RENDERED_DOCS__', '{}', renderedJson);
+
+    // Inject glossary (shared across all profiles)
+    const glossaryRaw = readFileSafe(path.join(PROJECT_ROOT, '_meta', 'glossary.json'));
+    let glossaryJson = '{}';
+    if (glossaryRaw) {
+      try {
+        JSON.parse(glossaryRaw);
+        glossaryJson = glossaryRaw;
+      } catch (e) {
+        console.warn('[build] glossary.json is not valid JSON, using empty {}');
+      }
+    }
+    template = replacePlaceholder(template, '__GLOSSARY__', '{}', glossaryJson);
 
     // Replace APP_CONFIG
     template = template.replace(
