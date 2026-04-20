@@ -53,6 +53,30 @@ function cloneExternal(source, env) {
   return tmpDir;
 }
 
+/**
+ * Recursively find all directories containing a metadata file.
+ * @param {string} baseDir - Root directory to search
+ * @param {string} metadataFilename - Filename to look for (e.g. 'merge.yaml')
+ * @returns {string[]} Array of absolute directory paths containing the metadata file
+ */
+function findDocumentDirs(baseDir, metadataFilename) {
+  const results = [];
+  if (!fs.existsSync(baseDir)) return results;
+
+  const entries = fs.readdirSync(baseDir, { withFileTypes: true });
+  for (const entry of entries) {
+    if (!entry.isDirectory() || entry.name.startsWith('.') || entry.name.startsWith('_')) continue;
+    const dirPath = path.join(baseDir, entry.name);
+    const yamlPath = path.join(dirPath, metadataFilename);
+    if (fs.existsSync(yamlPath)) {
+      results.push(dirPath);
+    }
+    // Recurse into subdirectories
+    results.push(...findDocumentDirs(dirPath, metadataFilename));
+  }
+  return results;
+}
+
 function readExternalDocuments(tmpDir, source, metadataFilename = 'merge.yaml') {
   const docsPath = path.join(tmpDir, source.path);
   if (!fs.existsSync(docsPath)) {
@@ -60,15 +84,19 @@ function readExternalDocuments(tmpDir, source, metadataFilename = 'merge.yaml') 
     return { chunks: [], renderedDocs: {} };
   }
 
-  const folders = fs.readdirSync(docsPath, { withFileTypes: true })
-    .filter(d => d.isDirectory())
-    .map(d => d.name);
+  // Recursively find all directories containing merge.yaml
+  const docDirs = findDocumentDirs(docsPath, metadataFilename);
 
-  // Apply include filter
+  // Apply include filter (match against relative path from docsPath)
   const include = source.include || [];
   const filtered = include.length > 0
-    ? folders.filter(f => include.some(pattern => matchGlob(f, pattern)))
-    : folders;
+    ? docDirs.filter(dir => {
+        const relPath = path.relative(docsPath, dir);
+        const dirName = path.basename(dir);
+        // Match against both the directory name and the relative path
+        return include.some(pattern => matchGlob(dirName, pattern) || matchGlob(relPath, pattern));
+      })
+    : docDirs;
 
   if (include.length > 0 && filtered.length === 0) {
     console.warn(`[external] No directories matched include patterns [${include.join(', ')}] in ${source.name}`);
@@ -77,10 +105,8 @@ function readExternalDocuments(tmpDir, source, metadataFilename = 'merge.yaml') 
   const chunks = [];
   const renderedDocs = {};
 
-  for (const folder of filtered) {
-    const yamlPath = path.join(docsPath, folder, metadataFilename);
-    if (!fs.existsSync(yamlPath)) continue;
-
+  for (const dirPath of filtered) {
+    const yamlPath = path.join(dirPath, metadataFilename);
     const yamlContent = fs.readFileSync(yamlPath, 'utf8');
     const docIdMatch = yamlContent.match(/^document_id:\s*(.+)$/m);
     const zhPathMatch = yamlContent.match(/^\s*zh:\s*(.+)$/m);
@@ -88,7 +114,7 @@ function readExternalDocuments(tmpDir, source, metadataFilename = 'merge.yaml') 
 
     const documentId = docIdMatch[1].trim();
     const zhFile = zhPathMatch[1].trim();
-    const mdPath = path.join(docsPath, folder, zhFile);
+    const mdPath = path.join(dirPath, zhFile);
     if (!fs.existsSync(mdPath)) continue;
 
     const md = fs.readFileSync(mdPath, 'utf8');
@@ -97,7 +123,6 @@ function readExternalDocuments(tmpDir, source, metadataFilename = 'merge.yaml') 
     const docChunks = chunkMarkdown(md, docKey);
     chunks.push(...docChunks);
 
-    // Simple HTML rendering for document viewer
     const titleMatch = yamlContent.match(/^title_zh:\s*(.+)$/m);
     const title = titleMatch ? titleMatch[1].trim() : documentId;
     renderedDocs[docKey] = renderMarkdownToHtml(md, title);
@@ -144,6 +169,7 @@ function fetchExternalSources(config, metadataFilename = 'merge.yaml') {
 
 module.exports = {
   fetchExternalSources,
+  findDocumentDirs,
   matchGlob,
   buildExternalDocKey,
   resolveCloneUrl,

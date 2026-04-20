@@ -1,7 +1,9 @@
 // scripts/lib/core/__tests__/external-fetcher.test.js
 const { describe, it } = require('node:test');
 const assert = require('node:assert');
-const { matchGlob, buildExternalDocKey, resolveCloneUrl } = require('../external-fetcher');
+const fs = require('node:fs');
+const path = require('node:path');
+const { matchGlob, buildExternalDocKey, resolveCloneUrl, findDocumentDirs } = require('../external-fetcher');
 
 describe('external-fetcher helpers', () => {
   describe('matchGlob', () => {
@@ -25,6 +27,46 @@ describe('external-fetcher helpers', () => {
   describe('buildExternalDocKey', () => {
     it('builds namespaced doc_key', () => {
       assert.strictEqual(buildExternalDocKey('siqc', 'POL-001'), 'external/siqc/POL-001');
+    });
+  });
+
+  describe('findDocumentDirs', () => {
+    const tmpBase = path.join(require('os').tmpdir(), `akora-test-finddocs-${Date.now()}`);
+
+    it('finds merge.yaml in nested directories', () => {
+      // Create nested structure: base/a/merge.yaml, base/b/c/merge.yaml, base/d/ (no yaml)
+      fs.mkdirSync(path.join(tmpBase, 'a'), { recursive: true });
+      fs.mkdirSync(path.join(tmpBase, 'b', 'c'), { recursive: true });
+      fs.mkdirSync(path.join(tmpBase, 'd'), { recursive: true });
+      fs.writeFileSync(path.join(tmpBase, 'a', 'merge.yaml'), 'document_id: A');
+      fs.writeFileSync(path.join(tmpBase, 'b', 'c', 'merge.yaml'), 'document_id: BC');
+
+      const dirs = findDocumentDirs(tmpBase, 'merge.yaml');
+      assert.strictEqual(dirs.length, 2);
+      assert.ok(dirs.some(d => d.endsWith('/a')));
+      assert.ok(dirs.some(d => d.endsWith('/c')));
+
+      fs.rmSync(tmpBase, { recursive: true, force: true });
+    });
+
+    it('skips dot and underscore directories', () => {
+      fs.mkdirSync(path.join(tmpBase, '.hidden'), { recursive: true });
+      fs.mkdirSync(path.join(tmpBase, '_meta'), { recursive: true });
+      fs.mkdirSync(path.join(tmpBase, 'valid'), { recursive: true });
+      fs.writeFileSync(path.join(tmpBase, '.hidden', 'merge.yaml'), 'id: 1');
+      fs.writeFileSync(path.join(tmpBase, '_meta', 'merge.yaml'), 'id: 2');
+      fs.writeFileSync(path.join(tmpBase, 'valid', 'merge.yaml'), 'id: 3');
+
+      const dirs = findDocumentDirs(tmpBase, 'merge.yaml');
+      assert.strictEqual(dirs.length, 1);
+      assert.ok(dirs[0].endsWith('/valid'));
+
+      fs.rmSync(tmpBase, { recursive: true, force: true });
+    });
+
+    it('returns empty array for non-existent path', () => {
+      const dirs = findDocumentDirs('/tmp/non-existent-akora-path', 'merge.yaml');
+      assert.strictEqual(dirs.length, 0);
     });
   });
 
