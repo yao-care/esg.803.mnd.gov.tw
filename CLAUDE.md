@@ -105,6 +105,7 @@ ls config.json 2>/dev/null && echo "MODE=normal" || echo "MODE=wizard"
 | `_meta/writer.md` | 該領域的文件撰寫指引（用語、格式、必要章節） |
 | `_meta/reviewer.md` | 該領域的文件審查標準（合規檢查點、常見缺失） |
 | `_meta/types/*.md` | 每個文件類型一個檔案（定義 YAML schema、必要欄位、範本） |
+| `_meta/glossary.json` | 從文件中擷取縮寫/俗稱對照表（LLM 自動產出） |
 | `collectors/*.sh` | 每個收集器一個骨架腳本（含 `#!/bin/bash`、參數解析、TODO 標記） |
 | `.github/ISSUE_TEMPLATE/*.yml` | 若需要手動表單（例如事件通報、變更申請），產出 GitHub Issue 模板 |
 | `.github/workflows/*.yml` | 根據 config 中啟用的功能，客製化現有 workflow 的 cron 排程 |
@@ -123,6 +124,10 @@ main:
 ```
 
 FRM 類型還需額外包含 `fields:` 定義（用於表單閉環系統）。
+
+**Glossary 產出流程：**
+
+掃描所有 `knowledge/` 文件，呼叫 LLM 擷取縮寫、俗稱、簡稱、英文縮寫及其全稱，輸出為 `_meta/glossary.json`。格式：`{"縮寫": "全稱", ...}`。
 
 產出完成後執行：
 
@@ -178,6 +183,10 @@ stat -f '%m' scripts/lib/core/qa-dynamic-cache.json 2>/dev/null
 
 # 6. 模板引擎是否有更新（若有 template remote）
 git remote get-url template 2>/dev/null && git fetch template --quiet 2>/dev/null && git log --oneline HEAD..template/main -- scripts/ templates/ tests/ .github/ 2>/dev/null | head -10
+
+# 7. Glossary 是否需要更新
+KNOWLEDGE_MTIME=$(find knowledge/ -name '*.md' -newer _meta/glossary.json 2>/dev/null | head -1)
+[ -n "$KNOWLEDGE_MTIME" ] && echo "GLOSSARY=outdated" || echo "GLOSSARY=current"
 ```
 
 根據結果，推薦行動：
@@ -190,6 +199,7 @@ git remote get-url template 2>/dev/null && git fetch template --quiet 2>/dev/nul
 | 文件 30 天內到期 | 列出到期文件，提醒審查 |
 | knowledge/ 有變更但動態題 cache 未更新 | `npm run qa-report -- --refresh-dynamic` |
 | 模板引擎有更新 | 報告更新數量，建議 `git merge template/main`（參見 `docs/upstream-sync.md`） |
+| glossary 過時 | 重新掃描文件產出 `_meta/glossary.json` |
 | 全部正常 | 報告「系統狀態正常，無待處理事項」 |
 
 ---
