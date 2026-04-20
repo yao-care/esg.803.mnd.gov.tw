@@ -1173,6 +1173,33 @@ function expandGlossary(query, glossary) {
 }
 
 // ============================================================
+// QUERY REWRITING (Layer 2)
+// ============================================================
+
+async function rewriteQuery(query, expandedQuery) {
+  const prompt = `你是搜尋查詢改寫器。將以下使用者問題改寫為適合全文搜尋的關鍵詞組合。
+規則：
+- 只輸出關鍵詞，用空格分隔
+- 不要解釋、不要回答問題
+- 保留專有名詞原文
+- 展開口語化表達為正式用語
+
+使用者問題：${expandedQuery}`;
+
+  try {
+    const result = await callClaude(
+      [{ role: 'user', content: prompt }],
+      '',
+      200
+    );
+    return result.trim();
+  } catch (e) {
+    console.warn('rewriteQuery failed:', e.message);
+    return '';
+  }
+}
+
+// ============================================================
 // RETRIEVAL ENGINE
 // ============================================================
 
@@ -1264,11 +1291,8 @@ async function findRelevantChunks(query) {
   if (structured.length > 0) return structured.slice(0, 6);
 
   // 2. Full text search
-  const ft = fullTextSearch(query, 6);
-  if (ft.length > 0) return ft;
-
-  // 3. Two-pass fallback via Claude
-  return await twoPassFallback(query);
+  return fullTextSearch(query, 6);
+  // Note: twoPassFallback removed — replaced by Layer 2 (rewriteQuery) in handleQA
 }
 
 // ============================================================
@@ -1503,8 +1527,32 @@ async function handleSend() {
 }
 
 async function handleQA(query, aiDiv, msgs) {
-  // Retrieve relevant chunks
-  const chunks = await findRelevantChunks(query);
+  // Layer 1: Glossary 確定性替換
+  const expandedQuery = expandGlossary(query, GLOSSARY);
+
+  // Structured + full-text search with expanded query
+  let chunks = structuredSearch(expandedQuery);
+  if (chunks.length === 0) chunks = fullTextSearch(expandedQuery, 6);
+
+  // Layer 2: LLM Query Rewriting (replaces twoPassFallback)
+  if (chunks.length === 0 && state.apiKey) {
+    const rewrittenQuery = await rewriteQuery(query, expandedQuery);
+    if (rewrittenQuery) {
+      const combined = expandedQuery + ' ' + rewrittenQuery;
+      chunks = structuredSearch(combined);
+      if (chunks.length === 0) chunks = fullTextSearch(combined, 6);
+    }
+  }
+
+  // Layer 3: Hard gate — no LLM call when zero results
+  if (chunks.length === 0) {
+    const noResultMsg = APP_CONFIG.no_result_message
+      || '根據目前知識庫的文件，查無相關資料。建議嘗試不同關鍵詞描述，或洽詢承辦人員。';
+    aiDiv.innerHTML = renderMarkdown(noResultMsg);
+    msgs.push({ role: 'assistant', content: noResultMsg });
+    wireUpCitations(aiDiv);
+    return;
+  }
 
   // Build API messages (inject context into first message)
   const apiMsgs = buildApiMessages(msgs, chunks, 80000);
