@@ -17,6 +17,79 @@ function buildExternalDocKey(sourceName, documentId) {
   return `external/${sourceName}/${documentId}`;
 }
 
+/**
+ * Resolve akora-app configuration for centralized token management.
+ *
+ * Priority:
+ *   1. AKORA_INSTALLATION_ID + AKORA_BUILD_TOKEN env vars
+ *   2. .github/akora.json or .gitlab/akora.json + AKORA_BUILD_TOKEN env var
+ *   3. null (fall back to per-source token_env)
+ *
+ * @param {string} projectRoot - Absolute path to project root
+ * @returns {{ installation_id: string, build_token: string, endpoint: string, platform: string } | null}
+ */
+function resolveAkoraConfig(projectRoot) {
+  const envInstallationId = process.env.AKORA_INSTALLATION_ID;
+  const envBuildToken = process.env.AKORA_BUILD_TOKEN;
+  const envEndpoint = process.env.AKORA_ENDPOINT;
+
+  // Priority 1: all from env vars
+  if (envInstallationId && envBuildToken) {
+    return {
+      installation_id: envInstallationId,
+      build_token: envBuildToken,
+      endpoint: envEndpoint || 'https://akora.weiqi.kids',
+      platform: process.env.AKORA_PLATFORM || 'github',
+    };
+  }
+
+  // Priority 2: config file + env build token
+  for (const configPath of ['.github/akora.json', '.gitlab/akora.json']) {
+    const fullPath = path.join(projectRoot, configPath);
+    if (fs.existsSync(fullPath)) {
+      try {
+        const config = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
+        if (config.installation_id && envBuildToken) {
+          return {
+            installation_id: String(config.installation_id),
+            build_token: envBuildToken,
+            endpoint: config.endpoint || 'https://akora.weiqi.kids',
+            platform: config.platform || 'github',
+          };
+        }
+      } catch { /* ignore malformed config */ }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Fetch a short-lived installation token from the akora-app server.
+ *
+ * @param {{ installation_id: string, build_token: string, endpoint: string, platform: string }} akoraConfig
+ * @returns {Promise<string>} Installation token
+ */
+async function fetchAkoraToken(akoraConfig) {
+  const resp = await fetch(`${akoraConfig.endpoint}/token`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${akoraConfig.build_token}`,
+    },
+    body: JSON.stringify({
+      installation_id: akoraConfig.installation_id,
+      platform: akoraConfig.platform,
+    }),
+  });
+  if (!resp.ok) {
+    const body = await resp.text();
+    throw new Error(`akora-app /token failed (${resp.status}): ${body}`);
+  }
+  const data = await resp.json();
+  return data.token;
+}
+
 function resolveCloneUrl(source, env) {
   const token = source.token_env ? (env[source.token_env] || '') : '';
   if (source.gitlab_endpoint) {
@@ -30,9 +103,24 @@ function resolveCloneUrl(source, env) {
     : `https://github.com/${source.repo}.git`;
 }
 
-function cloneExternal(source, env) {
+/**
+ * Build a clone URL using an explicit token (from akora-app) instead of
+ * per-source token_env.  Falls back to resolveCloneUrl when token is empty.
+ */
+function resolveCloneUrlWithToken(source, token) {
+  if (!token) return resolveCloneUrl(source, process.env);
+  if (source.gitlab_endpoint) {
+    const host = source.gitlab_endpoint.replace(/\/$/, '');
+    return `https://oauth2:${token}@${host.replace('https://', '')}/${source.repo}.git`;
+  }
+  return `https://x-access-token:${token}@github.com/${source.repo}.git`;
+}
+
+function cloneExternal(source, env, akoraToken) {
   const tmpDir = path.join(os.tmpdir(), `akora-external-${source.name}-${Date.now()}`);
-  const url = resolveCloneUrl(source, env);
+  const url = akoraToken
+    ? resolveCloneUrlWithToken(source, akoraToken)
+    : resolveCloneUrl(source, env);
   const ref = source.ref || 'main';
 
   try {
@@ -131,7 +219,19 @@ function readExternalDocuments(tmpDir, source, metadataFilename = 'merge.yaml') 
   return { chunks, renderedDocs };
 }
 
-function fetchExternalSources(config, metadataFilename = 'merge.yaml') {
+/**
+ * Fetch all external sources, cloning each repo and reading documents.
+ *
+ * When an akora-app config is available (via env vars or .github/akora.json),
+ * a single installation token is fetched and reused for ALL external sources.
+ * Otherwise, falls back to per-source token_env (PAT).
+ *
+ * @param {Object} config - Full project config
+ * @param {string} [metadataFilename] - Metadata filename (default: 'merge.yaml')
+ * @param {string} [projectRoot] - Absolute path to project root (for akora.json lookup)
+ * @returns {{ chunks: Object[], renderedDocs: Object }}
+ */
+async function fetchExternalSources(config, metadataFilename = 'merge.yaml', projectRoot = '') {
   const sources = config.data_sources?.external || [];
   if (sources.length === 0) return { chunks: [], renderedDocs: {} };
 
@@ -139,19 +239,34 @@ function fetchExternalSources(config, metadataFilename = 'merge.yaml') {
   const allRenderedDocs = {};
   const env = process.env;
 
+  // Try to resolve a centralized akora-app token
+  let akoraToken = null;
+  if (projectRoot) {
+    const akoraConfig = resolveAkoraConfig(projectRoot);
+    if (akoraConfig) {
+      try {
+        akoraToken = await fetchAkoraToken(akoraConfig);
+        console.log(`[external] Using akora-app token (${akoraConfig.platform})`);
+      } catch (err) {
+        console.warn(`[external] akora-app token failed, falling back to per-source tokens: ${err.message}`);
+      }
+    }
+  }
+
   for (const source of sources) {
     if (!source.name || !source.repo || !source.path) {
       console.warn(`[external] Skipping invalid source: missing name/repo/path`);
       continue;
     }
 
-    if (source.token_env && !env[source.token_env]) {
+    // When no akora token, require per-source token_env (existing behavior)
+    if (!akoraToken && source.token_env && !env[source.token_env]) {
       console.error(`[external] ${source.name}: token_env "${source.token_env}" not set, skipping`);
       continue;
     }
 
     console.log(`[external] Fetching ${source.name} from ${source.repo}...`);
-    const tmpDir = cloneExternal(source, env);
+    const tmpDir = cloneExternal(source, env, akoraToken);
     if (!tmpDir) continue;
 
     try {
@@ -173,6 +288,9 @@ module.exports = {
   matchGlob,
   buildExternalDocKey,
   resolveCloneUrl,
+  resolveCloneUrlWithToken,
+  resolveAkoraConfig,
+  fetchAkoraToken,
   cloneExternal,
   readExternalDocuments,
 };

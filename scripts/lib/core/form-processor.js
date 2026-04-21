@@ -126,7 +126,8 @@ function restoreForm() {
 }
 
 async function submitForm() {
-  if (!FORM_CONFIG.api_endpoint) {
+  const akora = window.__AKORA__;
+  if (!akora && !FORM_CONFIG.api_endpoint) {
     alert('API 尚未設定');
     return;
   }
@@ -154,22 +155,48 @@ async function submitForm() {
 
   try {
     if (!navigator.onLine) { alert('需要網路連線才能提交，資料已暫存'); return; }
-    const resp = await fetch(FORM_CONFIG.api_endpoint + '/submit', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': FORM_CONFIG.api_key || '',
-        'X-Idempotency-Key': idempotencyKey,
-      },
-      body: JSON.stringify({
-        document_id: FORM_CONFIG.document_id,
-        submitted_by: {
-          name: fields[FORM_CONFIG.submitter_field || '通報人'] || '',
-          title: fields[FORM_CONFIG.submitter_title_field || ''] || '',
+
+    let resp;
+    if (akora) {
+      // akora-app submit proxy
+      resp = await fetch(akora.endpoint + '/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Idempotency-Key': idempotencyKey,
         },
-        fields,
-      }),
-    });
+        body: JSON.stringify({
+          installation_id: akora.installation_id,
+          platform: akora.platform,
+          repo: akora.repo,
+          document_id: FORM_CONFIG.document_id,
+          submitted_by: {
+            name: fields[FORM_CONFIG.submitter_field || '通報人'] || '',
+            title: fields[FORM_CONFIG.submitter_title_field || ''] || '',
+          },
+          fields,
+        }),
+      });
+    } else {
+      // Legacy: direct API endpoint
+      resp = await fetch(FORM_CONFIG.api_endpoint + '/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': FORM_CONFIG.api_key || '',
+          'X-Idempotency-Key': idempotencyKey,
+        },
+        body: JSON.stringify({
+          document_id: FORM_CONFIG.document_id,
+          submitted_by: {
+            name: fields[FORM_CONFIG.submitter_field || '通報人'] || '',
+            title: fields[FORM_CONFIG.submitter_title_field || ''] || '',
+          },
+          fields,
+        }),
+      });
+    }
+
     const result = await resp.json();
     if (resp.ok) {
       alert('提交成功！紀錄編號: ' + result.record_id);

@@ -478,7 +478,7 @@ ${rows}
  * @param {string} [overrides.outputDir] - Override output directory
  * @param {Object} [overrides.config] - Override config (skip loadConfig)
  */
-function build(overrides = {}) {
+async function build(overrides = {}) {
   const config = overrides.config || loadConfig();
 
   const outputDir = overrides.outputDir
@@ -538,7 +538,7 @@ function build(overrides = {}) {
   }
 
   // ---- Step 2d: External data sources ----
-  const externalResult = fetchExternalSources(config, domain.metadata_filename);
+  const externalResult = await fetchExternalSources(config, domain.metadata_filename, PROJECT_ROOT);
   allChunks.push(...externalResult.chunks);
   Object.assign(renderedDocs, externalResult.renderedDocs);
   if (externalResult.chunks.length > 0) {
@@ -645,6 +645,27 @@ function build(overrides = {}) {
       `/*__APP_CONFIG__*/${JSON.stringify(appConfig)}`
     );
 
+    // Inject akora-app client config (if .github/akora.json or .gitlab/akora.json exists)
+    let akoraClientConfig = null;
+    for (const p of ['.github/akora.json', '.gitlab/akora.json']) {
+      const akoraPath = path.join(PROJECT_ROOT, p);
+      if (fs.existsSync(akoraPath)) {
+        try {
+          akoraClientConfig = JSON.parse(fs.readFileSync(akoraPath, 'utf8'));
+        } catch { /* ignore malformed config */ }
+        break;
+      }
+    }
+    if (akoraClientConfig) {
+      const akoraJs = `<script>window.__AKORA__=${JSON.stringify({
+        endpoint: akoraClientConfig.endpoint || 'https://akora.weiqi.kids',
+        installation_id: akoraClientConfig.installation_id,
+        platform: akoraClientConfig.platform || 'github',
+        repo: config.form_submission?.repo || '',
+      })};</script>`;
+      template = template.replace('</head>', `${akoraJs}\n</head>`);
+    }
+
     // Substitute UI/domain placeholders with profile overrides
     template = substitutePlaceholders(template, config, profile);
 
@@ -678,7 +699,10 @@ function build(overrides = {}) {
 
 if (require.main === module) {
   const [,, outputDir] = process.argv;
-  build({ outputDir });
+  build({ outputDir }).catch(err => {
+    console.error(`[build] Fatal: ${err.message}`);
+    process.exit(1);
+  });
 }
 
 // ---------------------------------------------------------------------------
