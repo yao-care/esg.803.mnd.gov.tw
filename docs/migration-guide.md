@@ -59,6 +59,12 @@ curl -X PUT https://akora.weiqi.kids/installation/api-key \
 **方式 B：使用者自備 key**
 使用者在 assistant.html 介面中自行輸入 API key，請求直連 Anthropic，不經過 AKORA App。
 
+### 注意：Chunk Overlap 導致 Cache 失效
+
+模板更新加入了 chunk overlap（預設 200 字元），會改變所有 chunk 的內容 hash。
+首次執行 `npm run qa-report -- --refresh-dynamic` 會重新呼叫 API 產生所有動態題，
+這是一次性的 API 費用。之後的 cache 會正常運作。
+
 ## 確認清單
 
 - [ ] `git merge template/main` 完成
