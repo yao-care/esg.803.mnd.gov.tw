@@ -341,9 +341,11 @@ function chunkReportedRecord(record, meta) {
   const submittedDate = record.submitted_at ? record.submitted_at.slice(0, 10) : '';
   const submitter = record.submitted_by?.name || '';
 
-  // Build searchable text from field values
+  // Build searchable text from field values (with type hints)
   const fieldLines = Object.entries(record.fields || {}).map(([key, val]) => {
-    if (Array.isArray(val)) return `${key}: ${val.join(', ')}`;
+    if (Array.isArray(val)) return `${key} [多選]: ${val.join(', ')}`;
+    if (val instanceof Date || /^\d{4}-\d{2}-\d{2}/.test(String(val))) return `${key} [日期]: ${val}`;
+    if (typeof val === 'number' || /^\d+(\.\d+)?$/.test(String(val))) return `${key} [數值]: ${val}`;
     return `${key}: ${val}`;
   });
 
