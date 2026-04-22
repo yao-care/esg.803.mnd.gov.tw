@@ -47,6 +47,15 @@ cfg_bool() {
   [ "$val" = "true" ]
 }
 
+# Count grep matches without failing on zero matches
+count_matches() { grep -c "$1" "$2" 2>/dev/null || true; }
+
+# Safely extract an integer from a string (strips non-digits, defaults to 0)
+safe_int() {
+  local num=$(echo "$1" | head -1 | tr -cd '0-9' | head -c 10)
+  echo "${num:-0}"
+}
+
 # Common config values (pre-loaded for convenience)
 KB_NAME_EN=$(cfg 'knowledge_body.name_en' 'unknown')
 KB_NAME=$(cfg 'knowledge_body.name' '')
