@@ -60,6 +60,37 @@ describe('chunk.js', () => {
       assert.strictEqual(chunks.length, 1);
       assert.ok(!chunks[0].section.includes('(cont.)'));
     });
+
+    it('adds overlap from previous chunk (#13)', () => {
+      // Need enough content so the first chunk's text > overlapSize
+      const longContent = 'This is a detailed paragraph about section A. '.repeat(10);
+      const md = `---\ntitle: Test\n---\n## Section A\n${longContent}\n## Section B\nContent of section B is here.`;
+      const chunks = chunkMarkdown(md, 'test', { chunk_overlap: 50 });
+      assert.ok(chunks.length >= 2);
+      // Second chunk should start with [...] overlap prefix
+      assert.ok(chunks[1].text.startsWith('[...]'), 'Second chunk should have overlap prefix');
+      // The overlap should contain text from the first chunk
+      assert.ok(chunks[1].text.includes('section A'), 'Overlap should contain previous chunk content');
+    });
+
+    it('skips overlap when chunk_overlap is 0 (#13)', () => {
+      const md = '---\ntitle: Test\n---\n## Section A\nContent A\n## Section B\nContent B';
+      const chunks = chunkMarkdown(md, 'test', { chunk_overlap: 0 });
+      assert.ok(chunks.length >= 2);
+      // No chunk should start with [...]
+      for (const c of chunks) {
+        assert.ok(!c.text.startsWith('[...]'), 'No overlap when chunk_overlap is 0');
+      }
+    });
+
+    it('does not add overlap when previous chunk text is shorter than overlapSize (#13)', () => {
+      // Very short content so text length < overlapSize
+      const md = '---\ntitle: T\n---\n## A\nHi\n## B\nBye';
+      const chunks = chunkMarkdown(md, 'test', { chunk_overlap: 9999 });
+      assert.ok(chunks.length >= 2);
+      // prevText.length (very short) <= overlapSize → no overlap added
+      assert.ok(!chunks[1].text.startsWith('[...]'), 'Should not add overlap when prev text is shorter than overlapSize');
+    });
   });
 
   describe('chunkCollectedResult', () => {

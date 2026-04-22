@@ -286,6 +286,18 @@ function chunkMarkdown(md, docKey, config = {}) {
     }
   }
 
+  // Add overlap context from previous chunk
+  const overlapSize = (config && config.chunk_overlap) || 200;
+  if (overlapSize > 0 && chunks.length > 1) {
+    for (let i = 1; i < chunks.length; i++) {
+      const prevText = chunks[i - 1].text || '';
+      if (prevText.length > overlapSize) {
+        const overlap = prevText.slice(-overlapSize);
+        chunks[i].text = `[...] ${overlap}\n\n${chunks[i].text}`;
+      }
+    }
+  }
+
   return chunks;
 }
 

@@ -48,6 +48,7 @@
     }
   },
   "chunk_threshold": 2000,
+  "chunk_overlap": 200,
   "search_boost": {
     "local": 1.0,
     "external": 1.0
