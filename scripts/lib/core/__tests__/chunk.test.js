@@ -26,15 +26,26 @@ describe('chunk.js', () => {
   });
 
   describe('chunkCollectedResult', () => {
+    const json = {
+      findings: [
+        { id: 'F1', severity: 'high', description: 'Test finding' }
+      ]
+    };
+
     it('produces chunks with source_type "collected"', () => {
-      const json = {
-        findings: [
-          { id: 'F1', severity: 'high', description: 'Test finding' }
-        ]
-      };
       const chunks = chunkCollectedResult(json, 'vulnerability', {});
       assert.ok(chunks.length >= 1);
       assert.strictEqual(chunks[0].source_type, 'collected');
+    });
+
+    it('has default group "collected"', () => {
+      const chunks = chunkCollectedResult(json, 'vulnerability', {});
+      assert.strictEqual(chunks[0].group, 'collected');
+    });
+
+    it('accepts custom group from config', () => {
+      const chunks = chunkCollectedResult(json, 'vulnerability', { group: 'SCAN' });
+      assert.strictEqual(chunks[0].group, 'SCAN');
     });
   });
 });

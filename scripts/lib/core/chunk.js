@@ -287,6 +287,7 @@ function chunkCollectedResult(json, resultName, config = {}) {
     title: displayName,
     section: '',
     controls: [],
+    group: (config && config.group) || 'collected',
     type: 'collected',
     source_type: 'collected',
     text,
@@ -323,6 +324,9 @@ function chunkReportedRecord(record, meta) {
     ...fieldLines,
   ].join('\n');
 
+  // Extract group from document_id prefix (e.g., "FRM-001" → "FRM")
+  const group = extractPrefixFromDocId(record.document_id) || 'reported';
+
   return [{
     chunk_id: `reported/${record.record_id}`,
     doc_id: record.document_id,
@@ -330,6 +334,7 @@ function chunkReportedRecord(record, meta) {
     title,
     section: `${submitter} ${submittedDate}`,
     controls: [],
+    group,
     type: 'reported',
     source_type: 'reported',
     text,

@@ -45,4 +45,15 @@ describe('chunkReportedRecord', () => {
     const [chunk] = chunkReportedRecord(record, meta);
     assert.strictEqual(chunk.title, '測試表單');
   });
+
+  it('chunk has group extracted from document_id prefix', () => {
+    const [chunk] = chunkReportedRecord(record, meta);
+    assert.strictEqual(chunk.group, 'FRM');
+  });
+
+  it('chunk group falls back to "reported" when no prefix', () => {
+    const noPrefixRecord = { ...record, document_id: 'noprefixid' };
+    const [chunk] = chunkReportedRecord(noPrefixRecord, { title_zh: 'test', document_id: 'noprefixid' });
+    assert.strictEqual(chunk.group, 'reported');
+  });
 });
