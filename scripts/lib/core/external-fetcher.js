@@ -8,6 +8,19 @@ const { execFileSync } = require('node:child_process');
 const { chunkMarkdown } = require('./chunk');
 const { renderMarkdownToHtml } = require('./markdown-renderer');
 
+/**
+ * Determine the locale language key from a locale string.
+ * "zh-TW", "zh-CN", "zh" → "zh"; "en" → "en"; defaults to "zh".
+ *
+ * @param {string} locale
+ * @returns {string} "zh" or "en"
+ */
+function localeToLangKey(locale) {
+  if (!locale) return 'zh';
+  const lang = locale.toLowerCase().split('-')[0];
+  return lang === 'en' ? 'en' : 'zh';
+}
+
 function matchGlob(name, pattern) {
   const regex = new RegExp('^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
   return regex.test(name);
@@ -165,7 +178,7 @@ function findDocumentDirs(baseDir, metadataFilename) {
   return results;
 }
 
-function readExternalDocuments(tmpDir, source, metadataFilename = 'merge.yaml', chunkConfig = {}) {
+function readExternalDocuments(tmpDir, source, metadataFilename = 'merge.yaml', chunkConfig = {}, locale = 'zh-TW') {
   const docsPath = path.join(tmpDir, source.path);
   if (!fs.existsSync(docsPath)) {
     console.warn(`[external] Path not found in clone: ${docsPath}`);
@@ -197,12 +210,20 @@ function readExternalDocuments(tmpDir, source, metadataFilename = 'merge.yaml', 
     const yamlPath = path.join(dirPath, metadataFilename);
     const yamlContent = fs.readFileSync(yamlPath, 'utf8');
     const docIdMatch = yamlContent.match(/^document_id:\s*(.+)$/m);
-    const zhPathMatch = yamlContent.match(/^\s*zh:\s*(.+)$/m);
-    if (!docIdMatch || !zhPathMatch) continue;
+    if (!docIdMatch) continue;
+
+    // Select locale-appropriate file, falling back to zh
+    const langKey = localeToLangKey(locale);
+    const localeRe = new RegExp(`^\\s+${langKey}:\\s*(.+)$`, 'm');
+    let localePathMatch = yamlContent.match(localeRe);
+    if (!localePathMatch && langKey !== 'zh') {
+      localePathMatch = yamlContent.match(/^\s+zh:\s*(.+)$/m);
+    }
+    if (!localePathMatch) continue;
 
     const documentId = docIdMatch[1].trim();
-    const zhFile = zhPathMatch[1].trim();
-    const mdPath = path.join(dirPath, zhFile);
+    const localeFile = localePathMatch[1].trim();
+    const mdPath = path.join(dirPath, localeFile);
     if (!fs.existsSync(mdPath)) continue;
 
     const md = fs.readFileSync(mdPath, 'utf8');
@@ -271,7 +292,8 @@ async function fetchExternalSources(config, metadataFilename = 'merge.yaml', pro
 
     try {
       const chunkConfig = config.chunk_threshold ? { chunk_threshold: config.chunk_threshold } : {};
-      const { chunks, renderedDocs } = readExternalDocuments(tmpDir, source, metadataFilename, chunkConfig);
+      const locale = config.ui?.locale || 'zh-TW';
+      const { chunks, renderedDocs } = readExternalDocuments(tmpDir, source, metadataFilename, chunkConfig, locale);
       allChunks.push(...chunks);
       Object.assign(allRenderedDocs, renderedDocs);
       console.log(`[external] ${source.name}: ${chunks.length} chunks from ${Object.keys(renderedDocs).length} documents`);
@@ -294,4 +316,5 @@ module.exports = {
   fetchAkoraToken,
   cloneExternal,
   readExternalDocuments,
+  localeToLangKey,
 };

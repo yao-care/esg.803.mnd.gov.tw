@@ -96,6 +96,38 @@ function extractZhPath(yamlContent) {
 }
 
 /**
+ * Determine the locale language key from a locale string.
+ * "zh-TW", "zh-CN", "zh" → "zh"; "en" → "en"; defaults to "zh".
+ *
+ * @param {string} locale
+ * @returns {string} "zh" or "en"
+ */
+function localeToLangKey(locale) {
+  if (!locale) return 'zh';
+  const lang = locale.toLowerCase().split('-')[0];
+  return lang === 'en' ? 'en' : 'zh';
+}
+
+/**
+ * Extract the locale-appropriate main file path from metadata YAML content.
+ * Looks for a line like:   zh: filename.md  or  en: filename.md
+ * Falls back to zh if the requested locale is not found.
+ *
+ * @param {string} yamlContent
+ * @param {string} locale - e.g. "zh-TW", "en"
+ * @returns {string|null}
+ */
+function extractLocalePath(yamlContent, locale) {
+  const langKey = localeToLangKey(locale);
+  const re = new RegExp(`^\\s+${langKey}:\\s*(.+)$`, 'm');
+  const m = yamlContent.match(re);
+  if (m) return m[1].trim();
+  // Fallback to zh if requested locale not found
+  if (langKey !== 'zh') return extractZhPath(yamlContent);
+  return null;
+}
+
+/**
  * Extract the document_id from metadata YAML content.
  *
  * @param {string} yamlContent
@@ -119,12 +151,14 @@ function extractDocumentId(yamlContent) {
  * @param {string} [options.metadataFilename] - Metadata filename (default: 'merge.yaml')
  * @param {string} [options.formPrefix] - Prefix for form documents (default: 'FRM')
  * @param {string} [options.outputDir] - Output directory for finding rendered HTML
+ * @param {string} [options.locale] - UI locale for selecting language file (default: 'zh-TW')
  * @returns {{ chunks: Object[], renderedDocs: Object }}
  */
 function readDocuments(docsDir, options = {}) {
   const metadataFilename = options.metadataFilename || 'merge.yaml';
   const formPrefix = options.formPrefix || 'FRM';
   const outputDir = options.outputDir || '';
+  const locale = options.locale || 'zh-TW';
 
   const chunks = [];
   const renderedDocs = {};
@@ -148,14 +182,14 @@ function readDocuments(docsDir, options = {}) {
     const metaYaml = readFileSafe(metaPath);
     if (!metaYaml) continue; // No metadata file → skip
 
-    // Extract zh file path
-    const zhFile = extractZhPath(metaYaml);
-    if (!zhFile) {
-      console.warn(`[build] No zh: entry in ${metaPath}`);
+    // Extract locale-appropriate file path (falls back to zh)
+    const localeFile = extractLocalePath(metaYaml, locale);
+    if (!localeFile) {
+      console.warn(`[build] No locale file entry in ${metaPath}`);
       continue;
     }
 
-    const mdPath = path.join(folderPath, zhFile);
+    const mdPath = path.join(folderPath, localeFile);
     const md = readFileSafe(mdPath);
     if (!md) {
       console.warn(`[build] Markdown not found: ${mdPath}`);
@@ -506,6 +540,7 @@ async function build(overrides = {}) {
       formPrefix: domain.form_prefix || 'FRM',
       outputDir,
       chunk_threshold: config.chunk_threshold,
+      locale: ui.locale || 'zh-TW',
     });
     allChunks.push(...result.chunks);
     renderedDocs = { ...renderedDocs, ...result.renderedDocs };
@@ -724,6 +759,8 @@ module.exports = {
   findFiles,
   readFileSafe,
   extractZhPath,
+  extractLocalePath,
+  localeToLangKey,
   extractDocumentId,
   renderMarkdownToHtml,
   convertNumbersToChinese,
