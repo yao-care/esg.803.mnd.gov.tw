@@ -204,6 +204,44 @@ KNOWLEDGE_MTIME=$(find knowledge/ -name '*.md' -newer _meta/glossary.json 2>/dev
 
 ---
 
+## AKORA App 整合
+
+AKORA App（https://akora.weiqi.kids）提供集中式後端服務：
+
+### 檔案
+
+- `.github/akora.json`（GitHub）或 `.gitlab/akora.json`（GitLab）— 安裝 App 後自動建立的 PR/MR 寫入
+- 內容：`{ installation_id, platform, endpoint }`
+
+### 功能
+
+| 端點 | 用途 |
+|------|------|
+| POST /token | build 時取得 read-only repo token（需 `AKORA_BUILD_TOKEN` 環境變數） |
+| POST /submit | 表單回傳（assistant.html 自動走此端點） |
+| POST /ask | AI 問答 proxy + streaming（需設定 Anthropic API key） |
+
+### 環境變數
+
+| 變數 | 說明 | 來源 |
+|------|------|------|
+| `AKORA_BUILD_TOKEN` | build 時認證用 | 安裝 App 時自動寫入 Actions Secrets |
+| `AKORA_INSTALLATION_ID` | 可選，override `.github/akora.json` 的值 | 手動設定 |
+
+### form_submission 設定
+
+config.json 中只需設定 `repo`：
+
+```json
+"form_submission": {
+  "repo": "your-org/your-repo"
+}
+```
+
+表單送出自動走 AKORA App，不需要自己部署 API server。
+
+---
+
 ## Project Overview
 
 （嚮導完成後自動填入）
