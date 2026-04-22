@@ -47,6 +47,7 @@
       "recipients": []
     }
   },
+  "chunk_threshold": 2000,
   "qa": {
     "search_hit_threshold": 0.95,
     "answer_rate_threshold": 0.98,

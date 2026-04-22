@@ -23,6 +23,18 @@ describe('chunk.js', () => {
       assert.strictEqual(chunks[0].source_type, 'document');
       assert.ok(chunks[0].chunk_id.startsWith('DOC-01#'));
     });
+
+    it('respects custom chunk_threshold', () => {
+      // Create a section with 500 chars + H3 subsections
+      const longContent = 'x'.repeat(500);
+      const md = `---\ntitle: Test\n---\n## Big Section\n${longContent}\n### Sub A\nSub content A\n### Sub B\nSub content B`;
+      // Default threshold 2000: section < 2000 → no H3 split → 1 chunk
+      const defaultChunks = chunkMarkdown(md, 'test', {});
+      assert.strictEqual(defaultChunks.length, 1);
+      // Low threshold 100: section > 100 → split by H3 → multiple chunks
+      const customChunks = chunkMarkdown(md, 'test', { chunk_threshold: 100 });
+      assert.ok(customChunks.length > 1);
+    });
   });
 
   describe('chunkCollectedResult', () => {

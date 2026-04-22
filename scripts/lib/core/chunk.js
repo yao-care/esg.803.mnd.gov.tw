@@ -222,7 +222,8 @@ function chunkMarkdown(md, docKey, config = {}) {
   const rawChunks = [];
   for (const section of h2Sections) {
     const sectionHeading = section.heading || 'intro';
-    if (section.content.length > 2000) {
+    const threshold = (config && config.chunk_threshold) || 2000;
+    if (section.content.length > threshold) {
       const subSections = splitByH3(sectionHeading, section.content);
       for (const sub of subSections) {
         rawChunks.push({ heading: sub.heading, content: sub.content });

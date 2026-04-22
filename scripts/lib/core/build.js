@@ -163,7 +163,8 @@ function readDocuments(docsDir, options = {}) {
     }
 
     // Chunk the markdown
-    const docChunks = chunkMarkdown(md, folderName);
+    const chunkConfig = options.chunk_threshold ? { chunk_threshold: options.chunk_threshold } : {};
+    const docChunks = chunkMarkdown(md, folderName, chunkConfig);
     chunks.push(...docChunks);
 
     // Determine rendered HTML path (if outputDir is provided)
@@ -504,6 +505,7 @@ async function build(overrides = {}) {
       metadataFilename: domain.metadata_filename || 'merge.yaml',
       formPrefix: domain.form_prefix || 'FRM',
       outputDir,
+      chunk_threshold: config.chunk_threshold,
     });
     allChunks.push(...result.chunks);
     renderedDocs = { ...renderedDocs, ...result.renderedDocs };

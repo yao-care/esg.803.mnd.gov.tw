@@ -165,7 +165,7 @@ function findDocumentDirs(baseDir, metadataFilename) {
   return results;
 }
 
-function readExternalDocuments(tmpDir, source, metadataFilename = 'merge.yaml') {
+function readExternalDocuments(tmpDir, source, metadataFilename = 'merge.yaml', chunkConfig = {}) {
   const docsPath = path.join(tmpDir, source.path);
   if (!fs.existsSync(docsPath)) {
     console.warn(`[external] Path not found in clone: ${docsPath}`);
@@ -208,7 +208,7 @@ function readExternalDocuments(tmpDir, source, metadataFilename = 'merge.yaml') 
     const md = fs.readFileSync(mdPath, 'utf8');
     const docKey = buildExternalDocKey(source.name, documentId);
 
-    const docChunks = chunkMarkdown(md, docKey);
+    const docChunks = chunkMarkdown(md, docKey, chunkConfig);
     chunks.push(...docChunks);
 
     const titleMatch = yamlContent.match(/^title_zh:\s*(.+)$/m);
@@ -270,7 +270,8 @@ async function fetchExternalSources(config, metadataFilename = 'merge.yaml', pro
     if (!tmpDir) continue;
 
     try {
-      const { chunks, renderedDocs } = readExternalDocuments(tmpDir, source, metadataFilename);
+      const chunkConfig = config.chunk_threshold ? { chunk_threshold: config.chunk_threshold } : {};
+      const { chunks, renderedDocs } = readExternalDocuments(tmpDir, source, metadataFilename, chunkConfig);
       allChunks.push(...chunks);
       Object.assign(allRenderedDocs, renderedDocs);
       console.log(`[external] ${source.name}: ${chunks.length} chunks from ${Object.keys(renderedDocs).length} documents`);
