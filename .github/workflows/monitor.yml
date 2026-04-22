@@ -5,7 +5,19 @@ on:
   workflow_dispatch:
 
 jobs:
+  guard:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { sparse-checkout: 'config.json', sparse-checkout-cone-mode: false }
+      - id: check
+        run: '[ -f config.json ] && echo "should_run=true" >> "$GITHUB_OUTPUT" || echo "::notice::Template repo — skipping"'
+
   monitor:
+    needs: guard
+    if: needs.guard.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

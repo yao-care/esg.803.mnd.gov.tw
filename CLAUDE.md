@@ -345,6 +345,20 @@ npm run qa-report -- --evaluate qa-answers.json --html
 2. 修改 templates/assistant.html 時：不可移除 normalizeCitations、parseCitations、autoLinkDocKeys 任何一個函式
 3. 新增文件類型時：確認 doc_key 格式能被 autoLinkDocKeys 的正則匹配
 
+## Chunking 策略與升級路徑
+
+目前 `chunk.js` 使用兩層標題切割（H2 必切、H3 視大小切），適用於一般政策/程序文件。
+
+**何時需要升級為 Markdown section tree parser（標題 → 子標題 → 編號項目）：**
+
+| 症狀 | 說明 |
+|------|------|
+| 單一 H2 section 超過 5000 字元 | 內含大量編號條文，paragraph split 切斷條文上下文 |
+| QA 報告特定文件類型命中率偏低 | 條文級問題搜尋不到對應 chunk |
+| 法規/合約類文件佔比高 | 結構以編號條款為主，非標題段落 |
+
+**升級方向：** 把 Markdown 解析成章節樹（heading → subheading → numbered items），沿樹走訪產出 chunk，每個 chunk 保留父標題鏈作為上下文。實作位置：`scripts/lib/core/chunk.js` 的 `splitByH2` / `splitByH3` 擴充或替換。
+
 ## Git Branch Policy
 
 ### 允許存在的分支 / Allowed Branches
@@ -410,3 +424,9 @@ gh release create "audit-$(date +%Y%m%d)" /tmp/Documents-$(date +%Y%m%d).zip \
 | `qa-report.yml` | 每月 AI 對答品質驗證報告 |
 | `record-status.yml` | PR merge/close 時自動更新 record 狀態 |
 | `remediation-verify.yml` | Issue 關閉時自動驗證修補 |
+
+### Workflow Guard（模板 repo 自動跳過）
+
+所有帶 `schedule` 的 workflow 都包含一個 `guard` job，檢查 `config.json` 是否存在。模板 repo 沒有 `config.json`，排程觸發時 guard 會讓主 job 顯示 **Skipped**，不浪費 CI 分鐘數。
+
+Fork 後執行嚮導（Step 5）會產出 `config.json`，guard 自動放行，**不需要手動修改 workflow**。

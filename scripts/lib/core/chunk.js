@@ -6,6 +6,26 @@
  * Processes markdown documents and collected result JSON files into
  * structured chunks suitable for MiniSearch indexing and Claude API context.
  *
+ * ## Chunking Strategy
+ *
+ * Current: 2-level heading split (H2 mandatory, H3 conditional on size).
+ * This works well for typical policy/procedure documents.
+ *
+ * ## When to Upgrade to Section Tree Parsing
+ *
+ * If search hit rate drops for specific document types (e.g., regulations
+ * with deeply nested numbered clauses), consider implementing a
+ * **Markdown section tree parser** (heading → subheading → numbered items).
+ *
+ * Symptoms that indicate the need:
+ * - A single H2 section exceeds 5000+ chars with many numbered clauses
+ * - Paragraph-level splitting breaks numbered item context
+ * - QA report shows repeated misses on clause-level questions
+ *
+ * Approach: parse Markdown into a hierarchical section tree, then walk
+ * the tree to produce chunks that respect clause boundaries while
+ * maintaining sufficient context (parent heading chain).
+ *
  * Generalized from agent.system-integration-quality-control/scripts/lib/audit-assistant/chunk.js:
  * - "isms" type → "document" type
  * - "scan" type → "collected" type
