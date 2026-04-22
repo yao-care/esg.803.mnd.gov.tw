@@ -10,12 +10,12 @@
 
 ## P0：Bug 修正
 
-### 1. Profile 過濾繞過修正
+### 1. ~~Profile 過濾繞過修正~~ ✅ 已修正（df66bc1）
 
-- chunk.js 的 `chunkCollectedResult()` 缺少 `group` 欄位
-- chunk.js 的 `chunkReportedRecord()` 缺少 `group` 欄位
-- 導致 collected/reported 資料繞過 `profiles.exclude_types`
-- 影響：所有有多 profile 的實例（siqc 的 auditor 會看到不該看的資料）
+- ~~chunk.js 的 `chunkCollectedResult()` 缺少 `group` 欄位~~
+- ~~chunk.js 的 `chunkReportedRecord()` 缺少 `group` 欄位~~
+- collected: `group` 預設 `'collected'`，可透過 config.group 自訂
+- reported: `group` 從 document_id 前綴萃取（如 FRM-001 → FRM），無前綴時 fallback 為 `'reported'`
 
 ## P1：設定機制與文件
 
