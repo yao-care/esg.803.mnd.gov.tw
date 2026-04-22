@@ -244,6 +244,10 @@ function parseYamlSimple(yamlContent) {
 }
 
 function postProcessForms(outputDir, knowledgeBaseDir, config, metadataFilename = 'merge.yaml') {
+  if (config.form_submission?.api_endpoint) {
+    console.warn('[form-processor] DEPRECATION: config.form_submission.api_endpoint is deprecated. Please migrate to akora-app integration (.github/akora.json).');
+  }
+
   const formsDir = path.join(outputDir, 'forms');
   if (!fs.existsSync(formsDir)) return 0;
 

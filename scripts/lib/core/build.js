@@ -602,6 +602,11 @@ async function build(overrides = {}) {
   const ui = config.ui || {};
   const api = config.api || {};
 
+  // ---- Legacy field migration warning ----
+  if (config.form_submission?.api_endpoint) {
+    console.warn('[build] DEPRECATION: config.form_submission.api_endpoint is deprecated. Please migrate to akora-app integration (.github/akora.json). See CLAUDE.md for migration guide.');
+  }
+
   // ---- Step 1: Documents ----
   const docsConfig = dataSources.documents || {};
   const docsPath = docsConfig.enabled !== false && docsConfig.path
