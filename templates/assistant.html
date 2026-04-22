@@ -181,6 +181,15 @@
       margin-right: 2px;
     }
     .doc-item.active .doc-item-id { color: var(--color-blue); }
+    .doc-item-source {
+      display: inline-block;
+      font-size: 10px;
+      background: var(--bg-tertiary, #e8e8e8);
+      color: var(--text-muted);
+      padding: 1px 4px;
+      border-radius: 3px;
+      margin-right: 3px;
+    }
     .doc-item-ver {
       display: inline-block;
       font-size: var(--text-xs);
@@ -866,9 +875,12 @@ function renderDocNav(filter) {
       const id = doc.doc_id || '';
       const title = doc.title || doc.doc_key;
       const ver = doc.version ? ` v${doc.version}` : '';
+      const sourceTag = doc.doc_key.startsWith('external/')
+        ? `<span class="doc-item-source">${doc.doc_key.split('/')[1]}</span> `
+        : '';
       btn.innerHTML = id
-        ? `<span class="doc-item-id">${id}</span> ${title}<span class="doc-item-ver">${ver}</span>`
-        : title;
+        ? `${sourceTag}<span class="doc-item-id">${id}</span> ${title}<span class="doc-item-ver">${ver}</span>`
+        : `${sourceTag}${title}`;
       btn.title = `${id} ${title}${ver}`;
       btn.dataset.docKey = doc.doc_key;
       btn.addEventListener('click', () => showDocument(doc.doc_key, null));
