@@ -437,15 +437,28 @@ function substitutePlaceholders(html, config, profile = null) {
 }
 
 /**
- * Filter chunks by excluding specified document type groups.
+ * Filter chunks by excluding specified document type groups and/or external sources.
  *
  * @param {Object[]} allChunks - Array of chunk objects (each with a `group` field)
  * @param {string[]|null} excludeTypes - Array of group names to exclude, or null/[] to keep all
+ * @param {string[]|null} excludeSources - Array of external source names to exclude, or null/[] to keep all
  * @returns {Object[]} Filtered chunks
  */
-function filterChunks(allChunks, excludeTypes) {
-  if (!excludeTypes || excludeTypes.length === 0) return allChunks;
-  return allChunks.filter(chunk => !excludeTypes.includes(chunk.group));
+function filterChunks(allChunks, excludeTypes, excludeSources) {
+  let result = allChunks;
+  if (excludeTypes && excludeTypes.length > 0) {
+    result = result.filter(chunk => !excludeTypes.includes(chunk.group));
+  }
+  if (excludeSources && excludeSources.length > 0) {
+    result = result.filter(chunk => {
+      // External chunks have doc_key like "external/{sourceName}/..."
+      if (!chunk.doc_key || !chunk.doc_key.startsWith('external/')) return true;
+      const parts = chunk.doc_key.split('/');
+      const sourceName = parts[1] || '';
+      return !excludeSources.includes(sourceName);
+    });
+  }
+  return result;
 }
 
 /**
@@ -631,7 +644,7 @@ async function build(overrides = {}) {
     }
 
     // ---- Step 3: Filter chunks for this profile ----
-    const profileChunks = filterChunks(allChunks, profile.exclude_types);
+    const profileChunks = filterChunks(allChunks, profile.exclude_types, profile.exclude_sources);
 
     // ---- Step 4: Build indexes ----
     const metaIndex = buildMetaIndex(profileChunks);
