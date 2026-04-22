@@ -462,6 +462,35 @@ function filterChunks(allChunks, excludeTypes, excludeSources) {
 }
 
 /**
+ * Resolve a glossary object based on locale.
+ *
+ * Supports two formats per entry:
+ *   - Simple (backward compatible): { "DRAM": "動態隨機存取記憶體" }
+ *   - Bilingual: { "DRAM": { "zh": "動態隨機存取記憶體", "en": "Dynamic Random Access Memory" } }
+ *
+ * Returns a flat { term: resolvedValue } object using the appropriate locale.
+ *
+ * @param {Object} glossary - Raw glossary object
+ * @param {string} locale - e.g. "zh-TW", "en"
+ * @returns {Object} Resolved glossary with string values
+ */
+function resolveGlossary(glossary, locale) {
+  if (!glossary || typeof glossary !== 'object') return {};
+  const langKey = localeToLangKey(locale);
+  const resolved = {};
+  for (const [term, value] of Object.entries(glossary)) {
+    if (typeof value === 'string') {
+      // Simple format — use as-is (backward compatible)
+      resolved[term] = value;
+    } else if (value && typeof value === 'object') {
+      // Bilingual format — pick by locale, fallback to zh, then first available
+      resolved[term] = value[langKey] || value.zh || Object.values(value)[0] || '';
+    }
+  }
+  return resolved;
+}
+
+/**
  * Read form schema JSON files from data/schemas/ and create searchable chunks.
  * Each schema becomes a chunk so users can search for form fields.
  *
@@ -758,13 +787,14 @@ async function build(overrides = {}) {
     const renderedJson = JSON.stringify(profileRenderedDocs).replace(/<\/script>/gi, '<\\/script>');
     template = replacePlaceholder(template, '__RENDERED_DOCS__', '{}', renderedJson);
 
-    // Inject glossary (shared across all profiles)
+    // Inject glossary (shared across all profiles), resolved by locale
     const glossaryRaw = readFileSafe(path.join(PROJECT_ROOT, '_meta', 'glossary.json'));
     let glossaryJson = '{}';
     if (glossaryRaw) {
       try {
-        JSON.parse(glossaryRaw);
-        glossaryJson = glossaryRaw;
+        const glossaryObj = JSON.parse(glossaryRaw);
+        const resolved = resolveGlossary(glossaryObj, ui.locale || 'zh-TW');
+        glossaryJson = JSON.stringify(resolved);
       } catch (e) {
         console.warn('[build] glossary.json is not valid JSON, using empty {}');
       }
@@ -846,6 +876,7 @@ module.exports = {
   readCollectedTables,
   readReportedTables,
   readSchemaFiles,
+  resolveGlossary,
   replacePlaceholder,
   substitutePlaceholders,
   filterChunks,
