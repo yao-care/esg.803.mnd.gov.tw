@@ -35,6 +35,31 @@ describe('chunk.js', () => {
       const customChunks = chunkMarkdown(md, 'test', { chunk_threshold: 100 });
       assert.ok(customChunks.length > 1);
     });
+
+    it('splits oversized chunks at paragraph boundaries (#12)', () => {
+      // Build a section with no H3 headings but multiple paragraphs, each ~60 chars
+      const para = 'Lorem ipsum dolor sit amet, paragraph content here abcdef.';
+      // 5 paragraphs joined by double newline (~300 chars total)
+      const content = [para, para, para, para, para].join('\n\n');
+      const md = `---\ntitle: Test\n---\n## Big Section\n${content}`;
+      // threshold 120: section > 120, no H3 → paragraph split kicks in
+      const chunks = chunkMarkdown(md, 'test', { chunk_threshold: 120, chunk_overlap: 0 });
+      assert.ok(chunks.length > 1, `Expected >1 chunks, got ${chunks.length}`);
+      // Each chunk's text should contain paragraph content
+      for (const c of chunks) {
+        assert.ok(c.text.includes('Lorem ipsum'), 'Each chunk should have paragraph content');
+      }
+      // Continuation chunks should have "(cont.)" in section name
+      const contChunks = chunks.filter(c => c.section.includes('(cont.)'));
+      assert.ok(contChunks.length > 0, 'Should have continuation chunks');
+    });
+
+    it('does not split when content is under threshold (#12)', () => {
+      const md = '---\ntitle: Test\n---\n## Section\nShort content.';
+      const chunks = chunkMarkdown(md, 'test', { chunk_threshold: 2000, chunk_overlap: 0 });
+      assert.strictEqual(chunks.length, 1);
+      assert.ok(!chunks[0].section.includes('(cont.)'));
+    });
   });
 
   describe('chunkCollectedResult', () => {

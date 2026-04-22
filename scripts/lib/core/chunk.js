@@ -233,8 +233,28 @@ function chunkMarkdown(md, docKey, config = {}) {
     }
   }
 
+  // Second pass: split oversized chunks at paragraph boundaries
+  const refined = [];
+  for (const chunk of rawChunks) {
+    const threshold = (config && config.chunk_threshold) || 2000;
+    if (chunk.content.length > threshold) {
+      const paragraphs = chunk.content.split(/\n\n+/);
+      let current = { heading: chunk.heading, content: '' };
+      for (const para of paragraphs) {
+        if (current.content.length + para.length > threshold && current.content.length > 0) {
+          refined.push(current);
+          current = { heading: chunk.heading + ' (cont.)', content: '' };
+        }
+        current.content += (current.content ? '\n\n' : '') + para;
+      }
+      if (current.content) refined.push(current);
+    } else {
+      refined.push(chunk);
+    }
+  }
+
   // Build final chunk objects
-  const chunks = rawChunks.map((c) => {
+  const chunks = refined.map((c) => {
     const section = c.heading;
     const sectionSlug = slugifySection(section);
     const chunkId = `${docKey}#${sectionSlug}`;
