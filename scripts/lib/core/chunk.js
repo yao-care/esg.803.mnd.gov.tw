@@ -311,7 +311,29 @@ function chunkMarkdown(md, docKey, config = {}) {
  */
 function chunkCollectedResult(json, resultName, config = {}) {
   const displayName = (config && config.displayName) || resultName;
-  const text = `[收集結果: ${displayName}]\n[工具: ${json.tool || resultName}]\n[狀態: ${json.status || 'unknown'}]\n[時間: ${json.timestamp || 'unknown'}]\n\n${JSON.stringify(json, null, 2)}`;
+
+  // Build natural-language summary for better search hit rate
+  const summaryParts = [`[掃描證據] ${displayName}`];
+  if (json.tool || resultName) summaryParts.push(`工具: ${json.tool || resultName}`);
+  if (json.status) summaryParts.push(`狀態: ${json.status}`);
+  if (json.timestamp) summaryParts.push(`時間: ${json.timestamp}`);
+  if (json.target) summaryParts.push(`目標: ${json.target}`);
+  // Extract summary counts if present (e.g., severity counts, pass/fail)
+  if (json.summary && typeof json.summary === 'object') {
+    const s = json.summary;
+    const countParts = [];
+    if (s.critical !== undefined) countParts.push(`Critical ${s.critical}`);
+    if (s.high !== undefined) countParts.push(`High ${s.high}`);
+    if (s.medium !== undefined) countParts.push(`Medium ${s.medium}`);
+    if (s.low !== undefined) countParts.push(`Low ${s.low}`);
+    if (s.pass !== undefined) countParts.push(`通過 ${s.pass}`);
+    if (s.fail !== undefined) countParts.push(`失敗 ${s.fail}`);
+    if (s.total !== undefined) countParts.push(`共 ${s.total} 項`);
+    if (countParts.length) summaryParts.push(`發現: ${countParts.join(', ')}`);
+  }
+  const summary = summaryParts.join(' | ');
+
+  const text = `${summary}\n\n${JSON.stringify(json, null, 2)}`;
 
   const chunk = {
     chunk_id: `collected/${resultName}`,

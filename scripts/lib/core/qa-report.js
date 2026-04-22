@@ -213,10 +213,16 @@ function findRelevantChunks(query, chunksMap, metaIndex, msInstance) {
  * @param {string} expectedDocKey
  * @returns {boolean}
  */
-function evaluateSearchHit(results, expectedDocKey) {
+function evaluateSearchHit(results, expectedDocKey, acceptedDocKeys) {
   // __NONE__ = expect zero results (gate test)
   if (expectedDocKey === '__NONE__') return results.length === 0;
-  return results.some(r => r.doc_key === expectedDocKey);
+  // Check primary expected_doc_key
+  if (results.some(r => r.doc_key === expectedDocKey)) return true;
+  // Check accepted_doc_keys (cross-document matches validated at generation time)
+  if (acceptedDocKeys && acceptedDocKeys.length > 0) {
+    return results.some(r => acceptedDocKeys.includes(r.doc_key));
+  }
+  return false;
 }
 
 /**
@@ -490,9 +496,22 @@ async function generateDynamicQuestions(allChunks, seedQuestions, cachePath, for
       ? `\n2. 問題要像真實的${identity}會問的問題`
       : '\n2. 問題要像實際使用者會問的問題';
 
-    const promptText = `根據以下${kbName}文件內容，產生 ${needed} 個相關問題。
+    // Determine if this is collected evidence (scan results) vs knowledge document
+    const isCollected = allChunks.find(c => c.doc_key === docKey)?.source_type === 'collected';
+
+    const promptText = isCollected
+      ? `以下是一份自動化掃描的證據資料。請產生 ${needed} 個稽核員在審查這份證據時會問的問題。
 要求：
-1. 問題必須能從文件內容中找到答案${identityClause}
+1. 問題必須是稽核員驗證合規性時會問的，例如：掃描覆蓋是否足夠、發現的風險等級分佈、是否有未結案的 Critical/High 發現、掃描頻率是否符合程序規定
+2. 禁止問具體數字（如「共掃描幾個元件」「檔案大小多少」）——稽核員不會問 AI 幫他查數字
+3. 問題應該能從這份證據 + 相關程序文件中找到答案
+4. 輸出 JSON 陣列格式，每個元素有 question 和 category 欄位
+
+證據資料：
+${chunkTexts}`
+      : `根據以下${kbName}文件內容，產生 ${needed} 個相關問題。
+要求：
+1. 問���必須能從這份文件的內容中找到答案，不要問其他文件才能回答的問題${identityClause}
 3. 避免問「本文件的目的為何」這類過於制式的問題
 4. 輸出 JSON 陣列格式，每個元素有 question 和 category 欄位
 
@@ -1183,6 +1202,20 @@ async function main() {
   if (!flags.seedOnly) {
     const cachePath = path.join(__dirname, `qa-dynamic-cache-${flags.profile}.json`);
     const dynamic = await generateDynamicQuestions(allChunks, questions, cachePath, flags.refreshDynamic);
+
+    // Post-generation search validation: populate accepted_doc_keys
+    // This catches cross-document questions where the answer is correct
+    // but comes from a different doc_key than expected
+    for (const q of dynamic) {
+      const expanded = expandGlossary(q.question, glossary);
+      const results = findRelevantChunks(expanded, chunksMap, metaIndex, msInstance);
+      const topDocKeys = [...new Set(results.slice(0, 5).map(r => r.doc_key))];
+      // If expected_doc_key is not in top results, record which doc_keys ARE relevant
+      if (!topDocKeys.includes(q.expected_doc_key)) {
+        q.accepted_doc_keys = topDocKeys.filter(dk => dk !== q.expected_doc_key);
+      }
+    }
+
     console.log(`[qa-report] Dynamic questions: ${dynamic.length}`);
     questions = [...questions, ...dynamic];
   }
@@ -1216,7 +1249,7 @@ async function main() {
       searchResultsMap[q.id] = {
         results: searchResults,
         context,
-        searchHit: evaluateSearchHit(searchResults, q.expected_doc_key),
+        searchHit: evaluateSearchHit(searchResults, q.expected_doc_key, q.accepted_doc_keys),
         searchDocKeys: [...new Set(searchResults.map(r => r.doc_key))],
       };
     }
@@ -1237,7 +1270,7 @@ async function main() {
       const searchResults = findRelevantChunks(expandedQuestion, chunksMap, metaIndex, msInstance);
       searchResultsMap[q.id] = {
         results: searchResults,
-        searchHit: evaluateSearchHit(searchResults, q.expected_doc_key),
+        searchHit: evaluateSearchHit(searchResults, q.expected_doc_key, q.accepted_doc_keys),
         searchDocKeys: [...new Set(searchResults.map(r => r.doc_key))],
       };
     }
@@ -1285,7 +1318,7 @@ async function main() {
     const expandedQuestion = expandGlossary(q.question, glossary);
     const searchResults = findRelevantChunks(expandedQuestion, chunksMap, metaIndex, msInstance);
     const searchDocKeys = [...new Set(searchResults.map(r => r.doc_key))];
-    const searchHit = evaluateSearchHit(searchResults, q.expected_doc_key);
+    const searchHit = evaluateSearchHit(searchResults, q.expected_doc_key, q.accepted_doc_keys);
 
     let answer = '';
     let hasAnswer = false;
