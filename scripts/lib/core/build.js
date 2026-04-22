@@ -462,6 +462,70 @@ function filterChunks(allChunks, excludeTypes, excludeSources) {
 }
 
 /**
+ * Read form schema JSON files from data/schemas/ and create searchable chunks.
+ * Each schema becomes a chunk so users can search for form fields.
+ *
+ * @param {string} schemasDir - Absolute path to schemas directory
+ * @returns {Object[]} Array of schema chunks
+ */
+function readSchemaFiles(schemasDir) {
+  const schemaChunks = [];
+  if (!fs.existsSync(schemasDir)) return schemaChunks;
+
+  const jsonFiles = findFiles(schemasDir, '.json');
+  for (const filePath of jsonFiles) {
+    const baseName = path.basename(filePath, '.json');
+    let schema;
+    try {
+      schema = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    } catch (err) {
+      console.warn(`[build] Failed to parse schema ${filePath}: ${err.message}`);
+      continue;
+    }
+
+    // Extract field names and types for searchable text
+    const fieldProps = schema.properties?.fields?.properties || {};
+    const fieldLines = Object.entries(fieldProps).map(([name, prop]) => {
+      const type = prop.type || '';
+      const enumVals = prop.enum ? ` (${prop.enum.join(', ')})` : '';
+      const itemEnum = prop.items?.enum ? ` (${prop.items.enum.join(', ')})` : '';
+      return `- ${name}: ${type}${enumVals}${itemEnum}`;
+    });
+
+    const docId = schema.properties?.document_id?.const || baseName;
+    const requiredFields = schema.properties?.fields?.required || [];
+
+    const text = [
+      `[表單 Schema] ${docId}`,
+      `[必填欄位] ${requiredFields.join(', ') || '無'}`,
+      '',
+      '欄位列表：',
+      ...fieldLines,
+    ].join('\n');
+
+    schemaChunks.push({
+      chunk_id: `schema/${baseName}`,
+      doc_id: docId,
+      doc_key: `schema/${baseName}`,
+      title: `${docId} 表單欄位定義`,
+      section: '',
+      controls: [],
+      group: 'schema',
+      type: 'schema',
+      source_type: 'schema',
+      text,
+      char_count: text.length,
+    });
+  }
+
+  if (schemaChunks.length > 0) {
+    console.log(`[build] Schemas: ${schemaChunks.length} form schemas indexed`);
+  }
+
+  return schemaChunks;
+}
+
+/**
  * Generate an index.html listing all profile entry points.
  * @param {string} outputDir - Directory where profile HTMLs were written
  * @param {Object} profiles - The profiles config object
@@ -579,13 +643,17 @@ async function build(overrides = {}) {
 
   // ---- Step 2c: Generate JSON schemas from FRM fields ----
   const knowledgeDir = docsPath || path.join(PROJECT_ROOT, 'knowledge');
+  const schemasDir = path.join(PROJECT_ROOT, 'data', 'schemas');
   if (reportedConfig.enabled !== false) {
-    const schemasDir = path.join(PROJECT_ROOT, 'data', 'schemas');
     const generated = generateAllSchemas(knowledgeDir, schemasDir, domain.metadata_filename);
     if (generated.length > 0) {
       console.log(`[build] Generated ${generated.length} form schemas`);
     }
   }
+
+  // ---- Step 2c-b: Index form schemas for search ----
+  const schemaChunks = readSchemaFiles(schemasDir);
+  allChunks.push(...schemaChunks);
 
   // ---- Step 2d: External data sources ----
   const externalResult = await fetchExternalSources(config, domain.metadata_filename, PROJECT_ROOT);
@@ -772,6 +840,7 @@ module.exports = {
   readDocuments,
   readCollectedTables,
   readReportedTables,
+  readSchemaFiles,
   replacePlaceholder,
   substitutePlaceholders,
   filterChunks,
