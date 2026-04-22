@@ -654,7 +654,12 @@ async function build(overrides = {}) {
       locale: ui.locale || 'zh-TW',
     });
     allChunks.push(...result.chunks);
-    renderedDocs = { ...renderedDocs, ...result.renderedDocs };
+    for (const [key, value] of Object.entries(result.renderedDocs)) {
+      if (renderedDocs[key]) {
+        console.warn(`[build] WARN: doc_key '${key}' collides with existing entry, overwriting`);
+      }
+      renderedDocs[key] = value;
+    }
   }
 
   // ---- Step 2a: Collected tables ----
@@ -692,7 +697,12 @@ async function build(overrides = {}) {
   // ---- Step 2d: External data sources ----
   const externalResult = await fetchExternalSources(config, domain.metadata_filename, PROJECT_ROOT);
   allChunks.push(...externalResult.chunks);
-  Object.assign(renderedDocs, externalResult.renderedDocs);
+  for (const [key, value] of Object.entries(externalResult.renderedDocs)) {
+    if (renderedDocs[key]) {
+      console.warn(`[build] WARN: doc_key '${key}' collides with existing entry, overwriting`);
+    }
+    renderedDocs[key] = value;
+  }
   if (externalResult.chunks.length > 0) {
     console.log(`[build] External: ${externalResult.chunks.length} chunks merged`);
   }
