@@ -95,7 +95,15 @@ function chineseTokenize(text) {
  * @returns {string} JSON-serialized MiniSearch index (use MiniSearch.loadJSON to restore)
  */
 function buildSearchIndex(chunks) {
-  const ms = new MiniSearch({
+  // Build a boost lookup map: chunk_id → boost factor
+  const boostMap = {};
+  for (const chunk of chunks) {
+    if (chunk.boost != null && chunk.boost !== 1.0) {
+      boostMap[chunk.chunk_id] = chunk.boost;
+    }
+  }
+
+  const msOptions = {
     idField: 'chunk_id',
     fields: ['text', 'title', 'section'],
     storeFields: ['chunk_id', 'doc_key', 'title', 'section'],
@@ -105,7 +113,14 @@ function buildSearchIndex(chunks) {
       prefix: true,
       fuzzy: 0.2,
     },
-  });
+  };
+
+  // Apply per-document boost if any chunks have non-default boost values
+  if (Object.keys(boostMap).length > 0) {
+    msOptions.searchOptions.boostDocument = (docId) => boostMap[docId] || 1.0;
+  }
+
+  const ms = new MiniSearch(msOptions);
 
   // Prepare documents: MiniSearch requires the idField to be present.
   // scan chunks may not have title/section — provide empty string defaults

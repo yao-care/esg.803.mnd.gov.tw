@@ -48,6 +48,10 @@
     }
   },
   "chunk_threshold": 2000,
+  "search_boost": {
+    "local": 1.0,
+    "external": 1.0
+  },
   "qa": {
     "search_hit_threshold": 0.95,
     "answer_rate_threshold": 0.98,

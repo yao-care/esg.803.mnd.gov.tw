@@ -582,6 +582,15 @@ async function build(overrides = {}) {
     console.log(`[build] External: ${externalResult.chunks.length} chunks merged`);
   }
 
+  // ---- Apply search_boost to chunks ----
+  const searchBoost = config.search_boost || {};
+  const localBoost = searchBoost.local ?? 1.0;
+  const externalBoost = searchBoost.external ?? 1.0;
+  for (const chunk of allChunks) {
+    const isExternal = chunk.doc_key && chunk.doc_key.startsWith('external/');
+    chunk.boost = isExternal ? externalBoost : localBoost;
+  }
+
   console.log(`[build] Total chunks: ${allChunks.length}`);
 
   // ---- Profile loop (Steps 3-7) ----
