@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{RECORD_ID}} — {{FORM_TITLE}}</title>
+<style>
+{{OKLCH_STYLES}}
+body { font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif; margin: 0; padding: 0; background: var(--bg, #f8f9fa); color: var(--fg, #1a1a2e); }
+.page-wrapper { max-width: 900px; margin: 0 auto; padding: 2rem; }
+.record-header { border-bottom: 3px solid var(--primary, #2563eb); padding-bottom: 1rem; margin-bottom: 2rem; }
+.record-header h1 { font-size: 1.5rem; margin: 0 0 0.5rem 0; }
+.record-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.5rem; font-size: 0.9rem; color: var(--fg-muted, #64748b); }
+.record-meta dt { font-weight: 600; }
+.badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+.badge-submitted { background: #dbeafe; color: #1e40af; }
+.badge-approved { background: #dcfce7; color: #166534; }
+.badge-rejected { background: #fee2e2; color: #991b1b; }
+.badge-pending_review { background: #fef3c7; color: #92400e; }
+.fields-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+.fields-table th, .fields-table td { padding: 0.75rem; border: 1px solid var(--border, #e2e8f0); text-align: left; }
+.fields-table th { background: var(--bg-muted, #f1f5f9); width: 30%; }
+.audit-trail { margin: 1.5rem 0; }
+.audit-entry { padding: 0.5rem 0; border-left: 3px solid var(--primary, #2563eb); padding-left: 1rem; margin-bottom: 0.5rem; }
+.back-link { margin-top: 2rem; }
+.back-link a { color: var(--primary, #2563eb); text-decoration: none; }
+@media print { .no-print { display: none; } }
+</style>
+</head>
+<body>
+<div class="page-wrapper">
+  <div class="record-header">
+    <h1>{{FORM_TITLE}}</h1>
+    <p><code>{{RECORD_ID}}</code> <span class="badge badge-{{STATUS}}">{{STATUS}}</span></p>
+  </div>
+
+  <div class="record-meta">
+    <dl>
+      <dt>提交者</dt><dd>{{SUBMITTER_NAME}} ({{SUBMITTER_TITLE}})</dd>
+      <dt>提交時間</dt><dd>{{SUBMITTED_AT}}</dd>
+      <dt>來源</dt><dd>{{SOURCE}}</dd>
+      <dt>分類</dt><dd>{{CLASSIFICATION}}</dd>
+      <dt>保留至</dt><dd>{{RETAINED_UNTIL}}</dd>
+    </dl>
+  </div>
+
+  <h2>填報內容</h2>
+  <table class="fields-table">
+    <tbody>
+      {{FIELDS_ROWS}}
+    </tbody>
+  </table>
+
+  <h2>審計軌跡</h2>
+  <div class="audit-trail">
+    {{AUDIT_TRAIL_HTML}}
+  </div>
+
+  <div class="back-link no-print">
+    <a href="{{BACK_LINK}}">← 返回 {{FORM_TITLE}}</a>
+  </div>
+</div>
+</body>
+</html>

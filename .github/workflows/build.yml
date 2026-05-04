@@ -1,0 +1,44 @@
+name: Build & QA
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Inject config
+        run: |
+          cp config.example.json config.json
+          # Override API key for QA
+          node -e "
+            const c = require('./config.json');
+            c.api.key_env_var = 'ANTHROPIC_API_KEY';
+            require('fs').writeFileSync('config.json', JSON.stringify(c, null, 2));
+          "
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Build
+        run: npm run build:assistant
+
+      - name: QA (search only)
+        run: npm run qa-report -- --search-only --ci
+
+      - name: Restore config
+        if: always()
+        run: git checkout -- config.json 2>/dev/null || true

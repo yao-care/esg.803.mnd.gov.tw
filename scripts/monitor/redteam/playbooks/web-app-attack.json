@@ -1,0 +1,48 @@
+{
+  "name": "Web Application Attack Chain",
+  "description": "MITRE ATT&CK based web application attack simulation",
+  "mitre_tactics": [
+    {
+      "id": "TA0043",
+      "name": "Reconnaissance",
+      "detect_timeout_sec": 60,
+      "techniques": [
+        {
+          "id": "T1595",
+          "name": "Active Scanning",
+          "attack_script": "recon.sh",
+          "args": "",
+          "detect_timeout_sec": 5
+        }
+      ]
+    },
+    {
+      "id": "TA0001",
+      "name": "Initial Access",
+      "detect_timeout_sec": 60,
+      "techniques": [
+        {
+          "id": "T1190",
+          "name": "Exploit Public-Facing Application",
+          "attack_script": "initial-access.sh",
+          "args": "",
+          "detect_timeout_sec": 5
+        }
+      ]
+    },
+    {
+      "id": "TA0008",
+      "name": "Lateral Movement",
+      "detect_timeout_sec": 60,
+      "techniques": [
+        {
+          "id": "T1021",
+          "name": "Remote Services",
+          "attack_script": "lateral.sh",
+          "args": "",
+          "detect_timeout_sec": 5
+        }
+      ]
+    }
+  ]
+}
