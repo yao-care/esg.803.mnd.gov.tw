@@ -206,12 +206,20 @@ KNOWLEDGE_MTIME=$(find knowledge/ -name '*.md' -newer _meta/glossary.json 2>/dev
 
 ## AKORA App 整合
 
-AKORA App（https://akora.weiqi.kids）提供集中式後端服務：
+AKORA App（https://akora.weiqi.kids）提供集中式後端服務，作為 Claude API proxy。Client 不直接接觸 Anthropic API key，透過 `token_id` 和 `BUILD_TOKEN` 識別身份。
 
 ### 檔案
 
 - `.github/akora.json`（GitHub）或 `.gitlab/akora.json`（GitLab）— 安裝 App 後自動建立的 PR/MR 寫入
-- 內容：`{ installation_id, platform, endpoint }`
+- 內容：`{ token_id, platform, endpoint }`
+
+```json
+{
+  "token_id": "tok_a1b2c3",
+  "platform": "github",
+  "endpoint": "https://akora.weiqi.kids"
+}
+```
 
 ### 功能
 
@@ -219,14 +227,48 @@ AKORA App（https://akora.weiqi.kids）提供集中式後端服務：
 |------|------|
 | POST /token | build 時取得 read-only repo token（需 `AKORA_BUILD_TOKEN` 環境變數） |
 | POST /submit | 表單回傳（assistant.html 自動走此端點） |
-| POST /ask | AI 問答 proxy + streaming（需設定 Anthropic API key） |
+| POST /ask | AI 問答 proxy + SSE streaming（HMAC-SHA256 簽名驗證） |
+
+### POST /ask 資料交換
+
+**Request：**
+
+```
+POST https://akora.weiqi.kids/ask
+Content-Type: application/json
+X-Signature: <HMAC-SHA256 hex，用 BUILD_TOKEN 對 body 字串簽名>
+```
+
+```json
+{
+  "token_id": "tok_a1b2c3",
+  "messages": [{ "role": "user", "content": "請問..." }],
+  "system": [{ "type": "text", "text": "...", "cache_control": { "type": "ephemeral" } }],
+  "model": "claude-sonnet-4-20250514",
+  "max_tokens": 4096,
+  "repo": "org/repo-name",
+  "user_id": "user-identifier"
+}
+```
+
+**Response：** SSE streaming（`Content-Type: text/event-stream`），事件類型用 `JSON.parse(data).type` 判斷（無 SSE `event:` 欄位）。
+
+**錯誤碼：** 400 bad_request / 401 unauthorized / 403 forbidden|expired / 404 not_found / 429 quota_exceeded
+
+### Build 時注入流程
+
+1. `build.js` 讀取 `.github/akora.json` 取得 `token_id` 和 `endpoint`
+2. 從環境變數 `AKORA_BUILD_TOKEN` 取得簽名密鑰
+3. 注入 `window.__AKORA__` 到產出的 HTML（含 `tokenId`、`buildToken`、`endpoint`、`repo`）
+4. `assistant.html` 偵測到 `window.__AKORA__` 後自動走 AKORA proxy，隱藏 API Key 輸入框
+
+**安全注意：** `BUILD_TOKEN` 只存在 GitHub Actions Secrets，不進 source code。產出的 HTML 包含 token，僅部署到受控環境（`audit` branch / GitHub Pages）。
 
 ### 環境變數
 
 | 變數 | 說明 | 來源 |
 |------|------|------|
-| `AKORA_BUILD_TOKEN` | build 時認證用 | 安裝 App 時自動寫入 Actions Secrets |
-| `AKORA_INSTALLATION_ID` | 可選，override `.github/akora.json` 的值 | 手動設定 |
+| `AKORA_BUILD_TOKEN` | build 時注入 HTML，用於 HMAC 簽名 | 安裝 App 時自動寫入 Actions Secrets |
 
 ### form_submission 設定
 

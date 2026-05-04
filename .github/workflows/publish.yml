@@ -26,6 +26,8 @@ jobs:
         run: npm run validate-records || true
       - name: Build assistant
         run: npm run build:assistant
+        env:
+          AKORA_BUILD_TOKEN: ${{ secrets.AKORA_BUILD_TOKEN }}
       - name: Generate index
         run: bash scripts/report/generate-index.sh
       - name: Commit results

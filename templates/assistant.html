@@ -1283,13 +1283,55 @@ async function findRelevantChunks(query) {
 }
 
 // ============================================================
+// AKORA PROXY DETECTION
+// ============================================================
+
+const AKORA = window.__AKORA__ || null;
+const useAkora = !!(AKORA && AKORA.tokenId && AKORA.buildToken);
+
+async function akoraSignBody(bodyStr) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode(AKORA.buildToken),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(bodyStr));
+  return Array.from(new Uint8Array(sig))
+    .map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function formatAkoraError(status, errObj) {
+  const code = errObj.error || 'unknown';
+  const msg = errObj.message || '';
+  if (status === 403 && code === 'expired') {
+    const expires = errObj.details?.expires_at || '';
+    return `服務已到期${expires ? '（' + expires + '）' : ''}，請聯繫管理員。`;
+  }
+  if (status === 429 && code === 'quota_exceeded') {
+    const resets = errObj.details?.resets_at || '';
+    return `本月用量已達上限${resets ? '，將於 ' + resets + ' 重置' : ''}。`;
+  }
+  if (status === 403) return `服務已停用（${code}），請聯繫管理員。`;
+  if (status === 401) return `簽名驗證失敗，請重新部署。`;
+  if (status === 404) return `Token 設定錯誤，請檢查 akora.json。`;
+  return `AKORA 錯誤 ${status}: ${msg || code}`;
+}
+
+// ============================================================
 // CLAUDE API
 // ============================================================
 
 async function callClaude(messages, systemPrompt, maxTokens) {
-  if (!state.apiKey) throw new Error('API Key 未設定');
+  if (!useAkora && !state.apiKey) throw new Error('API Key 未設定');
   if (state.apiErrors >= 3) {
-    throw new Error('連續 3 次 API 錯誤，請檢查 API Key 和網路連線後重試');
+    throw new Error('連續 3 次 API 錯誤，請檢查連線後重試');
+  }
+
+  if (useAkora) {
+    // AKORA always streams — collect full response
+    let result = '';
+    await callClaudeStream(messages, systemPrompt, (acc) => { result = acc; }, maxTokens);
+    return result;
   }
 
   const body = {
@@ -1327,41 +1369,82 @@ async function callClaude(messages, systemPrompt, maxTokens) {
   return data.content[0]?.text || '';
 }
 
-async function callClaudeStream(messages, systemPrompt, onChunk) {
-  if (!state.apiKey) throw new Error('API Key 未設定');
+async function callClaudeStream(messages, systemPrompt, onChunk, maxTokens) {
+  if (!useAkora && !state.apiKey) throw new Error('API Key 未設定');
   if (state.apiErrors >= 3) {
-    throw new Error('連續 3 次 API 錯誤，請檢查 API Key 和網路連線後重試');
+    throw new Error('連續 3 次 API 錯誤，請檢查連線後重試');
   }
 
-  const body = {
-    model: APP_CONFIG.model || 'claude-sonnet-4-20250514',
-    max_tokens: APP_CONFIG.max_tokens_per_turn || 4096,
-    system: [
-      {
-        type: 'text',
-        text: systemPrompt,
-        cache_control: { type: 'ephemeral' }
-      }
-    ],
-    messages,
-    stream: true
-  };
+  let resp;
 
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': state.apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify(body)
-  });
+  if (useAkora) {
+    const reqBody = {
+      token_id: AKORA.tokenId,
+      messages,
+      system: [
+        {
+          type: 'text',
+          text: systemPrompt,
+          cache_control: { type: 'ephemeral' }
+        }
+      ],
+      model: APP_CONFIG.model || 'claude-sonnet-4-20250514',
+      max_tokens: maxTokens || APP_CONFIG.max_tokens_per_turn || 4096,
+      repo: AKORA.repo || '',
+      user_id: ''
+    };
+    const bodyStr = JSON.stringify(reqBody);
+    const signature = await akoraSignBody(bodyStr);
 
-  if (!resp.ok) {
-    const errText = await resp.text();
-    state.apiErrors++;
-    throw new Error(`Claude API error ${resp.status}: ${errText}`);
+    resp = await fetch(`${AKORA.endpoint}/ask`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Signature': signature
+      },
+      body: bodyStr
+    });
+
+    if (!resp.ok) {
+      state.apiErrors++;
+      let errMsg = `AKORA 錯誤 ${resp.status}`;
+      try {
+        const errObj = await resp.json();
+        errMsg = formatAkoraError(resp.status, errObj);
+      } catch (_) { /* response was not JSON */ }
+      throw new Error(errMsg);
+    }
+  } else {
+    const body = {
+      model: APP_CONFIG.model || 'claude-sonnet-4-20250514',
+      max_tokens: APP_CONFIG.max_tokens_per_turn || 4096,
+      system: [
+        {
+          type: 'text',
+          text: systemPrompt,
+          cache_control: { type: 'ephemeral' }
+        }
+      ],
+      messages,
+      stream: true
+    };
+
+    resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': state.apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!resp.ok) {
+      const errText = await resp.text();
+      state.apiErrors++;
+      throw new Error(`Claude API error ${resp.status}: ${errText}`);
+    }
   }
 
   state.apiErrors = 0;
@@ -1473,7 +1556,7 @@ async function handleSend() {
   const input = document.getElementById('chat-input');
   const text = input.value.trim();
   if (!text) return;
-  if (!state.apiKey) {
+  if (!useAkora && !state.apiKey) {
     showApiKeyError();
     return;
   }
@@ -1522,7 +1605,7 @@ async function handleQA(query, aiDiv, msgs) {
   if (chunks.length === 0) chunks = fullTextSearch(expandedQuery, 6);
 
   // Layer 2: LLM Query Rewriting (replaces twoPassFallback)
-  if (chunks.length === 0 && state.apiKey) {
+  if (chunks.length === 0 && (state.apiKey || useAkora)) {
     const rewrittenQuery = await rewriteQuery(query, expandedQuery);
     if (rewrittenQuery) {
       const combined = expandedQuery + ' ' + rewrittenQuery;
@@ -1665,7 +1748,7 @@ async function startDrill() {
   appendMessage('system', `🎯 開始模擬評鑑，共 ${controls.length} 個控制項`);
 
   // Start with initial drill message
-  if (!state.apiKey) {
+  if (!useAkora && !state.apiKey) {
     showApiKeyError();
     return;
   }
@@ -1755,7 +1838,7 @@ function updateApiKeyStatus() {
 
 function updateSendButton() {
   const btn = document.getElementById('send-btn');
-  btn.disabled = state.sending || !state.apiKey;
+  btn.disabled = state.sending || (!useAkora && !state.apiKey);
 }
 
 // ============================================================
@@ -1818,27 +1901,34 @@ function exportChat() {
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Load API key
-  const savedKey = localStorage.getItem('kb_assistant_api_key');
-  if (savedKey) {
-    try { state.apiKey = atob(savedKey); } catch(_) { state.apiKey = savedKey; }
+  // AKORA mode: hide API key input, show AKORA status
+  if (useAkora) {
+    const apiSettings = document.getElementById('api-settings');
+    apiSettings.innerHTML = '<span style="font-size:var(--text-xs);color:var(--color-pass);">AKORA 已連線</span>' +
+      '<span id="token-estimate" style="margin-left:auto;"></span>';
   } else {
-    state.apiKey = APP_CONFIG.api_key || '';
-  }
-  document.getElementById('api-key-input').value = state.apiKey;
-  updateApiKeyStatus();
+    // Load API key
+    const savedKey = localStorage.getItem('kb_assistant_api_key');
+    if (savedKey) {
+      try { state.apiKey = atob(savedKey); } catch(_) { state.apiKey = savedKey; }
+    } else {
+      state.apiKey = APP_CONFIG.api_key || '';
+    }
+    document.getElementById('api-key-input').value = state.apiKey;
+    updateApiKeyStatus();
 
-  // Try fetch config.json (HTTP mode only — graceful fail on file://)
-  fetch('config.json')
-    .then(r => r.ok ? r.json() : null)
-    .then(cfg => {
-      if (cfg && cfg.api_key && !state.apiKey) {
-        state.apiKey = cfg.api_key;
-        document.getElementById('api-key-input').value = cfg.api_key;
-        updateApiKeyStatus();
-      }
-    })
-    .catch(() => { /* file:// or no config.json — ignore */ });
+    // Try fetch config.json (HTTP mode only — graceful fail on file://)
+    fetch('config.json')
+      .then(r => r.ok ? r.json() : null)
+      .then(cfg => {
+        if (cfg && cfg.api_key && !state.apiKey) {
+          state.apiKey = cfg.api_key;
+          document.getElementById('api-key-input').value = cfg.api_key;
+          updateApiKeyStatus();
+        }
+      })
+      .catch(() => { /* file:// or no config.json — ignore */ });
+  }
 
   // Init MiniSearch index once
   initMiniSearch();
@@ -1929,16 +2019,19 @@ document.addEventListener('DOMContentLoaded', () => {
     this.style.height = Math.min(this.scrollHeight, 120) + 'px';
   });
 
-  // API key input
-  document.getElementById('api-key-input').addEventListener('change', function() {
-    state.apiKey = this.value.trim();
-    localStorage.setItem('kb_assistant_api_key', btoa(state.apiKey));
-    updateApiKeyStatus();
-  });
-  document.getElementById('api-key-input').addEventListener('input', function() {
-    state.apiKey = this.value.trim();
-    updateApiKeyStatus();
-  });
+  // API key input (not present in AKORA mode)
+  const apiKeyInput = document.getElementById('api-key-input');
+  if (apiKeyInput) {
+    apiKeyInput.addEventListener('change', function() {
+      state.apiKey = this.value.trim();
+      localStorage.setItem('kb_assistant_api_key', btoa(state.apiKey));
+      updateApiKeyStatus();
+    });
+    apiKeyInput.addEventListener('input', function() {
+      state.apiKey = this.value.trim();
+      updateApiKeyStatus();
+    });
+  }
 
 
   // Sidebar toggle

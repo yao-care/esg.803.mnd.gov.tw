@@ -829,9 +829,17 @@ async function build(overrides = {}) {
       }
     }
     if (akoraClientConfig) {
+      const buildToken = process.env.AKORA_BUILD_TOKEN || '';
+      if (!akoraClientConfig.token_id) {
+        console.warn('[build] WARN: akora.json found but missing token_id. AKORA proxy will be disabled.');
+      }
+      if (!buildToken) {
+        console.warn('[build] WARN: akora.json found but AKORA_BUILD_TOKEN env var is not set. AKORA proxy will be disabled in the output.');
+      }
       const akoraJs = `<script>window.__AKORA__=${JSON.stringify({
         endpoint: akoraClientConfig.endpoint || 'https://akora.weiqi.kids',
-        installation_id: akoraClientConfig.installation_id,
+        tokenId: akoraClientConfig.token_id || '',
+        buildToken,
         platform: akoraClientConfig.platform || 'github',
         repo: config.form_submission?.repo || '',
       })};</script>`;
