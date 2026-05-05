@@ -1,0 +1,32 @@
+document_id: FRM-MILESTONE
+type: FRM
+title_zh: 建案里程碑追蹤表
+title_en: Construction Project Milestone Tracking Form
+main:
+  zh: 建案里程碑追蹤表.md
+status: active
+owner: 行政組
+effective_date: 2026-05-05
+next_review_date: 2027-05-05
+fields:
+  - name: milestone_name
+    label: 里程碑名稱
+    type: text
+    required: true
+  - name: planned_date
+    label: 預定日期
+    type: date
+    required: true
+  - name: actual_date
+    label: 實際日期
+    type: date
+    required: false
+  - name: status
+    label: 狀態
+    type: select
+    options: [未開始, 進行中, 完成, 延遲]
+    required: true
+  - name: notes
+    label: 備註
+    type: textarea
+    required: false

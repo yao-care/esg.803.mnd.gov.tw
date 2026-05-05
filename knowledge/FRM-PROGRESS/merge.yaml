@@ -1,0 +1,37 @@
+document_id: FRM-PROGRESS
+type: FRM
+title_zh: ESG 月度進度表
+title_en: ESG Monthly Progress Form
+main:
+  zh: ESG月度進度表.md
+status: active
+owner: 醫務企劃管理室
+effective_date: 2026-05-05
+next_review_date: 2027-05-05
+fields:
+  - name: reporting_month
+    label: 填報月份
+    type: text
+    required: true
+  - name: dimension
+    label: ESG 構面
+    type: select
+    options: [E1-碳盤查, E2-能源管理, E3-廢棄物, E4-水資源, S1-醫院評鑑, S2-職業安全, S3-社區參與, G1-ESG治理, G2-建案管理, G3-時程管制]
+    required: true
+  - name: task_description
+    label: 工作項目
+    type: textarea
+    required: true
+  - name: status
+    label: 狀態
+    type: select
+    options: [未開始, 進行中, 完成, 延遲]
+    required: true
+  - name: completion_pct
+    label: 完成度(%)
+    type: number
+    required: true
+  - name: notes
+    label: 備註
+    type: textarea
+    required: false

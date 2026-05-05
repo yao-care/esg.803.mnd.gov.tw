@@ -1,0 +1,133 @@
+milestones:
+  - id: GHG-DATA-CLOSE
+    name: 溫盤數據截止
+    category: E1-碳盤查
+    due_date: 2027-01-15
+    status: pending
+    owner: 醫務企劃管理室
+  - id: GHG-S1
+    name: 溫盤 S1 查證
+    category: E1-碳盤查
+    due_date: 2027-01-31
+    status: pending
+    owner: 醫務企劃管理室
+  - id: GHG-S2
+    name: 溫盤 S2 查證
+    category: E1-碳盤查
+    due_date: 2027-02-28
+    status: pending
+    owner: 醫務企劃管理室
+  - id: GHG-FINAL
+    name: 溫盤報告定版
+    category: E1-碳盤查
+    due_date: 2027-03-15
+    status: pending
+    owner: 醫務企劃管理室
+  - id: ACCRED-SUBMIT
+    name: 評鑑資料送件
+    category: S1-醫院評鑑
+    due_date: null
+    status: pending
+    owner: 醫務企劃管理室
+  - id: ENERGY-LED-SURVEY
+    name: 全院照明盤點完成
+    category: E2-能源管理
+    due_date: 2026-06-30
+    status: pending
+    owner: 行政組
+  - id: ENERGY-LED-PUB
+    name: 公共區域 LED 汰換完成
+    category: E2-能源管理
+    due_date: 2026-12-31
+    status: pending
+    owner: 行政組
+  - id: ENERGY-AC-SURVEY
+    name: 空調能效普查完成
+    category: E2-能源管理
+    due_date: 2026-09-30
+    status: pending
+    owner: 行政組
+  - id: ACCRED-SELFEVAL
+    name: 評鑑自我評估報告完成
+    category: S1-醫院評鑑
+    due_date: 2026-12-31
+    status: pending
+    owner: 醫務企劃管理室
+  - id: ESG-RPT-2025
+    name: 年度 ESG 報告書發布
+    category: G1-ESG治理
+    due_date: 2026-04-30
+    status: pending
+    owner: 醫務企劃管理室
+  - id: ESG-Q1-MTG
+    name: ESG 委員會 Q1 會議
+    category: G1-ESG治理
+    due_date: 2026-03-20
+    status: pending
+    owner: 醫務企劃管理室
+  - id: ESG-Q2-MTG
+    name: ESG 委員會 Q2 會議
+    category: G1-ESG治理
+    due_date: 2026-06-19
+    status: pending
+    owner: 醫務企劃管理室
+  - id: ESG-Q3-MTG
+    name: ESG 委員會 Q3 會議
+    category: G1-ESG治理
+    due_date: 2026-09-18
+    status: pending
+    owner: 醫務企劃管理室
+  - id: ESG-Q4-MTG
+    name: ESG 委員會 Q4 年度會議
+    category: G1-ESG治理
+    due_date: 2026-12-18
+    status: pending
+    owner: 醫務企劃管理室
+  - id: STAKEHOLDER-UPDATE
+    name: 利害關係人矩陣年度更新
+    category: G1-ESG治理
+    due_date: 2026-03-31
+    status: pending
+    owner: 醫務企劃管理室
+  - id: CLIMATE-RISK-UPDATE
+    name: 氣候風險矩陣年度更新
+    category: G1-ESG治理
+    due_date: 2026-03-31
+    status: pending
+    owner: 醫務企劃管理室
+  - id: CONST-PLN-APPROVED
+    name: 建案 ESG 規劃文件核定
+    category: G2-建案管理
+    due_date: 2026-06-30
+    status: pending
+    owner: 行政組
+  - id: CONST-CONTRACT-ESG
+    name: 施工合約 ESG 條款簽訂
+    category: G2-建案管理
+    due_date: 2026-09-30
+    status: pending
+    owner: 行政組
+  - id: CONST-HANDOVER
+    name: 建物點交
+    category: G2-建案管理
+    due_date: null
+    status: pending
+    owner: 行政組
+  - id: CONST-GHG-EXPAND
+    name: 盤查邊界擴充（點交後）
+    category: G2-建案管理
+    due_date: null
+    status: pending
+    owner: 醫務企劃管理室
+  - id: PLN-ANNUAL-NEXT
+    name: 次年 ESG 工作計畫定版
+    category: G3-時程管制
+    due_date: 2026-12-31
+    status: pending
+    owner: 醫務企劃管理室
+  - id: TIMELINE-UPDATE
+    name: 關鍵時程總表年度更新
+    category: G3-時程管制
+    due_date: 2026-12-31
+    status: pending
+    owner: 醫務企劃管理室
