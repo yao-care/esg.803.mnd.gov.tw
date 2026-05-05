@@ -1,0 +1,39 @@
+document_id: FRM-WASTE-MON
+type: FRM
+title_zh: 廢棄物月報表
+title_en: Monthly Waste Monitoring Form
+main:
+  zh: 廢棄物月報表.md
+status: active
+owner: 醫勤組
+effective_date: 2026-05-05
+next_review_date: 2027-05-05
+fields:
+  - name: reporting_month
+    label: 填報月份
+    type: text
+    required: true
+  - name: waste_type
+    label: 廢棄物類型
+    type: select
+    options:
+      - 一般廢棄物
+      - 感染性廢棄物
+      - 有害事業廢棄物
+    required: true
+  - name: weight_kg
+    label: 重量(公斤)
+    type: number
+    required: true
+  - name: disposal_contractor
+    label: 清除處理業者
+    type: text
+    required: true
+  - name: manifest_number
+    label: 廢棄物清運聯單號碼
+    type: text
+    required: true
+  - name: notes
+    label: 備註
+    type: text
+    required: false

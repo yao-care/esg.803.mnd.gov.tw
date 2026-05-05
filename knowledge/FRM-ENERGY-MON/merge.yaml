@@ -1,0 +1,35 @@
+document_id: FRM-ENERGY-MON
+type: FRM
+title_zh: 能源月報表
+title_en: Monthly Energy Monitoring Form
+main:
+  zh: 能源月報表.md
+status: active
+owner: 行政組
+effective_date: 2026-05-05
+next_review_date: 2027-05-05
+fields:
+  - name: reporting_month
+    label: 填報月份
+    type: text
+    required: true
+  - name: zone
+    label: 區域/樓層
+    type: text
+    required: true
+  - name: kwh_current
+    label: 本月用電量(度)
+    type: number
+    required: true
+  - name: kwh_previous_month
+    label: 上月用電量(度)
+    type: number
+    required: false
+  - name: kwh_same_month_last_year
+    label: 去年同月用電量(度)
+    type: number
+    required: false
+  - name: notes
+    label: 備註
+    type: text
+    required: false
