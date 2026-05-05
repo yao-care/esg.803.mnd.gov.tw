@@ -28,7 +28,7 @@
   {"id": 27, "question": "廢棄物月度監測表需記錄哪些項目？", "expected_doc_key": "FRM-WASTE-MON", "identity": "環安衛人員", "category": "E3-廢棄物"},
   {"id": 28, "question": "用水量的監測頻率與記錄方式為何？", "expected_doc_key": "PRO-WATER", "identity": "環安衛人員", "category": "E4-水資源"},
   {"id": 29, "question": "水資源月度監測表的必填欄位有哪些？", "expected_doc_key": "FRM-WATER-MON", "identity": "環安衛人員", "category": "E4-水資源"},
-  {"id": 30, "question": "廢水排放的管制標準與申報頻率為何？", "expected_doc_key": "PRO-WATER", "identity": "環安衛人員", "category": "E4-水資源"},
+  {"id": 30, "question": "水資源管理程序中包含哪些節水與回收措施？", "expected_doc_key": "PRO-WATER", "identity": "環安衛人員", "category": "E4-水資源"},
   {"id": 31, "question": "醫院評鑑的自我評估表填寫流程為何？", "expected_doc_key": "RPT-SELF-EVAL", "identity": "ESG委員會", "category": "S1-醫院評鑑"},
   {"id": 32, "question": "評鑑認證標準對 ESG 相關指標的要求為何？", "expected_doc_key": "STD-ACCRED", "identity": "ESG委員會", "category": "S1-醫院評鑑"},
   {"id": 33, "question": "本院自我評估報告中哪些項目列為改善重點？", "expected_doc_key": "RPT-SELF-EVAL", "identity": "ESG委員會", "category": "S1-醫院評鑑"},
@@ -43,10 +43,10 @@
   {"id": 42, "question": "ESG 委員會的決策層級與呈報對象為何？", "expected_doc_key": "PRO-ESG-COMMITTEE", "identity": "ESG委員會", "category": "G1-ESG治理"},
   {"id": 43, "question": "建案施工進度里程碑如何記錄與追蹤？", "expected_doc_key": "FRM-MILESTONE", "identity": "設施管理員", "category": "G2-建案管理"},
   {"id": 44, "question": "綠建築設計指引的適用範圍與評估項目？", "expected_doc_key": "GDL-GREEN-BUILD", "identity": "設施管理員", "category": "G2-建案管理"},
-  {"id": 45, "question": "建案施工期間的工程進度月報填寫規範？", "expected_doc_key": "FRM-PROGRESS", "identity": "設施管理員", "category": "G2-建案管理"},
+  {"id": 45, "question": "ESG 月度進度表的填報欄位與流程為何？", "expected_doc_key": "FRM-PROGRESS", "identity": "設施管理員", "category": "G2-建案管理"},
   {"id": 46, "question": "年度 ESG 工作計畫的 Q1 行動項目有哪些？", "expected_doc_key": "PLN-ANNUAL", "identity": "ESG委員會", "category": "G3-時程管制"},
   {"id": 47, "question": "溫盤查證完成後的後續行動時間表為何？", "expected_doc_key": "MTX-TIMELINE", "identity": "碳盤查管理員", "category": "G3-時程管制"},
-  {"id": 48, "question": "各月分配的 ESG 重要事項與截止日期？", "expected_doc_key": "MTX-TIMELINE", "identity": "ESG委員會", "category": "G3-時程管制"},
+  {"id": 48, "question": "關鍵時程總表中有哪些里程碑與截止日期？", "expected_doc_key": "MTX-TIMELINE", "identity": "ESG委員會", "category": "G3-時程管制"},
   {"id": 49, "question": "年度能源管理計畫的執行時程與查核點？", "expected_doc_key": "PLN-ENERGY", "identity": "設施管理員", "category": "G3-時程管制"},
   {"id": 50, "question": "ESG 年度計畫中各工作項目的負責單位分工？", "expected_doc_key": "PLN-ANNUAL", "identity": "ESG委員會", "category": "G3-時程管制"}
 ]
