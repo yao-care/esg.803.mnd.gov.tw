@@ -856,17 +856,19 @@ function generateHtmlReport(results) {
   const dynCardValue = dynCount === 0 ? 'N/A' : (dynHits === dynCount && dynAnswered === dynCount && dynCited === dynCount ? '100%' : pct(Math.min(dynHits, dynAnswered, dynCited), dynCount));
   const dynCardClass = dynCount === 0 ? 'warn' : (dynHits >= dynCount && dynAnswered >= dynCount && dynCited >= dynCount ? 'pass' : 'fail');
 
-  const sourceBreakdownCards = `<div class="cards" style="grid-template-columns: 1fr 1fr;">
-  <div class="card">
-    <div class="card-value ${seedCardClass}">${seedCardValue}</div>
-    <div class="card-label">種子題（${seedCount} 題）</div>
-    <div class="card-sub">搜尋 ${seedHits}/${seedCount} ｜ 回答 ${seedAnswered}/${seedCount} ｜ 引文 ${seedCited}/${seedCount}</div>
-  </div>
+  const dynCard = dynCount > 0 ? `
   <div class="card">
     <div class="card-value ${dynCardClass}">${dynCardValue}</div>
     <div class="card-label">動態題（${dynCount} 題）</div>
     <div class="card-sub">搜尋 ${dynHits}/${dynCount} ｜ 回答 ${dynAnswered}/${dynCount} ｜ 引文 ${dynCited}/${dynCount}</div>
-  </div>
+  </div>` : '';
+  const gridCols = dynCount > 0 ? '1fr 1fr' : '1fr';
+  const sourceBreakdownCards = `<div class="cards" style="grid-template-columns: ${gridCols};">
+  <div class="card">
+    <div class="card-value ${seedCardClass}">${seedCardValue}</div>
+    <div class="card-label">種子題（${seedCount} 題）</div>
+    <div class="card-sub">搜尋 ${seedHits}/${seedCount} ｜ 回答 ${seedAnswered}/${seedCount} ｜ 引文 ${seedCited}/${seedCount}</div>
+  </div>${dynCard}
 </div>`;
 
   const footerOrg = orgName ? `${escHtml(orgName)} &mdash; ` : '';
