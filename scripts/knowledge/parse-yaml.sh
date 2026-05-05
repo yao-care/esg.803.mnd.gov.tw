@@ -13,5 +13,5 @@ python3 -c "
 import yaml, json, sys
 with open(sys.argv[1], 'r') as f:
     data = yaml.safe_load(f)
-print(json.dumps(data, ensure_ascii=False))
+print(json.dumps(data, ensure_ascii=False, default=str))
 " "$1"

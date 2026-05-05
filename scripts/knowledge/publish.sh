@@ -5,9 +5,10 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+KNOWLEDGE_SCRIPT_DIR="$SCRIPT_DIR"
 source "$SCRIPT_DIR/../lib/shell-config.sh"
 
-MERGE="$SCRIPT_DIR/merge.sh"
+MERGE="$KNOWLEDGE_SCRIPT_DIR/merge.sh"
 DOCS_DIR="$PROJECT_ROOT/$DOCUMENTS_PATH"
 OUTPUT="/tmp/knowledge-publish-$$"
 LOCAL_ONLY=false
@@ -73,7 +74,7 @@ if [ -d "$PROJECT_ROOT/$PROJECTS_PATH" ]; then
     [ ! -d "$proj_dir" ] && continue
     proj_name=$(basename "$proj_dir")
     mkdir -p "$OUTPUT/projects/$proj_name"
-    "$SCRIPT_DIR/generate-project-dashboard.sh" "$proj_name" "$OUTPUT/projects/$proj_name" 2>/dev/null || echo "  WARN: dashboard for $proj_name failed"
+    "$KNOWLEDGE_SCRIPT_DIR/generate-project-dashboard.sh" "$proj_name" "$OUTPUT/projects/$proj_name" 2>/dev/null || echo "  WARN: dashboard for $proj_name failed"
   done
 fi
 
@@ -81,7 +82,7 @@ fi
 cp "$PROJECT_ROOT/templates/styles.css" "$OUTPUT/styles.css"
 
 # Generate index
-"$SCRIPT_DIR/generate-dashboard.sh" "$OUTPUT" "$DOCS_DIR"
+"$KNOWLEDGE_SCRIPT_DIR/generate-dashboard.sh" "$OUTPUT" "$DOCS_DIR"
 
 echo ""
 if [ "$LOCAL_ONLY" = true ]; then

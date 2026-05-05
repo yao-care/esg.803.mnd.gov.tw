@@ -16,6 +16,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 PARSE_YAML="$SCRIPT_DIR/parse-yaml.sh"
+MERGE_SCRIPT_DIR="$SCRIPT_DIR"
 source "$SCRIPT_DIR/../lib/shell-config.sh"
 
 # ── Validate arguments ──
