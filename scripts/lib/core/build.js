@@ -33,6 +33,7 @@
 
 const fs   = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 const { loadConfig, PROJECT_ROOT } = require('./config.js');
 const { chunkMarkdown, chunkCollectedResult, chunkReportedRecord } = require('./chunk.js');
@@ -196,9 +197,12 @@ function readDocuments(docsDir, options = {}) {
       continue;
     }
 
+    // Prepend merge.yaml frontmatter to md so chunkMarkdown can read title_zh etc.
+    const mdWithFrontmatter = md.startsWith('---') ? md : `---\n${metaYaml}\n---\n${md}`;
+
     // Chunk the markdown
     const chunkConfig = options.chunk_threshold ? { chunk_threshold: options.chunk_threshold } : {};
-    const docChunks = chunkMarkdown(md, folderName, chunkConfig);
+    const docChunks = chunkMarkdown(mdWithFrontmatter, folderName, chunkConfig);
     chunks.push(...docChunks);
 
     // Determine rendered HTML path (if outputDir is provided)
@@ -400,6 +404,95 @@ function replacePlaceholder(template, marker, defaultPat, value) {
   const escapedDefault = defaultPat.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const re = new RegExp(`/\\*${escapedMarker}\\*/${escapedDefault}`, 'g');
   return template.replace(re, `/*${marker}*/${value}`);
+}
+
+/**
+ * Collect dashboard data from merge.yaml metadata and git history.
+ * Returns a JSON-serializable object for injection into the template.
+ */
+function collectDashboardData(docsDir, metadataFilename, config) {
+  const documents = [];
+  const today = new Date().toISOString().slice(0, 10);
+
+  if (fs.existsSync(docsDir)) {
+    for (const entry of fs.readdirSync(docsDir, { withFileTypes: true })) {
+      if (!entry.isDirectory() || entry.name.startsWith('_')) continue;
+      const metaPath = path.join(docsDir, entry.name, metadataFilename);
+      const yaml = readFileSafe(metaPath);
+      if (!yaml) continue;
+
+      const get = (key) => {
+        const m = yaml.match(new RegExp(`^${key}:\\s*(.+)$`, 'm'));
+        return m ? m[1].trim() : '';
+      };
+
+      documents.push({
+        doc_id: get('document_id'),
+        folder: entry.name,
+        type: get('type'),
+        title: get('title_zh'),
+        title_en: get('title_en'),
+        status: get('status') || 'draft',
+        owner: get('owner'),
+        effective_date: get('effective_date'),
+        next_review_date: get('next_review_date'),
+      });
+    }
+  }
+
+  // Git log (recent 20 commits touching knowledge/)
+  let gitLog = [];
+  try {
+    const raw = execSync(
+      `git log --format="%H|%ai|%s" -20 -- "${docsDir}"`,
+      { cwd: PROJECT_ROOT, encoding: 'utf8', timeout: 10000 }
+    ).trim();
+    if (raw) {
+      gitLog = raw.split('\n').map(line => {
+        const [hash, date, ...msgParts] = line.split('|');
+        return { hash: (hash || '').slice(0, 7), date: (date || '').slice(0, 10), message: msgParts.join('|') };
+      });
+    }
+  } catch { /* git not available or not a repo */ }
+
+  // QA report summary (latest)
+  let qaSummary = null;
+  const reportsDir = path.join(PROJECT_ROOT, 'data', 'reports');
+  if (fs.existsSync(reportsDir)) {
+    const reports = fs.readdirSync(reportsDir)
+      .filter(f => f.startsWith('assistant-report-') && f.endsWith('.md'))
+      .sort()
+      .reverse();
+    if (reports.length > 0) {
+      const content = readFileSafe(path.join(reportsDir, reports[0])) || '';
+      const searchHit = content.match(/搜尋命中率[：:]\s*([\d.]+)%/);
+      const answerRate = content.match(/回答率[：:]\s*([\d.]+)%/);
+      const citationAcc = content.match(/引用準確率[：:]\s*([\d.]+)%/);
+      qaSummary = {
+        report: reports[0],
+        date: reports[0].replace('assistant-report-', '').replace('.md', ''),
+        search_hit_rate: searchHit ? parseFloat(searchHit[1]) : null,
+        answer_rate: answerRate ? parseFloat(answerRate[1]) : null,
+        citation_accuracy: citationAcc ? parseFloat(citationAcc[1]) : null,
+      };
+    }
+  }
+
+  // Collectors status from config
+  const collectors = (config.collectors || []).map(c => ({
+    id: c.id, enabled: c.enabled !== false,
+  }));
+
+  return {
+    build_time: new Date().toISOString().slice(0, 19).replace('T', ' '),
+    build_date: today,
+    kb_name: (config.knowledge_body || {}).name || '',
+    organization: (config.knowledge_body || {}).organization || '',
+    documents,
+    git_log: gitLog,
+    qa_summary: qaSummary,
+    collectors,
+  };
 }
 
 /**
@@ -810,6 +903,16 @@ async function build(overrides = {}) {
       }
     }
     template = replacePlaceholder(template, '__GLOSSARY__', '{}', glossaryJson);
+
+    // Inject dashboard data
+    const docsDir = docsPath || path.join(PROJECT_ROOT, 'knowledge');
+    const dashboardData = collectDashboardData(
+      docsDir,
+      domain.metadata_filename || 'merge.yaml',
+      config
+    );
+    dashboardData.total_chunks = profileChunks.length;
+    template = replacePlaceholder(template, '__DASHBOARD_DATA__', '{}', JSON.stringify(dashboardData));
 
     // Replace APP_CONFIG
     template = template.replace(
