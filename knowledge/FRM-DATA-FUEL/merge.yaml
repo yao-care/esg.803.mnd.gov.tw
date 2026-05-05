@@ -1,0 +1,37 @@
+document_id: FRM-DATA-FUEL
+type: FRM
+title_zh: 油料月報表
+title_en: Monthly Fuel Data Collection Form
+main:
+  zh: 油料月報表.md
+status: active
+owner: 行政組
+effective_date: 2026-05-05
+next_review_date: 2027-05-05
+fields:
+  - name: reporting_month
+    label: 填報月份
+    type: text
+    required: true
+  - name: fuel_type
+    label: 燃料種類
+    type: select
+    options: [超級柴油, 95無鉛汽油, 92無鉛汽油, 車用尿素]
+    required: true
+  - name: equipment
+    label: 設備/車輛
+    type: text
+    required: true
+  - name: purchase_volume
+    label: 購買量
+    type: number
+    required: true
+  - name: unit
+    label: 單位
+    type: select
+    options: [公秉, 公升]
+    required: true
+  - name: receipt_ref
+    label: 憑證編號
+    type: text
+    required: true

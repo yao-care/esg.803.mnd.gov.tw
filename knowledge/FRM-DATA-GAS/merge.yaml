@@ -1,0 +1,40 @@
+document_id: FRM-DATA-GAS
+type: FRM
+title_zh: 氣體及滅火器紀錄表
+title_en: Gas Cylinder and Fire Extinguisher Record Form
+main:
+  zh: 氣體滅火器紀錄表.md
+status: active
+owner: 行政組
+effective_date: 2026-05-05
+next_review_date: 2027-05-05
+fields:
+  - name: date
+    label: 日期
+    type: text
+    required: true
+  - name: category
+    label: 類別
+    type: select
+    options: [麻醉氣體, CO2鋼瓶, 混合氣體鋼瓶, CO2滅火器, FM-200滅火器]
+    required: true
+  - name: item_name
+    label: 品項名稱
+    type: text
+    required: true
+  - name: quantity
+    label: 數量
+    type: number
+    required: true
+  - name: unit_fill_amount
+    label: 單位填充量
+    type: number
+    required: true
+  - name: total_fill_kg
+    label: 總填充量(公斤)
+    type: number
+    required: true
+  - name: source_ref
+    label: 來源憑證
+    type: text
+    required: true

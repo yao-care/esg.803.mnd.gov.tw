@@ -1,0 +1,39 @@
+document_id: FRM-DATA-ELEC
+type: FRM
+title_zh: 電力月報表
+title_en: Monthly Electricity Data Collection Form
+main:
+  zh: 電力月報表.md
+status: active
+owner: 行政組
+effective_date: 2026-05-05
+next_review_date: 2027-05-05
+fields:
+  - name: reporting_month
+    label: 填報月份
+    type: text
+    required: true
+  - name: meter_number
+    label: 電表號碼
+    type: text
+    required: true
+  - name: kwh_reading
+    label: 用電度數
+    type: number
+    required: true
+  - name: billing_period
+    label: 計費期間
+    type: text
+    required: true
+  - name: tenant_deduction
+    label: 租用單位扣除度數
+    type: number
+    required: true
+  - name: net_kwh
+    label: 淨用電度數
+    type: number
+    required: true
+  - name: bill_ref
+    label: 電費帳單編號
+    type: text
+    required: true
