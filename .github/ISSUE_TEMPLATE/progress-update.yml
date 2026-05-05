@@ -1,0 +1,58 @@
+name: "ESG 月度進度回報"
+description: "每月各構面進度更新"
+labels: ["progress", "monthly"]
+body:
+  - type: input
+    id: reporting_month
+    attributes:
+      label: 填報月份
+      placeholder: "YYYY-MM"
+    validations:
+      required: true
+  - type: dropdown
+    id: dimension
+    attributes:
+      label: ESG 構面
+      options:
+        - E1-碳盤查
+        - E2-能源管理
+        - E3-廢棄物
+        - E4-水資源
+        - S1-醫院評鑑
+        - S2-職業安全
+        - S3-社區參與
+        - G1-ESG治理
+        - G2-建案管理
+        - G3-時程管制
+    validations:
+      required: true
+  - type: textarea
+    id: task_description
+    attributes:
+      label: 工作項目說明
+    validations:
+      required: true
+  - type: dropdown
+    id: status
+    attributes:
+      label: 狀態
+      options:
+        - 未開始
+        - 進行中
+        - 完成
+        - 延遲
+    validations:
+      required: true
+  - type: input
+    id: completion_pct
+    attributes:
+      label: 完成度 (%)
+      placeholder: "0-100"
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: 備註
+    validations:
+      required: false

@@ -1,0 +1,61 @@
+name: "職災/異常事件通報"
+description: "通報職業安全衛生事件"
+labels: ["incident", "S2-職業安全"]
+body:
+  - type: input
+    id: incident_date
+    attributes:
+      label: 事件日期
+      placeholder: "YYYY-MM-DD"
+    validations:
+      required: true
+  - type: input
+    id: location
+    attributes:
+      label: 發生地點
+      placeholder: "例：急診室、3樓護理站"
+    validations:
+      required: true
+  - type: dropdown
+    id: incident_type
+    attributes:
+      label: 事件類型
+      options:
+        - 針扎
+        - 跌倒
+        - 化學暴露
+        - 輻射暴露
+        - 暴力事件
+        - 其他
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: 事件描述
+      placeholder: "請詳細描述事件經過"
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 傷害程度
+      options:
+        - 輕微
+        - 中度
+        - 嚴重
+    validations:
+      required: true
+  - type: textarea
+    id: immediate_action
+    attributes:
+      label: 立即處置措施
+      placeholder: "已採取的緊急處理"
+    validations:
+      required: true
+  - type: input
+    id: reporter
+    attributes:
+      label: 通報人姓名
+    validations:
+      required: true

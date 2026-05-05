@@ -1,0 +1,50 @@
+name: "病患滿意度調查"
+description: "病患滿意度資料登錄"
+labels: ["survey", "S3-社區參與"]
+body:
+  - type: input
+    id: survey_date
+    attributes:
+      label: 調查日期
+      placeholder: "YYYY-MM-DD"
+    validations:
+      required: true
+  - type: dropdown
+    id: overall_rating
+    attributes:
+      label: 整體滿意度
+      options:
+        - "1-非常不滿意"
+        - "2-不滿意"
+        - "3-普通"
+        - "4-滿意"
+        - "5-非常滿意"
+    validations:
+      required: true
+  - type: dropdown
+    id: cleanliness
+    attributes:
+      label: 環境清潔
+      options: ["1", "2", "3", "4", "5"]
+    validations:
+      required: true
+  - type: dropdown
+    id: staff_attitude
+    attributes:
+      label: 人員態度
+      options: ["1", "2", "3", "4", "5"]
+    validations:
+      required: true
+  - type: dropdown
+    id: wait_time
+    attributes:
+      label: 等候時間
+      options: ["1", "2", "3", "4", "5"]
+    validations:
+      required: true
+  - type: textarea
+    id: comments
+    attributes:
+      label: 其他意見
+    validations:
+      required: false
