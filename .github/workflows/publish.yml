@@ -8,32 +8,54 @@ on:
       - 'imports/**'
       - '_meta/**'
       - 'templates/**'
+      - 'scripts/knowledge/**'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
+  guard:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { sparse-checkout: 'config.json', sparse-checkout-cone-mode: false }
+      - id: check
+        run: '[ -f config.json ] && echo "should_run=true" >> "$GITHUB_OUTPUT" || echo "::notice::Template repo — skipping"'
+
   publish:
+    needs: guard
+    if: needs.guard.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with: { node-version: '20' }
       - run: npm ci
-      - name: Publish
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Publish documents
         run: bash scripts/knowledge/publish.sh
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+      - name: Push audit branch
+        run: git push origin audit --force
+      - name: Checkout main
+        run: git checkout main
       - name: Validate records
         run: npm run validate-records || true
       - name: Build assistant
         run: npm run build:assistant
         env:
           AKORA_BUILD_TOKEN: ${{ secrets.AKORA_BUILD_TOKEN }}
-      - name: Generate index
-        run: bash scripts/report/generate-index.sh
-      - name: Commit results
+      - name: Commit and push
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
           git diff --cached --quiet || git commit -m "publish: render $(date +%Y%m%d-%H%M%S)"
           git push
