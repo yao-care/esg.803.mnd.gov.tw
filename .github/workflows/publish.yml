@@ -48,6 +48,8 @@ jobs:
         run: git push origin audit --force
       - name: Checkout main
         run: git checkout main
+      - name: Restore dependencies
+        run: npm ci
       - name: Validate records
         run: npm run validate-records || true
       - name: Build assistant
