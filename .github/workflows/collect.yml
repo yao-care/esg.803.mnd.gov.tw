@@ -1,7 +1,7 @@
 name: Collect Data
 on:
   schedule:
-    - cron: '0 1 * * *'  # Wizard will customize cron schedule
+    - cron: '0 6 * * *'  # Daily 06:00 UTC (14:00 Taiwan) for deadline-check
   workflow_dispatch:
     inputs:
       collector:
