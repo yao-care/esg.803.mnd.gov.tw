@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>hospital-esg — 文件總覽</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<style>/* ============================================================
+ * OKLCH Design System — System Integration Quality Control
+ * 感知均勻的淺色主題配色 + 字級系統
+ *
+ * 設計原則：
+ *   - 淺色背景適合列印和簡報投影
+ *   - 嚴重度色彩在淺底上保持足夠對比 (WCAG AA 4.5:1+)
+ *   - 色彩 Lightness 統一壓低至 0.45-0.55 確保可讀性
+ * ============================================================ */
+
+:root {
+  /* ── 背景層級 ── */
+  --bg-base:     oklch(0.97 0.005 250);   /* 近白 */
+  --bg-surface:  oklch(0.94 0.005 250);   /* 淺灰 */
+  --bg-overlay:  oklch(0.90 0.008 250);   /* 表頭灰 */
+  --bg-hover:    oklch(0.92 0.005 250);   /* hover */
+
+  /* ── 文字層級 ── */
+  --text-primary:   oklch(0.20 0.01 250);   /* 近黑 */
+  --text-secondary: oklch(0.45 0.01 250);   /* 中灰 */
+  --text-muted:     oklch(0.60 0.008 250);  /* 淺灰 */
+
+  /* ── 嚴重度色彩（L 壓低至 0.45-0.55，確保淺底對比） ── */
+  --color-critical: oklch(0.55 0.22 25);    /* 紅 */
+  --color-high:     oklch(0.55 0.16 55);    /* 橘 */
+  --color-medium:   oklch(0.52 0.14 80);    /* 暗琥珀（黃在淺底需更深） */
+  --color-low:      oklch(0.52 0.13 240);   /* 藍 */
+
+  /* ── 狀態色彩 ── */
+  --color-pass:  oklch(0.48 0.16 150);      /* 森林綠 */
+  --color-fail:  oklch(0.55 0.22 25);       /* 同 critical */
+  --color-warn:  oklch(0.52 0.14 80);       /* 同 medium */
+  --color-info:  oklch(0.52 0.13 240);      /* 同 low */
+
+  /* ── 功能色彩 ── */
+  --color-link:   oklch(0.48 0.15 250);     /* 連結藍 */
+  --color-purple: oklch(0.50 0.17 300);     /* 滲透測試紫 */
+  --color-cyan:   oklch(0.48 0.10 200);     /* SBOM 青 */
+  --color-pink:   oklch(0.52 0.17 340);     /* Schema 粉 */
+  --color-indigo: oklch(0.48 0.15 280);     /* SGE 靛 */
+
+  /* ── 邊框 ── */
+  --border-subtle: oklch(0.85 0.005 250);
+
+  /* ── 字級系統（最小 18px，卡片數字 48px） ── */
+  --text-xs:   1.125rem;   /* 18px — 徽章、標籤 */
+  --text-sm:   1.25rem;    /* 20px — 表格內文 */
+  --text-base: 1.5rem;     /* 24px — 正文 */
+  --text-lg:   1.75rem;    /* 28px — 強調文字 */
+  --text-xl:   2rem;       /* 32px — 區段標題 */
+  --text-2xl:  3rem;       /* 48px — 摘要卡片數字 */
+  --text-3xl:  3.5rem;     /* 56px — 報告標題 */
+}
+
+/* ── Fallback for browsers without OKLCH ── */
+@supports not (color: oklch(0 0 0)) {
+  :root {
+    --bg-base:     #f5f6f8;
+    --bg-surface:  #ecedf0;
+    --bg-overlay:  #dfe0e5;
+    --bg-hover:    #e5e6ea;
+
+    --text-primary:   #1e2030;
+    --text-secondary: #5e6070;
+    --text-muted:     #8a8c98;
+
+    --color-critical: #c93135;
+    --color-high:     #b86a2a;
+    --color-medium:   #8a7020;
+    --color-low:      #2a6bb8;
+
+    --color-pass:  #1e8050;
+    --color-fail:  #c93135;
+    --color-warn:  #8a7020;
+    --color-info:  #2a6bb8;
+
+    --color-link:   #1e5ab8;
+    --color-purple: #7830b8;
+    --color-cyan:   #1e7a8a;
+    --color-pink:   #b8306a;
+    --color-indigo: #4830b8;
+
+    --border-subtle: #d5d6da;
+  }
+}
+
+/* ── Base styles ── */
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: var(--text-base);
+  line-height: 1.6;
+}
+
+/* ── Utility classes ── */
+.text-primary   { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted     { color: var(--text-muted); }
+
+.text-critical { color: var(--color-critical); }
+.text-high     { color: var(--color-high); }
+.text-medium   { color: var(--color-medium); }
+.text-low      { color: var(--color-low); }
+.text-pass     { color: var(--color-pass); }
+.text-fail     { color: var(--color-fail); }
+.text-warn     { color: var(--color-warn); }
+.text-info     { color: var(--color-info); }
+.text-link     { color: var(--color-link); }
+.text-purple   { color: var(--color-purple); }
+.text-cyan     { color: var(--color-cyan); }
+.text-pink     { color: var(--color-pink); }
+.text-indigo   { color: var(--color-indigo); }
+
+.bg-base    { background: var(--bg-base); }
+.bg-surface { background: var(--bg-surface); }
+.bg-overlay { background: var(--bg-overlay); }
+
+.border-subtle { border-color: var(--border-subtle); }
+
+/* ── Status badges ── */
+.status-pass { color: var(--color-pass); font-weight: 600; }
+.status-fail { color: var(--color-fail); font-weight: 600; }
+.status-warn { color: var(--color-warn); font-weight: 600; }
+
+/* ── Severity badges ── */
+.badge {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+.badge-critical { background: oklch(0.92 0.06 25);  color: var(--color-critical); }
+.badge-high     { background: oklch(0.92 0.04 55);  color: var(--color-high); }
+.badge-medium   { background: oklch(0.92 0.04 80);  color: var(--color-medium); }
+.badge-low      { background: oklch(0.92 0.03 240); color: var(--color-low); }
+
+@supports not (color: oklch(0 0 0)) {
+  .badge-critical { background: #fce8e8; }
+  .badge-high     { background: #fceee8; }
+  .badge-medium   { background: #fcf5e8; }
+  .badge-low      { background: #e8f0fc; }
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--bg-surface);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  text-align: center;
+}
+.card-value {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+}
+.card-label {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* ── Tables ── */
+.table-container {
+  background: var(--bg-surface);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+.table-container table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table-container thead {
+  background: var(--bg-overlay);
+}
+.table-container th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.table-container td {
+  padding: 0.5rem 1rem;
+  font-size: var(--text-sm);
+}
+.table-container tbody tr {
+  border-top: 1px solid var(--border-subtle);
+}
+.table-container tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+/* ── Links ── */
+a { color: var(--color-link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Code blocks ── */
+pre {
+  background: oklch(0.92 0.005 250);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+}
+
+@supports not (color: oklch(0 0 0)) {
+  pre { background: #e8e9ed; }
+}
+
+/* ── Quality gate ── */
+.qg-pass { color: var(--color-pass); }
+.qg-fail { color: var(--color-fail); }
+
+/* ── Font size classes ── */
+.fs-xs   { font-size: var(--text-xs); }
+.fs-sm   { font-size: var(--text-sm); }
+.fs-base { font-size: var(--text-base); }
+.fs-lg   { font-size: var(--text-lg); }
+.fs-xl   { font-size: var(--text-xl); }
+.fs-2xl  { font-size: var(--text-2xl); }
+.fs-3xl  { font-size: var(--text-3xl); }
+
+/* ============================================================
+ * Code Syntax Highlighting — Pandoc skylighting classes
+ * 配色遵循 OKLCH 設計系統，Lightness 0.40-0.60 確保淺底可讀性
+ * ============================================================ */
+
+div.sourceCode {
+  background: oklch(0.96 0.005 250);
+  border: 1px solid oklch(0.88 0.01 250);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+pre.sourceCode { margin: 0; padding: 0; background: transparent; }
+code.sourceCode { font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace; }
+
+/* Keywords, control flow, imports */
+code.sourceCode span.kw,
+code.sourceCode span.cf,
+code.sourceCode span.im { color: oklch(0.45 0.15 300); font-weight: 600; }
+
+/* Data types, builtins */
+code.sourceCode span.dt,
+code.sourceCode span.bu { color: oklch(0.45 0.12 220); }
+
+/* Strings, chars */
+code.sourceCode span.st,
+code.sourceCode span.vs,
+code.sourceCode span.ss,
+code.sourceCode span.ch,
+code.sourceCode span.sc { color: oklch(0.45 0.12 150); }
+
+/* Numbers */
+code.sourceCode span.dv,
+code.sourceCode span.bn,
+code.sourceCode span.fl { color: oklch(0.50 0.14 50); }
+
+/* Comments */
+code.sourceCode span.co { color: oklch(0.60 0.02 250); font-style: italic; }
+
+/* Operators */
+code.sourceCode span.op { color: oklch(0.40 0.10 30); }
+
+/* Functions */
+code.sourceCode span.fu { color: oklch(0.45 0.14 250); }
+
+/* Decorators, attributes, preprocessor */
+code.sourceCode span.at { color: oklch(0.50 0.12 80); }
+code.sourceCode span.pp { color: oklch(0.50 0.12 80); font-weight: 600; }
+
+/* Errors, alerts */
+code.sourceCode span.al { color: oklch(0.50 0.18 25); font-weight: 600; }
+code.sourceCode span.er { color: oklch(0.50 0.18 25); text-decoration: underline; }
+
+/* Line number links */
+code.sourceCode span a { color: oklch(0.65 0.02 250); text-decoration: none; }
+code.sourceCode span a:hover { text-decoration: underline; }</style>
+</head>
+<body style="background:#f5f6f8;color:#1e2030;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<div style="max-width:1100px;margin:0 auto;padding:2rem;">
+
+<div style="margin-bottom:2rem;">
+  <div style="font-size:14px;color:#8a8c98;"></div>
+  <h1 style="font-size:48px;font-weight:700;margin:0.25rem 0;">hospital-esg 文件總覽</h1>
+  <p style="font-size:20px;color:#5e6070;">醫院 ESG 管理系統 — Document Library</p>
+</div>
+
+<h2 style="font-size:28px;font-weight:700;margin-bottom:1rem;border-bottom:2px solid #dfe0e5;padding-bottom:0.5rem;">核心文件 Core Documents</h2>
+<table style="width:100%;border-collapse:collapse;margin-bottom:2rem;background:#ecedf0;border-radius:8px;overflow:hidden;">
+<tr style="background:#dfe0e5;"><th style="padding:10px 14px;text-align:left;font-size:14px;font-weight:600;">ID</th><th style="padding:10px 14px;text-align:left;font-size:14px;font-weight:600;">文件名稱 Document</th><th style="padding:10px 14px;text-align:center;font-size:14px;font-weight:600;">版本</th><th style="padding:10px 14px;text-align:center;font-size:14px;font-weight:600;">狀態</th><th style="padding:10px 14px;text-align:center;font-size:14px;font-weight:600;">最後修改</th></tr>
+
+</table>
+
+<h2 style="font-size:28px;font-weight:700;margin-bottom:1rem;border-bottom:2px solid #dfe0e5;padding-bottom:0.5rem;">附屬文件 Supporting Documents</h2>
+<table style="width:100%;border-collapse:collapse;margin-bottom:2rem;background:#ecedf0;border-radius:8px;overflow:hidden;">
+<tr style="background:#dfe0e5;"><th style="padding:10px 14px;text-align:left;font-size:14px;font-weight:600;">ID</th><th style="padding:10px 14px;text-align:left;font-size:14px;font-weight:600;">文件名稱 Document</th><th style="padding:10px 14px;text-align:center;font-size:14px;font-weight:600;">版本</th><th style="padding:10px 14px;text-align:center;font-size:14px;font-weight:600;">狀態</th><th style="padding:10px 14px;text-align:center;font-size:14px;font-weight:600;">最後修改</th></tr>
+<tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="forms/FRM-DATA-ELEC/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">FRM-DATA-ELEC</a></td><td style="padding:10px 14px;">電力月報表<br><span style="color:#8a8c98;font-size:14px;">Monthly Electricity Data Collection Form</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="forms/FRM-DATA-FUEL/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">FRM-DATA-FUEL</a></td><td style="padding:10px 14px;">油料月報表<br><span style="color:#8a8c98;font-size:14px;">Monthly Fuel Data Collection Form</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="forms/FRM-DATA-GAS/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">FRM-DATA-GAS</a></td><td style="padding:10px 14px;">氣體及滅火器紀錄表<br><span style="color:#8a8c98;font-size:14px;">Gas Cylinder and Fire Extinguisher Record Form</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="forms/FRM-DATA-REF/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">FRM-DATA-REF</a></td><td style="padding:10px 14px;">冷媒紀錄表<br><span style="color:#8a8c98;font-size:14px;">Refrigerant Record Form</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="forms/FRM-ENERGY-MON/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">FRM-ENERGY-MON</a></td><td style="padding:10px 14px;">能源月報表<br><span style="color:#8a8c98;font-size:14px;">Monthly Energy Monitoring Form</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="forms/FRM-INCIDENT/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">FRM-INCIDENT</a></td><td style="padding:10px 14px;">職災異常事件通報表<br><span style="color:#8a8c98;font-size:14px;">Incident Report Form</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="forms/FRM-MILESTONE/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">FRM-MILESTONE</a></td><td style="padding:10px 14px;">建案里程碑追蹤表<br><span style="color:#8a8c98;font-size:14px;">Construction Project Milestone Tracking Form</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="forms/FRM-PROGRESS/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">FRM-PROGRESS</a></td><td style="padding:10px 14px;">ESG 月度進度表<br><span style="color:#8a8c98;font-size:14px;">ESG Monthly Progress Form</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="forms/FRM-SATISFACTION/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">FRM-SATISFACTION</a></td><td style="padding:10px 14px;">病患滿意度調查表<br><span style="color:#8a8c98;font-size:14px;">Patient Satisfaction Survey Form</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="forms/FRM-WASTE-MON/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">FRM-WASTE-MON</a></td><td style="padding:10px 14px;">廢棄物月報表<br><span style="color:#8a8c98;font-size:14px;">Monthly Waste Monitoring Form</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="forms/FRM-WATER-MON/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">FRM-WATER-MON</a></td><td style="padding:10px 14px;">用水月報表<br><span style="color:#8a8c98;font-size:14px;">Monthly Water Monitoring Form</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/GDL-CALC-METHOD/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">GDL-CALC-METHOD</a></td><td style="padding:10px 14px;">溫室氣體計算方法指引<br><span style="color:#8a8c98;font-size:14px;">GHG Calculation Method Guideline</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/GDL-EQUIP/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">GDL-EQUIP</a></td><td style="padding:10px 14px;">節能設備選用指引<br><span style="color:#8a8c98;font-size:14px;">Energy-Efficient Equipment Selection Guideline</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/GDL-GREEN-BUILD/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">GDL-GREEN-BUILD</a></td><td style="padding:10px 14px;">綠建築設計指引<br><span style="color:#8a8c98;font-size:14px;">Green Building Design Guideline</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/MTX-EMISSION/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">MTX-EMISSION</a></td><td style="padding:10px 14px;">排放源清冊<br><span style="color:#8a8c98;font-size:14px;">Emission Source Inventory Matrix</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/MTX-RISK-CLIMATE/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">MTX-RISK-CLIMATE</a></td><td style="padding:10px 14px;">氣候風險評估矩陣(TCFD)<br><span style="color:#8a8c98;font-size:14px;">Climate Risk Assessment Matrix (TCFD)</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/MTX-STAKEHOLDER/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">MTX-STAKEHOLDER</a></td><td style="padding:10px 14px;">利害關係人鑑別矩陣<br><span style="color:#8a8c98;font-size:14px;">Stakeholder Identification Matrix</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/MTX-TIMELINE/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">MTX-TIMELINE</a></td><td style="padding:10px 14px;">關鍵時程總表<br><span style="color:#8a8c98;font-size:14px;">Master Timeline Matrix</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/PLN-ANNUAL/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">PLN-ANNUAL</a></td><td style="padding:10px 14px;">年度 ESG 工作計畫<br><span style="color:#8a8c98;font-size:14px;">Annual ESG Action Plan</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/PLN-CONSTRUCTION/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">PLN-CONSTRUCTION</a></td><td style="padding:10px 14px;">建案 ESG 規劃<br><span style="color:#8a8c98;font-size:14px;">Construction Project ESG Plan</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/PLN-ENERGY/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">PLN-ENERGY</a></td><td style="padding:10px 14px;">節能減碳行動計畫<br><span style="color:#8a8c98;font-size:14px;">Energy Conservation and Carbon Reduction Action Plan</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/POL-ESG/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">POL-ESG</a></td><td style="padding:10px 14px;">ESG 政策聲明<br><span style="color:#8a8c98;font-size:14px;">ESG Policy Statement</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/PRO-ESG-COMMITTEE/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">PRO-ESG-COMMITTEE</a></td><td style="padding:10px 14px;">ESG 委員會運作程序<br><span style="color:#8a8c98;font-size:14px;">ESG Committee Operation Procedure</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/PRO-GHG-INV/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">PRO-GHG-INV</a></td><td style="padding:10px 14px;">溫室氣體盤查程序書<br><span style="color:#8a8c98;font-size:14px;">GHG Inventory Procedure</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/PRO-GHG-VERIFY/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">PRO-GHG-VERIFY</a></td><td style="padding:10px 14px;">溫室氣體查證程序書<br><span style="color:#8a8c98;font-size:14px;">GHG Verification Procedure</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/PRO-OHS/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">PRO-OHS</a></td><td style="padding:10px 14px;">職業安全衛生管理程序<br><span style="color:#8a8c98;font-size:14px;">Occupational Health and Safety Management Procedure</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/PRO-WASTE/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">PRO-WASTE</a></td><td style="padding:10px 14px;">醫療廢棄物管理程序<br><span style="color:#8a8c98;font-size:14px;">Medical Waste Management Procedure</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/PRO-WATER/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">PRO-WATER</a></td><td style="padding:10px 14px;">水資源管理程序<br><span style="color:#8a8c98;font-size:14px;">Water Resource Management Procedure</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/REG-OHS-COMMITTEE/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">REG-OHS-COMMITTEE</a></td><td style="padding:10px 14px;">職安衛委員會會議紀錄<br><span style="color:#8a8c98;font-size:14px;">OHS Committee Meeting Record</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/RPT-COMMUNITY/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">RPT-COMMUNITY</a></td><td style="padding:10px 14px;">社區醫療服務報告<br><span style="color:#8a8c98;font-size:14px;">Community Healthcare Service Report</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/RPT-GHG-2023/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">RPT-GHG-2023</a></td><td style="padding:10px 14px;">2023年溫室氣體盤查報告書<br><span style="color:#8a8c98;font-size:14px;">2023 GHG Inventory Report</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/RPT-GHG-2025/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">RPT-GHG-2025</a></td><td style="padding:10px 14px;">2025年溫室氣體盤查報告書<br><span style="color:#8a8c98;font-size:14px;">2025 GHG Inventory Report</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/RPT-SELF-EVAL/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">RPT-SELF-EVAL</a></td><td style="padding:10px 14px;">自評報告<br><span style="color:#8a8c98;font-size:14px;">Self-Evaluation Report</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/STD-ACCRED/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">STD-ACCRED</a></td><td style="padding:10px 14px;">醫院評鑑基準摘要<br><span style="color:#8a8c98;font-size:14px;">Teaching Hospital Accreditation Criteria Summary</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr><tr style="border-bottom:1px solid #dfe0e5;"><td style="padding:10px 14px;"><a href="documents/STD-WASTE-REG/index.html" style="color:#2a6bb8;text-decoration:none;font-weight:600;">STD-WASTE-REG</a></td><td style="padding:10px 14px;">廢棄物管理法規摘要<br><span style="color:#8a8c98;font-size:14px;">Waste Management Regulatory Summary</span></td><td style="padding:10px 14px;text-align:center;">v</td><td style="padding:10px 14px;text-align:center;"><span style="font-size:14px;"></span></td><td style="padding:10px 14px;text-align:center;color:#8a8c98;">2026-05-05</td></tr>
+</table>
+
+<div style="margin-top:2rem;padding:1.5rem;background:#ecedf0;border-radius:8px;text-align:center;">
+  <a href="assistant.html" target="_blank" style="font-size:24px;font-weight:700;color:#1e5ab8;text-decoration:none;">ESG 管理助理</a>
+  <p style="margin-top:0.5rem;font-size:16px;color:#5e6070;">AI 輔助的 Q&amp;A 與模擬評鑑演練</p>
+</div>
+
+<footer style="margin-top:3rem;padding-top:1rem;border-top:1px solid #dfe0e5;font-size:14px;color:#8a8c98;">
+   · 產出時間 Generated: 2026-05-05 14:18 UTC
+</footer>
+</div>
+</body>
+</html>

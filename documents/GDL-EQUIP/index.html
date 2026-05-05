@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GDL-EQUIP 節能設備選用指引</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+/* ============================================================
+ * OKLCH Design System — System Integration Quality Control
+ * 感知均勻的淺色主題配色 + 字級系統
+ *
+ * 設計原則：
+ *   - 淺色背景適合列印和簡報投影
+ *   - 嚴重度色彩在淺底上保持足夠對比 (WCAG AA 4.5:1+)
+ *   - 色彩 Lightness 統一壓低至 0.45-0.55 確保可讀性
+ * ============================================================ */
+
+:root {
+  /* ── 背景層級 ── */
+  --bg-base:     oklch(0.97 0.005 250);   /* 近白 */
+  --bg-surface:  oklch(0.94 0.005 250);   /* 淺灰 */
+  --bg-overlay:  oklch(0.90 0.008 250);   /* 表頭灰 */
+  --bg-hover:    oklch(0.92 0.005 250);   /* hover */
+
+  /* ── 文字層級 ── */
+  --text-primary:   oklch(0.20 0.01 250);   /* 近黑 */
+  --text-secondary: oklch(0.45 0.01 250);   /* 中灰 */
+  --text-muted:     oklch(0.60 0.008 250);  /* 淺灰 */
+
+  /* ── 嚴重度色彩（L 壓低至 0.45-0.55，確保淺底對比） ── */
+  --color-critical: oklch(0.55 0.22 25);    /* 紅 */
+  --color-high:     oklch(0.55 0.16 55);    /* 橘 */
+  --color-medium:   oklch(0.52 0.14 80);    /* 暗琥珀（黃在淺底需更深） */
+  --color-low:      oklch(0.52 0.13 240);   /* 藍 */
+
+  /* ── 狀態色彩 ── */
+  --color-pass:  oklch(0.48 0.16 150);      /* 森林綠 */
+  --color-fail:  oklch(0.55 0.22 25);       /* 同 critical */
+  --color-warn:  oklch(0.52 0.14 80);       /* 同 medium */
+  --color-info:  oklch(0.52 0.13 240);      /* 同 low */
+
+  /* ── 功能色彩 ── */
+  --color-link:   oklch(0.48 0.15 250);     /* 連結藍 */
+  --color-purple: oklch(0.50 0.17 300);     /* 滲透測試紫 */
+  --color-cyan:   oklch(0.48 0.10 200);     /* SBOM 青 */
+  --color-pink:   oklch(0.52 0.17 340);     /* Schema 粉 */
+  --color-indigo: oklch(0.48 0.15 280);     /* SGE 靛 */
+
+  /* ── 邊框 ── */
+  --border-subtle: oklch(0.85 0.005 250);
+
+  /* ── 字級系統（最小 18px，卡片數字 48px） ── */
+  --text-xs:   1.125rem;   /* 18px — 徽章、標籤 */
+  --text-sm:   1.25rem;    /* 20px — 表格內文 */
+  --text-base: 1.5rem;     /* 24px — 正文 */
+  --text-lg:   1.75rem;    /* 28px — 強調文字 */
+  --text-xl:   2rem;       /* 32px — 區段標題 */
+  --text-2xl:  3rem;       /* 48px — 摘要卡片數字 */
+  --text-3xl:  3.5rem;     /* 56px — 報告標題 */
+}
+
+/* ── Fallback for browsers without OKLCH ── */
+@supports not (color: oklch(0 0 0)) {
+  :root {
+    --bg-base:     #f5f6f8;
+    --bg-surface:  #ecedf0;
+    --bg-overlay:  #dfe0e5;
+    --bg-hover:    #e5e6ea;
+
+    --text-primary:   #1e2030;
+    --text-secondary: #5e6070;
+    --text-muted:     #8a8c98;
+
+    --color-critical: #c93135;
+    --color-high:     #b86a2a;
+    --color-medium:   #8a7020;
+    --color-low:      #2a6bb8;
+
+    --color-pass:  #1e8050;
+    --color-fail:  #c93135;
+    --color-warn:  #8a7020;
+    --color-info:  #2a6bb8;
+
+    --color-link:   #1e5ab8;
+    --color-purple: #7830b8;
+    --color-cyan:   #1e7a8a;
+    --color-pink:   #b8306a;
+    --color-indigo: #4830b8;
+
+    --border-subtle: #d5d6da;
+  }
+}
+
+/* ── Base styles ── */
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: var(--text-base);
+  line-height: 1.6;
+}
+
+/* ── Utility classes ── */
+.text-primary   { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted     { color: var(--text-muted); }
+
+.text-critical { color: var(--color-critical); }
+.text-high     { color: var(--color-high); }
+.text-medium   { color: var(--color-medium); }
+.text-low      { color: var(--color-low); }
+.text-pass     { color: var(--color-pass); }
+.text-fail     { color: var(--color-fail); }
+.text-warn     { color: var(--color-warn); }
+.text-info     { color: var(--color-info); }
+.text-link     { color: var(--color-link); }
+.text-purple   { color: var(--color-purple); }
+.text-cyan     { color: var(--color-cyan); }
+.text-pink     { color: var(--color-pink); }
+.text-indigo   { color: var(--color-indigo); }
+
+.bg-base    { background: var(--bg-base); }
+.bg-surface { background: var(--bg-surface); }
+.bg-overlay { background: var(--bg-overlay); }
+
+.border-subtle { border-color: var(--border-subtle); }
+
+/* ── Status badges ── */
+.status-pass { color: var(--color-pass); font-weight: 600; }
+.status-fail { color: var(--color-fail); font-weight: 600; }
+.status-warn { color: var(--color-warn); font-weight: 600; }
+
+/* ── Severity badges ── */
+.badge {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+.badge-critical { background: oklch(0.92 0.06 25);  color: var(--color-critical); }
+.badge-high     { background: oklch(0.92 0.04 55);  color: var(--color-high); }
+.badge-medium   { background: oklch(0.92 0.04 80);  color: var(--color-medium); }
+.badge-low      { background: oklch(0.92 0.03 240); color: var(--color-low); }
+
+@supports not (color: oklch(0 0 0)) {
+  .badge-critical { background: #fce8e8; }
+  .badge-high     { background: #fceee8; }
+  .badge-medium   { background: #fcf5e8; }
+  .badge-low      { background: #e8f0fc; }
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--bg-surface);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  text-align: center;
+}
+.card-value {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+}
+.card-label {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* ── Tables ── */
+.table-container {
+  background: var(--bg-surface);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+.table-container table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table-container thead {
+  background: var(--bg-overlay);
+}
+.table-container th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.table-container td {
+  padding: 0.5rem 1rem;
+  font-size: var(--text-sm);
+}
+.table-container tbody tr {
+  border-top: 1px solid var(--border-subtle);
+}
+.table-container tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+/* ── Links ── */
+a { color: var(--color-link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Code blocks ── */
+pre {
+  background: oklch(0.92 0.005 250);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+}
+
+@supports not (color: oklch(0 0 0)) {
+  pre { background: #e8e9ed; }
+}
+
+/* ── Quality gate ── */
+.qg-pass { color: var(--color-pass); }
+.qg-fail { color: var(--color-fail); }
+
+/* ── Font size classes ── */
+.fs-xs   { font-size: var(--text-xs); }
+.fs-sm   { font-size: var(--text-sm); }
+.fs-base { font-size: var(--text-base); }
+.fs-lg   { font-size: var(--text-lg); }
+.fs-xl   { font-size: var(--text-xl); }
+.fs-2xl  { font-size: var(--text-2xl); }
+.fs-3xl  { font-size: var(--text-3xl); }
+
+/* ============================================================
+ * Code Syntax Highlighting — Pandoc skylighting classes
+ * 配色遵循 OKLCH 設計系統，Lightness 0.40-0.60 確保淺底可讀性
+ * ============================================================ */
+
+div.sourceCode {
+  background: oklch(0.96 0.005 250);
+  border: 1px solid oklch(0.88 0.01 250);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+pre.sourceCode { margin: 0; padding: 0; background: transparent; }
+code.sourceCode { font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace; }
+
+/* Keywords, control flow, imports */
+code.sourceCode span.kw,
+code.sourceCode span.cf,
+code.sourceCode span.im { color: oklch(0.45 0.15 300); font-weight: 600; }
+
+/* Data types, builtins */
+code.sourceCode span.dt,
+code.sourceCode span.bu { color: oklch(0.45 0.12 220); }
+
+/* Strings, chars */
+code.sourceCode span.st,
+code.sourceCode span.vs,
+code.sourceCode span.ss,
+code.sourceCode span.ch,
+code.sourceCode span.sc { color: oklch(0.45 0.12 150); }
+
+/* Numbers */
+code.sourceCode span.dv,
+code.sourceCode span.bn,
+code.sourceCode span.fl { color: oklch(0.50 0.14 50); }
+
+/* Comments */
+code.sourceCode span.co { color: oklch(0.60 0.02 250); font-style: italic; }
+
+/* Operators */
+code.sourceCode span.op { color: oklch(0.40 0.10 30); }
+
+/* Functions */
+code.sourceCode span.fu { color: oklch(0.45 0.14 250); }
+
+/* Decorators, attributes, preprocessor */
+code.sourceCode span.at { color: oklch(0.50 0.12 80); }
+code.sourceCode span.pp { color: oklch(0.50 0.12 80); font-weight: 600; }
+
+/* Errors, alerts */
+code.sourceCode span.al { color: oklch(0.50 0.18 25); font-weight: 600; }
+code.sourceCode span.er { color: oklch(0.50 0.18 25); text-decoration: underline; }
+
+/* Line number links */
+code.sourceCode span a { color: oklch(0.65 0.02 250); text-decoration: none; }
+code.sourceCode span a:hover { text-decoration: underline; }
+
+/* ── Document-specific styles ── */
+
+/* Header title area */
+.doc-header {
+  border-bottom: 3px solid var(--color-link);
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.doc-header .doc-id {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.doc-header .doc-title-zh {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+  margin-top: 0.25rem;
+}
+
+.doc-header .doc-title-en {
+  font-size: var(--text-lg);
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+/* Metadata grid */
+.doc-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  background: var(--bg-surface);
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+  border: 1px solid var(--border-subtle);
+}
+
+.doc-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.doc-meta-label {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.doc-meta-value {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* Content typography */
+.doc-content {
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  line-height: 1.7;
+}
+
+.doc-content h1 {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--border-subtle);
+}
+
+.doc-content h2 {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 1.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.doc-content h3 {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.doc-content p {
+  margin-bottom: 1rem;
+}
+
+.doc-content ul,
+.doc-content ol {
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.doc-content ul {
+  list-style-type: disc;
+}
+
+.doc-content ol {
+  list-style-type: decimal;
+}
+
+.doc-content li {
+  margin-bottom: 0.35rem;
+}
+
+.doc-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.25rem;
+  font-size: var(--text-sm);
+  background: var(--bg-surface);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.doc-content table thead {
+  background: var(--bg-overlay);
+}
+
+.doc-content table th {
+  padding: 0.6rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+.doc-content table td {
+  padding: 0.5rem 1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.doc-content table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+/* Version history */
+.version-history {
+  background: var(--bg-surface);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+
+.version-history-entry {
+  display: grid;
+  grid-template-columns: 9rem 7rem 1fr;
+  gap: 1rem;
+  padding: 0.6rem 1.25rem;
+  border-top: 1px solid var(--border-subtle);
+  font-size: var(--text-sm);
+  align-items: start;
+}
+
+.version-history-entry:first-child {
+  border-top: none;
+}
+
+.version-history-header {
+  display: grid;
+  grid-template-columns: 9rem 7rem 1fr;
+  gap: 1rem;
+  padding: 0.6rem 1.25rem;
+  background: var(--bg-overlay);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.version-history-date {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.version-history-hash {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--color-link);
+  font-size: var(--text-xs);
+}
+
+.version-history-msg {
+  color: var(--text-primary);
+}
+
+/* Reference section */
+.ref-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.ref-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  transition: background 0.15s;
+}
+
+.ref-card:hover {
+  background: var(--bg-hover);
+}
+
+.ref-link {
+  color: var(--color-link);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.ref-link:hover {
+  text-decoration: underline;
+}
+
+.ref-desc {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* Automation badge */
+.automation-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1.5px solid var(--color-pass);
+  color: var(--color-pass);
+  background: oklch(0.97 0.02 150);
+  border-radius: 9999px;
+  padding: 0.2rem 0.8rem;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+@supports not (color: oklch(0 0 0)) {
+  .automation-badge {
+    background: #edf7f0;
+  }
+}
+
+/* Automation source section */
+.automation-source {
+  background: oklch(0.95 0.015 150);
+  border-left: 4px solid var(--color-pass);
+  border-radius: 0 0.5rem 0.5rem 0;
+  padding: 1rem 1.25rem;
+  margin-bottom: 2rem;
+  font-size: var(--text-sm);
+}
+
+@supports not (color: oklch(0 0 0)) {
+  .automation-source {
+    background: #edf7f0;
+  }
+}
+
+.automation-source .automation-title {
+  font-weight: 700;
+  color: var(--color-pass);
+  margin-bottom: 0.35rem;
+}
+
+/* Section wrappers */
+.section-block {
+  margin-bottom: 2.5rem;
+}
+
+.section-title {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--border-subtle);
+  margin-bottom: 1.25rem;
+}
+
+/* Footer */
+.doc-footer {
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 3rem;
+  padding-top: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+  </style>
+</head>
+<body class="min-h-screen" style="background: var(--bg-base);">
+
+  <div class="max-w-5xl mx-auto px-6 py-10">
+
+    <!-- ══ Header ══ -->
+    <header class="doc-header">
+      <div class="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <div class="doc-id">GDL-EQUIP</div>
+          <div class="doc-title-zh">節能設備選用指引</div>
+          <div class="doc-title-en">Energy-Efficient Equipment Selection Guideline</div>
+        </div>
+        <div class="flex items-center gap-2 pt-1">
+          <span class="badge" style="background: oklch(0.92 0.04 80); color: var(--color-warn);">Draft</span>
+          
+        </div>
+      </div>
+    </header>
+
+    <!-- ══ Metadata grid ══ -->
+    <div class="doc-meta">
+      <div class="doc-meta-item">
+        <span class="doc-meta-label">文件版本</span>
+        <span class="doc-meta-value">v1.0</span>
+      </div>
+      <div class="doc-meta-item">
+        <span class="doc-meta-label">機密等級</span>
+        <span class="doc-meta-value">internal</span>
+      </div>
+      <div class="doc-meta-item">
+        <span class="doc-meta-label">文件負責人</span>
+        <span class="doc-meta-value"></span>
+      </div>
+      <div class="doc-meta-item">
+        <span class="doc-meta-label">核准人</span>
+        <span class="doc-meta-value"></span>
+      </div>
+      <div class="doc-meta-item">
+        <span class="doc-meta-label">生效日期</span>
+        <span class="doc-meta-value"></span>
+      </div>
+      <div class="doc-meta-item">
+        <span class="doc-meta-label">下次審查</span>
+        <span class="doc-meta-value"></span>
+      </div>
+      <div class="doc-meta-item">
+        <span class="doc-meta-label">最後修改</span>
+        <span class="doc-meta-value">2026-05-05</span>
+      </div>
+      {{#if ISO_CONTROLS}}<div class="doc-meta-item">
+        <span class="doc-meta-label">__CONTROL_NAME__</span>
+        <span class="doc-meta-value"></span>
+      </div>{{/if}}
+    </div>
+
+    <!-- ══ Automation source (empty if not automated) ══ -->
+    
+
+    <!-- ══ Main content ══ -->
+    <div class="section-block doc-content">
+      <pre># 節能設備選用指引
+
+document_id: GDL-EQUIP
+
+## 1. 指引目的與範圍
+
+本指引提供國軍臺中總醫院採購節能設備時之選用建議，協助採購人員、行政組及各單位主管，在設備汰換與新採購決策時有一致的能效評估標準，以落實 PLN-ENERGY 節能減碳行動計畫之目標。
+
+本指引為**非強制性文件**，所列標準為建議門檻值，實際採購應以政府採購法規定之程序辦理。採購單位得依實際預算及設備規格，參考本指引要求作為技術規格訂定之依據。
+
+本指引適用之設備類型：照明設備、空調設備（分離式冷氣機、冷水主機）、醫療輔助設備（含一般辦公設備）。
+
+## 2. 適用對象
+
+| 對象 | 使用時機 |
+|------|------|
+| 行政組採購承辦人 | 設備採購規格訂定 |
+| 聯合採購小組 | 共同採購規格審查 |
+| 各單位主管 | 提出設備需求申請時的能效說明 |
+| 醫務企劃管理室 | ESG 績效追蹤時之標準依據 |
+
+## 3. 指引內容
+
+### 3.1 照明設備 — LED 燈具
+
+#### 3.1.1 汰換判斷原則
+
+建議優先汰換以下類型之既有照明：
+
+- T8 傳統螢光燈管（使用年限超過 5 年者）
+- 鹵素燈、白熾燈（任何年限，一律建議汰換）
+- 金屬鹵化物燈（HID，使用年限超過 3 年者）
+
+#### 3.1.2 LED 燈具建議規格
+
+| 規格項目 | 建議值 | 說明 |
+|------|------|------|
+| 發光效率（Luminous Efficacy） | ≥ 100 lm/W | T8 LED 燈管；標準辦公照明 |
+| 演色指數（CRI / Ra） | ≥ 80 | 病房、診間建議 ≥ 90 |
+| 色溫 | 3000K～5000K | 依空間用途選擇；手術室宜 4000K 以上 |
+| 功率因數（Power Factor） | ≥ 0.9 | 降低諧波污染 |
+| 壽命 | ≥ 35,000 小時 | L70（光通量維持 70% 時之壽命） |
+| 能源標章 | 1 級或 2 級 | 依經濟部能源署能源標章等級 |
+| CNS 認證 | 應具備 | CNS 15630 系列或對應認證 |
+
+#### 3.1.3 節電效益估算公式
+
+**年節電量（度）=（舊燈具瓦數 - LED 瓦數）× 每日使用小時 × 365 / 1000**
+
+| 變數 | 單位 | 說明 |
+|------|------|------|
+| 舊燈具瓦數 | W | 原有燈具標示功率（含安定器損耗） |
+| LED 瓦數 | W | LED 燈具輸入功率 |
+| 每日使用小時 | h/day | 該空間平均每日照明使用時數 |
+
+**計算範例：** 以 T8 40W 傳統燈管（含安定器約 48W）換為 20W LED 燈管，每日使用 12 小時：
+
+年節電量 = (48 - 20) × 12 × 365 / 1000 = **122.64 度/支/年**
+
+### 3.2 空調設備 — 分離式冷氣機
+
+#### 3.2.1 汰換判斷原則
+
+建議優先汰換：
+
+- 使用年限超過 10 年之舊型定頻機
+- 能源標章等級低於 3 級之機種（或無能源標章）
+- 使用 R-22 冷媒之舊機（符合環保法規淘汰期限）
+
+#### 3.2.2 分離式冷氣機建議規格
+
+| 規格項目 | 建議值 | 說明 |
+|------|------|------|
+| 冷氣能源效率比（EER / CSPF） | CSPF ≥ 4.5（變頻機） | 依 CNS 14464 測試標準 |
+| 能源標章等級 | 1 級 | 年耗電量最省之等級 |
+| 型式 | 變頻式（Inverter） | 較定頻機節電 20%~40% |
+| 冷媒種類 | R-32 或 R-410A | 建議選用 R-32（GWP 較低：677 vs 1,923.5） |
+| 噪音（室內機） | ≤ 40 dB(A) | 病房區宜 ≤ 35 dB(A) |
+
+#### 3.2.3 能效比較計算
+
+**年節電量（度）= 冷凍噸數 × 年操作小時 / EER（舊） - 冷凍噸數 × 年操作小時 / EER（新）**
+
+**範例：** 2 噸分離式冷氣（舊機 EER=2.5，新機 CSPF=4.5），全年操作 2,000 小時：
+
+- 舊機年耗電 = 2 × 3.517（kW/冷凍噸）× 2000 / 2.5 = **5,627 度**
+- 新機年耗電 = 2 × 3.517 × 2000 / 4.5 = **3,126 度**
+- **年節電 = 2,501 度**
+
+### 3.3 冷水主機（Chiller）— 中央空調
+
+#### 3.3.1 選用建議
+
+| 規格項目 | 建議值 | 說明 |
+|------|------|------|
+| 整合部分負載值（IPLV） | ≥ 6.5 kW/RT | 依 AHRI 550/590 標準 |
+| 型式 | 變頻螺旋式或離心式 | 大型冷量（≥200RT）優先考量離心 |
+| 冷媒 | R-134a 或 R-1234ze(E) | 建議低 GWP 冷媒 |
+| 熱回收功能 | 建議納入 | 可回收冷凝熱供熱水使用 |
+| 能源監測介面 | Modbus RTU 或 BACnet | 供能源管理系統介接 |
+
+#### 3.3.2 IPLV 節能計算
+
+**年節電估算（度）= 年冷氣度日（CDDH）× 總冷凍噸 / IPLV**
+
+| 變數 | 說明 |
+|------|------|
+| 年冷氣度日（CDDH） | 臺中地區約 2,400 小時/年（依 CNS 能效計算基準） |
+| 總冷凍噸 | 主機額定冷凍噸數 |
+| IPLV | kW/冷凍噸（越小越節能） |
+
+### 3.4 一般辦公與醫療輔助設備
+
+| 設備類型 | 建議要求 |
+|------|------|
+| 桌上型電腦/主機 | 具備 Energy Star 或相等認證；電源管理設定啟用自動休眠（閒置 15 分鐘後） |
+| 印表機/多功能事務機 | Energy Star 認證；雙面列印設為預設 |
+| 冰箱/冷凍庫（一般） | 能源標章 1 級 |
+| 醫療冰箱（藥品/檢體） | 具能源標章或原廠能耗說明書；年耗電量明確標示 |
+| UPS 不斷電系統 | 轉換效率 ≥ 90%（EC 模式） |
+
+## 4. 參考文獻
+
+### 4.1 內部文件
+
+| document_id | 文件名稱 | 引用內容 |
+|------|------|------|
+| PLN-ENERGY | 節能減碳行動計畫 | 本指引服務之節能目標與 KPI |
+| RPT-GHG-2025 | 2025年溫室氣體盤查報告書 | 外購電力佔排放量 91% 之依據 |
+| MTX-EMISSION | 排放源清冊 | 各排放源（電力、冷媒）之量化基礎 |
+| GDL-CALC-METHOD | 溫室氣體計算方法指引 | 冷媒 GWP 值引用 |
+
+### 4.2 外部標準與法規
+
+| 來源 | 說明 |
+|------|------|
+| 經濟部能源署能源標章制度 | LED、空調、家電之能效等級劃分 |
+| CNS 15630 系列 | LED 燈具安全及電磁相容性要求 |
+| CNS 14464 | 房間空氣調節機能源效率測試方法 |
+| AHRI 550/590 | 冷水主機效能測試標準 |
+| Energy Star（美國環保署） | 辦公設備能效認證標準 |
+| 政府採購法及相關施行細則 | 採購程序規範 |
+| 氟氯碳化物管制法規（環境部） | R-22 冷媒淘汰時程規定 |
+
+## 5. 附錄
+
+### 5.1 設備採購能效審查檢核表
+
+採購申請單位填寫設備需求時，建議檢核以下項目：
+
+| 項目 | 應提供資料 | 符合 |
+|------|------|:---:|
+| 設備類型 | 明確標示（照明/空調/辦公設備等） | ☐ |
+| 能效標章等級 | 附上能源標章或型錄影本 | ☐ |
+| 預估年耗電量 | 依規格計算或廠商提供 | ☐ |
+| 替換舊設備型號 | 說明汰換設備現況（使用年限、能效） | ☐ |
+| 節電效益試算 | 依 3.1.3 或 3.2.3 公式計算 | ☐ |
+| 冷媒種類（空調類） | 確認非受管制冷媒（R-22 禁止採購） | ☐ |
+
+### 5.2 常見問題（Q&amp;A）
+
+**Q1：T8 LED 燈管與 T8 傳統燈管（磁力安定器）相容嗎？**
+A：部分 LED 燈管宣稱相容，但建議同步汰換安定器或採用電子式驅動器，以確保 LED 燈管壽命及安全性。採購時確認廠商提供的相容性說明。
+
+**Q2：採購冷氣機時，如何確認是否為真正變頻機而非假變頻？**
+A：要求廠商提供 CSPF 測試報告（依 CNS 14464 之季節能源效率比），CSPF 數值應明確標示於設備銘板或型錄。真變頻機在部分負載下能效顯著優於定頻機。
+
+**Q3：能源標章 1 級比 2 級節電多少？**
+A：依能源署公告，各類設備能效等級門檻不同。以分離式冷氣為例，1 級 CSPF 約為 2 級之 1.1~1.2 倍，全年節電效益因機型而異，採購時宜直接比較年耗電量數值（標示於能源標章）。
+
+**Q4：小型採購（金額低於公告金額）是否也需遵循本指引？**
+A：本指引為建議性文件，小型採購仍建議以能效標準作為選用依據，以累積全院整體節能效益。</pre>
+    </div>
+
+    <!-- ══ References ══ -->
+    <div class="section-block">
+      <div class="section-title">參考文件</div>
+      <div style="color: var(--text-muted); font-size: var(--text-sm);">（無參考文件）</div>
+    </div>
+
+    <!-- ══ Version history ══ -->
+    <div class="section-block">
+      <div class="section-title">版本歷程</div>
+      <div class="version-history">
+        <div class="version-history-header">
+          <span>日期</span>
+          <span>Commit</span>
+          <span>變更說明</span>
+        </div>
+        <div class="version-history-entry"><span class="version-history-date">2026-05-05</span><span class="version-history-hash">974ee03</span><span class="version-history-msg">feat: E2-E4 environmental skeleton documents (energy, waste, water)</span></div>
+      </div>
+    </div>
+
+    <!-- ══ Footer ══ -->
+    <footer class="doc-footer">
+      <span>__ORGANIZATION__ &mdash; __KB_NAME__</span>
+      <span>產生時間：2026-05-05 14:18:06</span>
+    </footer>
+
+  </div><!-- /max-w-5xl -->
+
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });
+// pandoc outputs <pre class="mermaid"><code>...</code></pre>
+// mermaid expects <pre class="mermaid">...</pre> (no <code> wrapper)
+document.querySelectorAll('pre.mermaid code').forEach(el => {
+  const pre = el.parentElement;
+  pre.textContent = el.textContent;
+  pre.classList.add('mermaid');
+});
+mermaid.run({ querySelector: '.mermaid' });
+</script>
+
+</body>
+</html>

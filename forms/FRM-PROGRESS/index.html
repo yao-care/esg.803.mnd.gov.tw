@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FRM-PROGRESS ESG 月度進度表</title>
+  <style>
+    /* ── OKLCH Design System ── */
+    :root {
+      --bg-base:     oklch(0.97 0.005 250);
+      --bg-surface:  oklch(0.94 0.005 250);
+      --bg-overlay:  oklch(0.90 0.008 250);
+      --bg-hover:    oklch(0.92 0.005 250);
+
+      --text-primary:   oklch(0.20 0.01 250);
+      --text-secondary: oklch(0.45 0.01 250);
+      --text-muted:     oklch(0.60 0.008 250);
+
+      --color-critical: oklch(0.55 0.22 25);
+      --color-high:     oklch(0.55 0.16 55);
+      --color-medium:   oklch(0.52 0.14 80);
+      --color-low:      oklch(0.52 0.13 240);
+
+      --color-pass:  oklch(0.48 0.16 150);
+      --color-fail:  oklch(0.55 0.22 25);
+      --color-warn:  oklch(0.52 0.14 80);
+      --color-info:  oklch(0.52 0.13 240);
+
+      --color-link:   oklch(0.48 0.15 250);
+      --color-purple: oklch(0.50 0.17 300);
+      --color-cyan:   oklch(0.48 0.10 200);
+      --color-pink:   oklch(0.52 0.17 340);
+      --color-indigo: oklch(0.48 0.15 280);
+
+      --border-subtle: oklch(0.85 0.005 250);
+
+      --text-xs:   1.125rem;
+      --text-sm:   1.25rem;
+      --text-base: 1.5rem;
+      --text-lg:   1.75rem;
+      --text-xl:   2rem;
+      --text-2xl:  3rem;
+      --text-3xl:  3.5rem;
+    }
+
+    @supports not (color: oklch(0 0 0)) {
+      :root {
+        --bg-base:     #f5f6f8;
+        --bg-surface:  #ecedf0;
+        --bg-overlay:  #dfe0e5;
+        --bg-hover:    #e5e6ea;
+
+        --text-primary:   #1e2030;
+        --text-secondary: #5e6070;
+        --text-muted:     #8a8c98;
+
+        --color-critical: #c93135;
+        --color-high:     #b86a2a;
+        --color-medium:   #8a7020;
+        --color-low:      #2a6bb8;
+
+        --color-pass:  #1e8050;
+        --color-fail:  #c93135;
+        --color-warn:  #8a7020;
+        --color-info:  #2a6bb8;
+
+        --color-link:   #1e5ab8;
+        --color-purple: #7830b8;
+        --color-cyan:   #1e7a8a;
+        --color-pink:   #b8306a;
+        --color-indigo: #4830b8;
+
+        --border-subtle: #d5d6da;
+      }
+    }
+
+    /* ============================================================
+ * OKLCH Design System — System Integration Quality Control
+ * 感知均勻的淺色主題配色 + 字級系統
+ *
+ * 設計原則：
+ *   - 淺色背景適合列印和簡報投影
+ *   - 嚴重度色彩在淺底上保持足夠對比 (WCAG AA 4.5:1+)
+ *   - 色彩 Lightness 統一壓低至 0.45-0.55 確保可讀性
+ * ============================================================ */
+
+:root {
+  /* ── 背景層級 ── */
+  --bg-base:     oklch(0.97 0.005 250);   /* 近白 */
+  --bg-surface:  oklch(0.94 0.005 250);   /* 淺灰 */
+  --bg-overlay:  oklch(0.90 0.008 250);   /* 表頭灰 */
+  --bg-hover:    oklch(0.92 0.005 250);   /* hover */
+
+  /* ── 文字層級 ── */
+  --text-primary:   oklch(0.20 0.01 250);   /* 近黑 */
+  --text-secondary: oklch(0.45 0.01 250);   /* 中灰 */
+  --text-muted:     oklch(0.60 0.008 250);  /* 淺灰 */
+
+  /* ── 嚴重度色彩（L 壓低至 0.45-0.55，確保淺底對比） ── */
+  --color-critical: oklch(0.55 0.22 25);    /* 紅 */
+  --color-high:     oklch(0.55 0.16 55);    /* 橘 */
+  --color-medium:   oklch(0.52 0.14 80);    /* 暗琥珀（黃在淺底需更深） */
+  --color-low:      oklch(0.52 0.13 240);   /* 藍 */
+
+  /* ── 狀態色彩 ── */
+  --color-pass:  oklch(0.48 0.16 150);      /* 森林綠 */
+  --color-fail:  oklch(0.55 0.22 25);       /* 同 critical */
+  --color-warn:  oklch(0.52 0.14 80);       /* 同 medium */
+  --color-info:  oklch(0.52 0.13 240);      /* 同 low */
+
+  /* ── 功能色彩 ── */
+  --color-link:   oklch(0.48 0.15 250);     /* 連結藍 */
+  --color-purple: oklch(0.50 0.17 300);     /* 滲透測試紫 */
+  --color-cyan:   oklch(0.48 0.10 200);     /* SBOM 青 */
+  --color-pink:   oklch(0.52 0.17 340);     /* Schema 粉 */
+  --color-indigo: oklch(0.48 0.15 280);     /* SGE 靛 */
+
+  /* ── 邊框 ── */
+  --border-subtle: oklch(0.85 0.005 250);
+
+  /* ── 字級系統（最小 18px，卡片數字 48px） ── */
+  --text-xs:   1.125rem;   /* 18px — 徽章、標籤 */
+  --text-sm:   1.25rem;    /* 20px — 表格內文 */
+  --text-base: 1.5rem;     /* 24px — 正文 */
+  --text-lg:   1.75rem;    /* 28px — 強調文字 */
+  --text-xl:   2rem;       /* 32px — 區段標題 */
+  --text-2xl:  3rem;       /* 48px — 摘要卡片數字 */
+  --text-3xl:  3.5rem;     /* 56px — 報告標題 */
+}
+
+/* ── Fallback for browsers without OKLCH ── */
+@supports not (color: oklch(0 0 0)) {
+  :root {
+    --bg-base:     #f5f6f8;
+    --bg-surface:  #ecedf0;
+    --bg-overlay:  #dfe0e5;
+    --bg-hover:    #e5e6ea;
+
+    --text-primary:   #1e2030;
+    --text-secondary: #5e6070;
+    --text-muted:     #8a8c98;
+
+    --color-critical: #c93135;
+    --color-high:     #b86a2a;
+    --color-medium:   #8a7020;
+    --color-low:      #2a6bb8;
+
+    --color-pass:  #1e8050;
+    --color-fail:  #c93135;
+    --color-warn:  #8a7020;
+    --color-info:  #2a6bb8;
+
+    --color-link:   #1e5ab8;
+    --color-purple: #7830b8;
+    --color-cyan:   #1e7a8a;
+    --color-pink:   #b8306a;
+    --color-indigo: #4830b8;
+
+    --border-subtle: #d5d6da;
+  }
+}
+
+/* ── Base styles ── */
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: var(--text-base);
+  line-height: 1.6;
+}
+
+/* ── Utility classes ── */
+.text-primary   { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted     { color: var(--text-muted); }
+
+.text-critical { color: var(--color-critical); }
+.text-high     { color: var(--color-high); }
+.text-medium   { color: var(--color-medium); }
+.text-low      { color: var(--color-low); }
+.text-pass     { color: var(--color-pass); }
+.text-fail     { color: var(--color-fail); }
+.text-warn     { color: var(--color-warn); }
+.text-info     { color: var(--color-info); }
+.text-link     { color: var(--color-link); }
+.text-purple   { color: var(--color-purple); }
+.text-cyan     { color: var(--color-cyan); }
+.text-pink     { color: var(--color-pink); }
+.text-indigo   { color: var(--color-indigo); }
+
+.bg-base    { background: var(--bg-base); }
+.bg-surface { background: var(--bg-surface); }
+.bg-overlay { background: var(--bg-overlay); }
+
+.border-subtle { border-color: var(--border-subtle); }
+
+/* ── Status badges ── */
+.status-pass { color: var(--color-pass); font-weight: 600; }
+.status-fail { color: var(--color-fail); font-weight: 600; }
+.status-warn { color: var(--color-warn); font-weight: 600; }
+
+/* ── Severity badges ── */
+.badge {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+.badge-critical { background: oklch(0.92 0.06 25);  color: var(--color-critical); }
+.badge-high     { background: oklch(0.92 0.04 55);  color: var(--color-high); }
+.badge-medium   { background: oklch(0.92 0.04 80);  color: var(--color-medium); }
+.badge-low      { background: oklch(0.92 0.03 240); color: var(--color-low); }
+
+@supports not (color: oklch(0 0 0)) {
+  .badge-critical { background: #fce8e8; }
+  .badge-high     { background: #fceee8; }
+  .badge-medium   { background: #fcf5e8; }
+  .badge-low      { background: #e8f0fc; }
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--bg-surface);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  text-align: center;
+}
+.card-value {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+}
+.card-label {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* ── Tables ── */
+.table-container {
+  background: var(--bg-surface);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+.table-container table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table-container thead {
+  background: var(--bg-overlay);
+}
+.table-container th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.table-container td {
+  padding: 0.5rem 1rem;
+  font-size: var(--text-sm);
+}
+.table-container tbody tr {
+  border-top: 1px solid var(--border-subtle);
+}
+.table-container tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+/* ── Links ── */
+a { color: var(--color-link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Code blocks ── */
+pre {
+  background: oklch(0.92 0.005 250);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+}
+
+@supports not (color: oklch(0 0 0)) {
+  pre { background: #e8e9ed; }
+}
+
+/* ── Quality gate ── */
+.qg-pass { color: var(--color-pass); }
+.qg-fail { color: var(--color-fail); }
+
+/* ── Font size classes ── */
+.fs-xs   { font-size: var(--text-xs); }
+.fs-sm   { font-size: var(--text-sm); }
+.fs-base { font-size: var(--text-base); }
+.fs-lg   { font-size: var(--text-lg); }
+.fs-xl   { font-size: var(--text-xl); }
+.fs-2xl  { font-size: var(--text-2xl); }
+.fs-3xl  { font-size: var(--text-3xl); }
+
+/* ============================================================
+ * Code Syntax Highlighting — Pandoc skylighting classes
+ * 配色遵循 OKLCH 設計系統，Lightness 0.40-0.60 確保淺底可讀性
+ * ============================================================ */
+
+div.sourceCode {
+  background: oklch(0.96 0.005 250);
+  border: 1px solid oklch(0.88 0.01 250);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+pre.sourceCode { margin: 0; padding: 0; background: transparent; }
+code.sourceCode { font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace; }
+
+/* Keywords, control flow, imports */
+code.sourceCode span.kw,
+code.sourceCode span.cf,
+code.sourceCode span.im { color: oklch(0.45 0.15 300); font-weight: 600; }
+
+/* Data types, builtins */
+code.sourceCode span.dt,
+code.sourceCode span.bu { color: oklch(0.45 0.12 220); }
+
+/* Strings, chars */
+code.sourceCode span.st,
+code.sourceCode span.vs,
+code.sourceCode span.ss,
+code.sourceCode span.ch,
+code.sourceCode span.sc { color: oklch(0.45 0.12 150); }
+
+/* Numbers */
+code.sourceCode span.dv,
+code.sourceCode span.bn,
+code.sourceCode span.fl { color: oklch(0.50 0.14 50); }
+
+/* Comments */
+code.sourceCode span.co { color: oklch(0.60 0.02 250); font-style: italic; }
+
+/* Operators */
+code.sourceCode span.op { color: oklch(0.40 0.10 30); }
+
+/* Functions */
+code.sourceCode span.fu { color: oklch(0.45 0.14 250); }
+
+/* Decorators, attributes, preprocessor */
+code.sourceCode span.at { color: oklch(0.50 0.12 80); }
+code.sourceCode span.pp { color: oklch(0.50 0.12 80); font-weight: 600; }
+
+/* Errors, alerts */
+code.sourceCode span.al { color: oklch(0.50 0.18 25); font-weight: 600; }
+code.sourceCode span.er { color: oklch(0.50 0.18 25); text-decoration: underline; }
+
+/* Line number links */
+code.sourceCode span a { color: oklch(0.65 0.02 250); text-decoration: none; }
+code.sourceCode span a:hover { text-decoration: underline; }
+
+    /* ── Base reset ── */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: var(--text-base);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    a { color: var(--color-link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Utility classes ── */
+    .text-primary   { color: var(--text-primary); }
+    .text-secondary { color: var(--text-secondary); }
+    .text-muted     { color: var(--text-muted); }
+    .text-link      { color: var(--color-link); }
+    .bg-surface     { background: var(--bg-surface); }
+    .border-subtle  { border-color: var(--border-subtle); }
+    .fs-xs   { font-size: var(--text-xs); }
+    .fs-sm   { font-size: var(--text-sm); }
+    .fs-base { font-size: var(--text-base); }
+    .fs-lg   { font-size: var(--text-lg); }
+    .fs-xl   { font-size: var(--text-xl); }
+    .fs-2xl  { font-size: var(--text-2xl); }
+    .fs-3xl  { font-size: var(--text-3xl); }
+
+    /* ── Tables ── */
+    .table-container {
+      background: var(--bg-surface);
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+    .table-container table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .table-container thead {
+      background: var(--bg-overlay);
+    }
+    .table-container th {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-size: var(--text-sm);
+      font-weight: 600;
+    }
+    .table-container td {
+      padding: 0.5rem 1rem;
+      font-size: var(--text-sm);
+    }
+    .table-container tbody tr {
+      border-top: 1px solid var(--border-subtle);
+    }
+    .table-container tbody tr:hover {
+      background: var(--bg-hover);
+    }
+
+    /* ── Page layout ── */
+    .page-wrapper {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+
+    /* ── Document header ── */
+    .doc-header {
+      background: var(--bg-surface);
+      border-radius: 0.5rem;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border-left: 4px solid var(--color-link);
+    }
+    .doc-header .doc-id {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    .doc-header h1 {
+      font-size: var(--text-xl);
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    .doc-header .doc-subtitle {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+    .doc-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .doc-meta-item label {
+      display: block;
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .doc-meta-item span {
+      font-size: var(--text-sm);
+      font-weight: 500;
+    }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      padding: 0.75rem 1rem;
+      background: var(--bg-surface);
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-subtle);
+    }
+    .toolbar-spacer { flex: 1; }
+
+    /* ── Section headings ── */
+    .section {
+      margin-bottom: 2rem;
+    }
+    .section h2 {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--bg-overlay);
+    }
+
+    /* ── Content body ── */
+    .content-body p { margin-bottom: 1rem; }
+    .content-body ul, .content-body ol {
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .content-body li { margin-bottom: 0.25rem; }
+
+    /* ── Form-specific styles ── */
+    .form-field { margin-bottom: 1rem; }
+    .form-field label {
+      display: block;
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .form-field input,
+    .form-field textarea,
+    .form-field select {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--bg-overlay);
+      border-radius: 0.25rem;
+      font-size: var(--text-sm);
+      background: white;
+    }
+    .form-field input:focus,
+    .form-field textarea:focus {
+      border-color: var(--color-link);
+      outline: none;
+    }
+    .btn-print {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      padding: 0.75rem 2rem;
+      border: 1px solid var(--bg-overlay);
+      border-radius: 0.25rem;
+      font-size: var(--text-sm);
+      cursor: pointer;
+    }
+    .btn-toggle {
+      background: var(--color-link);
+      color: white;
+      padding: 0.75rem 2rem;
+      border: none;
+      border-radius: 0.25rem;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-submit {
+      background: var(--color-pass);
+      color: white;
+      padding: 0.75rem 2rem;
+      border: none;
+      border-radius: 0.25rem;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* ── References ── */
+    .references-list {
+      list-style: none;
+      margin: 0;
+    }
+    .references-list li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: var(--text-sm);
+    }
+    .references-list li:last-child { border-bottom: none; }
+
+    /* ── Version history table ── */
+    .version-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .version-table th,
+    .version-table td {
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      font-size: var(--text-sm);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .version-table thead th {
+      background: var(--bg-overlay);
+      font-weight: 600;
+    }
+
+    /* ── Footer ── */
+    .doc-footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-subtle);
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    /* ── Print styles ── */
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white; font-size: 12pt; }
+      .page-wrapper { max-width: 100%; padding: 0; }
+      .doc-header { border-left-color: #1e5ab8; break-inside: avoid; }
+      .section { break-inside: avoid; }
+      .form-field input,
+      .form-field textarea,
+      .form-field select {
+        border: 1px solid #ccc;
+        background: white;
+      }
+      a { color: inherit; text-decoration: none; }
+      .doc-footer { border-top: 1px solid #ccc; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+
+    <!-- Document header -->
+    <div class="doc-header">
+      <div class="doc-id">FRM-PROGRESS</div>
+      <h1>ESG 月度進度表</h1>
+      <div class="doc-subtitle">ESG Monthly Progress Form</div>
+      <div class="doc-meta">
+        <div class="doc-meta-item">
+          <label>版本 Version</label>
+          <span>1.0</span>
+        </div>
+        <div class="doc-meta-item">
+          <label>生效日期 Effective Date</label>
+          <span></span>
+        </div>
+        <div class="doc-meta-item">
+          <label>文件擁有者 Owner</label>
+          <span></span>
+        </div>
+        <div class="doc-meta-item">
+          <label>機密等級 Classification</label>
+          <span>internal</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toolbar (no-print) -->
+    <div class="toolbar no-print">
+      <button id="btn-toggle" class="btn-toggle" onclick="toggleMode()">填寫</button>
+      <button id="btn-submit" class="btn-submit" onclick="submitForm()" style="display:none">提交</button>
+      <div class="toolbar-spacer"></div>
+      <button class="btn-print" onclick="window.print()">列印 Print</button>
+    </div>
+
+    <!-- Main content -->
+    <div class="section">
+      <div class="content-body">
+        <div id="view-mode">
+          <pre># ESG 月度進度表
+
+document_id: FRM-PROGRESS
+
+## 1. 表單說明
+
+本表單供各 ESG 權責單位每月填報各構面工作項目之執行進度，由醫務企劃管理室彙整後作為 ESG 委員會（PRO-ESG-COMMITTEE）季度報告之基礎資料。
+
+**填報週期：** 每月最後一個工作天前完成填報
+
+**填報方式：** 各負責單位依所負責之 ESG 構面填報，一項工作項目填一筆紀錄
+
+**審查人：** 醫務企劃管理室主任
+
+**用途：** ESG 委員會季度會議、MTX-TIMELINE 時程追蹤、PLN-ANNUAL 年度 KPI 監控
+
+## 2. 填報欄位說明
+
+| 欄位 | 說明 | 必填 | 格式 |
+|------|------|:---:|------|
+| 填報月份 | 填報所屬月份 | 是 | YYYY-MM（例如：2026-05） |
+| ESG 構面 | 選擇工作項目所屬 ESG 構面 | 是 | 選單（見下方選項） |
+| 工作項目 | 具體工作描述，參照 PLN-ANNUAL 行動項目名稱 | 是 | 文字（≤ 100 字） |
+| 狀態 | 目前執行狀態 | 是 | 選單（未開始/進行中/完成/延遲） |
+| 完成度(%) | 估計完成百分比 | 是 | 數字（0–100） |
+| 備註 | 進度說明、障礙、預計完成日、延遲原因等 | 否 | 文字 |
+
+**ESG 構面選項：**
+
+| 代碼 | 名稱 | 主要填報單位 |
+|------|------|------|
+| E1-碳盤查 | 溫室氣體盤查相關 | 醫務企劃管理室 |
+| E2-能源管理 | 節能減碳行動計畫相關 | 行政組 |
+| E3-廢棄物 | 廢棄物管理相關 | 行政組 |
+| E4-水資源 | 水資源管理相關 | 行政組 |
+| S1-醫院評鑑 | 評鑑準備與品質管理 | 醫務企劃管理室 |
+| S2-職業安全 | 職安衛管理 | 職業安全衛生室 |
+| S3-社區參與 | 社區健康促進 | 民眾診療服務處 |
+| G1-ESG治理 | ESG 委員會、矩陣更新 | 醫務企劃管理室 |
+| G2-建案管理 | 新建醫療大樓 ESG 管理 | 行政組 |
+| G3-時程管制 | 時程追蹤、計畫更新 | 醫務企劃管理室 |
+
+## 3. 當月填報紀錄表（範例格式）
+
+&gt; 填報人依以下格式填寫，每筆為一個工作項目。實際使用時可複製表格新增列。
+
+| 填報月份 | ESG 構面 | 工作項目 | 狀態 | 完成度(%) | 備註 |
+|------|------|------|------|:---:|------|
+| 2026-05 | E1-碳盤查 | 全年 GHG 數據監控（FRM 表單完整度確認） | 進行中 | 40 | 1–4 月數據已確認，5 月填報中 |
+| 2026-05 | E2-能源管理 | 全院照明燈具盤點 | 進行中 | 30 | 門診區已完成，住院區進行中，預計 6 月完成 |
+| 2026-05 | E2-能源管理 | 能源月報（FRM-ENERGY-MON）填報 | 完成 | 100 | 4 月報告已提交 |
+| 2026-05 | E3-廢棄物 | 廢棄物月報彙整 | 完成 | 100 | 4 月廢棄物清除申報完成 |
+| 2026-05 | E4-水資源 | 用水月報（FRM-WATER-MON）填報 | 完成 | 100 | 4 月用水量已記錄 |
+| 2026-05 | S2-職業安全 | 職安衛委員會月例會 | 完成 | 100 | 5 月 8 日已召開，會議紀錄存查 |
+| 2026-05 | G1-ESG治理 | 利害關係人矩陣年度更新 | 完成 | 100 | 3 月已完成，Q2 委員會議確認 |
+| 2026-05 | G1-ESG治理 | Q2 委員會議議程準備 | 進行中 | 60 | 議程草案已發送，等候各單位進度報告回收 |
+| 2026-05 | G2-建案管理 | 建案里程碑追蹤（FRM-MILESTONE） | 進行中 | 40 | EEWH 設計要求確認中，設計單位意見徵詢中 |
+| 2026-05 | G3-時程管制 | MTX-TIMELINE 月度狀態更新 | 進行中 | 50 | 本月更新中 |
+
+## 4. 延遲項目處理
+
+當工作項目狀態標記為「延遲」時，填報人必須在備註欄說明：
+
+1. **延遲原因**（如：資源不足、外部因素、待協調）
+2. **預計完成日期**（修訂後的目標日期）
+3. **因應措施**（已採取或計畫採取的行動）
+
+醫務企劃管理室收到含「延遲」狀態的填報後，應在 3 個工作天內通知該項目負責單位主管，並確認因應措施可行性。
+
+## 5. 季度彙整報告
+
+每季末月，醫務企劃管理室依當季三個月的 FRM-PROGRESS 填報資料，製作以下彙整分析：
+
+1. **各構面完成度概覽**（以完成度加權平均呈現）
+2. **延遲項目清單**（含延遲天數及因應說明）
+3. **關鍵時程達成率**（對照 MTX-TIMELINE）
+4. **下季重點關注事項**
+
+彙整報告提交 ESG 委員會季度會議審查。
+
+## 6. 相關文件
+
+- **PLN-ANNUAL：** 年度 ESG 工作計畫（行動項目對照基準）
+- **MTX-TIMELINE：** 關鍵時程總表（時程對照依據）
+- **PRO-ESG-COMMITTEE：** ESG 委員會運作程序（彙整報告用途）</pre>
+        </div>
+        <div id="fill-mode" style="display:none">
+          <!-- FILL_MODE_PLACEHOLDER -->
+        </div>
+      </div>
+    </div>
+
+    <!-- References -->
+    <div class="section">
+      <h2>參考文件 References</h2>
+      <div style="color: var(--text-muted); font-size: var(--text-sm);">（無參考文件）</div>
+    </div>
+
+    <!-- Version history -->
+    <div class="section">
+      <h2>版本歷程 Version History</h2>
+      <div class="table-container">
+        <table class="version-table">
+          <thead>
+            <tr>
+              <th>版本 Version</th>
+              <th>日期 Date</th>
+              <th>修訂者 Author</th>
+              <th>摘要 Summary</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>b61e100</code></td><td>2026-05-05</td><td>git</td><td>feat: G1-G3 governance, construction, timeline documents</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RECORDS_PLACEHOLDER -->
+
+    <!-- Footer -->
+    <div class="doc-footer">
+      <span>FRM-PROGRESS v1.0 &mdash; ESG 月度進度表</span>
+      <span></span>
+    </div>
+
+  </div>
+
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });
+document.querySelectorAll('pre.mermaid code').forEach(el => {
+  const pre = el.parentElement;
+  pre.textContent = el.textContent;
+  pre.classList.add('mermaid');
+});
+mermaid.run({ querySelector: '.mermaid' });
+</script>
+
+<!-- FORM_CONFIG_PLACEHOLDER -->
+<script>
+function toggleMode() {
+  const view = document.getElementById('view-mode');
+  const fill = document.getElementById('fill-mode');
+  const btnToggle = document.getElementById('btn-toggle');
+  const btnSubmit = document.getElementById('btn-submit');
+  if (fill.style.display === 'none') {
+    view.style.display = 'none';
+    fill.style.display = 'block';
+    btnToggle.textContent = '檢視';
+    btnSubmit.style.display = '';
+  } else {
+    view.style.display = 'block';
+    fill.style.display = 'none';
+    btnToggle.textContent = '填寫';
+    btnSubmit.style.display = 'none';
+  }
+}
+</script>
+</body>
+</html>

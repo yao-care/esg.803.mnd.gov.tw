@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>POL-ESG ESG 政策聲明</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+/* ============================================================
+ * OKLCH Design System — System Integration Quality Control
+ * 感知均勻的淺色主題配色 + 字級系統
+ *
+ * 設計原則：
+ *   - 淺色背景適合列印和簡報投影
+ *   - 嚴重度色彩在淺底上保持足夠對比 (WCAG AA 4.5:1+)
+ *   - 色彩 Lightness 統一壓低至 0.45-0.55 確保可讀性
+ * ============================================================ */
+
+:root {
+  /* ── 背景層級 ── */
+  --bg-base:     oklch(0.97 0.005 250);   /* 近白 */
+  --bg-surface:  oklch(0.94 0.005 250);   /* 淺灰 */
+  --bg-overlay:  oklch(0.90 0.008 250);   /* 表頭灰 */
+  --bg-hover:    oklch(0.92 0.005 250);   /* hover */
+
+  /* ── 文字層級 ── */
+  --text-primary:   oklch(0.20 0.01 250);   /* 近黑 */
+  --text-secondary: oklch(0.45 0.01 250);   /* 中灰 */
+  --text-muted:     oklch(0.60 0.008 250);  /* 淺灰 */
+
+  /* ── 嚴重度色彩（L 壓低至 0.45-0.55，確保淺底對比） ── */
+  --color-critical: oklch(0.55 0.22 25);    /* 紅 */
+  --color-high:     oklch(0.55 0.16 55);    /* 橘 */
+  --color-medium:   oklch(0.52 0.14 80);    /* 暗琥珀（黃在淺底需更深） */
+  --color-low:      oklch(0.52 0.13 240);   /* 藍 */
+
+  /* ── 狀態色彩 ── */
+  --color-pass:  oklch(0.48 0.16 150);      /* 森林綠 */
+  --color-fail:  oklch(0.55 0.22 25);       /* 同 critical */
+  --color-warn:  oklch(0.52 0.14 80);       /* 同 medium */
+  --color-info:  oklch(0.52 0.13 240);      /* 同 low */
+
+  /* ── 功能色彩 ── */
+  --color-link:   oklch(0.48 0.15 250);     /* 連結藍 */
+  --color-purple: oklch(0.50 0.17 300);     /* 滲透測試紫 */
+  --color-cyan:   oklch(0.48 0.10 200);     /* SBOM 青 */
+  --color-pink:   oklch(0.52 0.17 340);     /* Schema 粉 */
+  --color-indigo: oklch(0.48 0.15 280);     /* SGE 靛 */
+
+  /* ── 邊框 ── */
+  --border-subtle: oklch(0.85 0.005 250);
+
+  /* ── 字級系統（最小 18px，卡片數字 48px） ── */
+  --text-xs:   1.125rem;   /* 18px — 徽章、標籤 */
+  --text-sm:   1.25rem;    /* 20px — 表格內文 */
+  --text-base: 1.5rem;     /* 24px — 正文 */
+  --text-lg:   1.75rem;    /* 28px — 強調文字 */
+  --text-xl:   2rem;       /* 32px — 區段標題 */
+  --text-2xl:  3rem;       /* 48px — 摘要卡片數字 */
+  --text-3xl:  3.5rem;     /* 56px — 報告標題 */
+}
+
+/* ── Fallback for browsers without OKLCH ── */
+@supports not (color: oklch(0 0 0)) {
+  :root {
+    --bg-base:     #f5f6f8;
+    --bg-surface:  #ecedf0;
+    --bg-overlay:  #dfe0e5;
+    --bg-hover:    #e5e6ea;
+
+    --text-primary:   #1e2030;
+    --text-secondary: #5e6070;
+    --text-muted:     #8a8c98;
+
+    --color-critical: #c93135;
+    --color-high:     #b86a2a;
+    --color-medium:   #8a7020;
+    --color-low:      #2a6bb8;
+
+    --color-pass:  #1e8050;
+    --color-fail:  #c93135;
+    --color-warn:  #8a7020;
+    --color-info:  #2a6bb8;
+
+    --color-link:   #1e5ab8;
+    --color-purple: #7830b8;
+    --color-cyan:   #1e7a8a;
+    --color-pink:   #b8306a;
+    --color-indigo: #4830b8;
+
+    --border-subtle: #d5d6da;
+  }
+}
+
+/* ── Base styles ── */
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: var(--text-base);
+  line-height: 1.6;
+}
+
+/* ── Utility classes ── */
+.text-primary   { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted     { color: var(--text-muted); }
+
+.text-critical { color: var(--color-critical); }
+.text-high     { color: var(--color-high); }
+.text-medium   { color: var(--color-medium); }
+.text-low      { color: var(--color-low); }
+.text-pass     { color: var(--color-pass); }
+.text-fail     { color: var(--color-fail); }
+.text-warn     { color: var(--color-warn); }
+.text-info     { color: var(--color-info); }
+.text-link     { color: var(--color-link); }
+.text-purple   { color: var(--color-purple); }
+.text-cyan     { color: var(--color-cyan); }
+.text-pink     { color: var(--color-pink); }
+.text-indigo   { color: var(--color-indigo); }
+
+.bg-base    { background: var(--bg-base); }
+.bg-surface { background: var(--bg-surface); }
+.bg-overlay { background: var(--bg-overlay); }
+
+.border-subtle { border-color: var(--border-subtle); }
+
+/* ── Status badges ── */
+.status-pass { color: var(--color-pass); font-weight: 600; }
+.status-fail { color: var(--color-fail); font-weight: 600; }
+.status-warn { color: var(--color-warn); font-weight: 600; }
+
+/* ── Severity badges ── */
+.badge {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+.badge-critical { background: oklch(0.92 0.06 25);  color: var(--color-critical); }
+.badge-high     { background: oklch(0.92 0.04 55);  color: var(--color-high); }
+.badge-medium   { background: oklch(0.92 0.04 80);  color: var(--color-medium); }
+.badge-low      { background: oklch(0.92 0.03 240); color: var(--color-low); }
+
+@supports not (color: oklch(0 0 0)) {
+  .badge-critical { background: #fce8e8; }
+  .badge-high     { background: #fceee8; }
+  .badge-medium   { background: #fcf5e8; }
+  .badge-low      { background: #e8f0fc; }
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--bg-surface);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  text-align: center;
+}
+.card-value {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+}
+.card-label {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* ── Tables ── */
+.table-container {
+  background: var(--bg-surface);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+.table-container table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table-container thead {
+  background: var(--bg-overlay);
+}
+.table-container th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.table-container td {
+  padding: 0.5rem 1rem;
+  font-size: var(--text-sm);
+}
+.table-container tbody tr {
+  border-top: 1px solid var(--border-subtle);
+}
+.table-container tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+/* ── Links ── */
+a { color: var(--color-link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Code blocks ── */
+pre {
+  background: oklch(0.92 0.005 250);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+}
+
+@supports not (color: oklch(0 0 0)) {
+  pre { background: #e8e9ed; }
+}
+
+/* ── Quality gate ── */
+.qg-pass { color: var(--color-pass); }
+.qg-fail { color: var(--color-fail); }
+
+/* ── Font size classes ── */
+.fs-xs   { font-size: var(--text-xs); }
+.fs-sm   { font-size: var(--text-sm); }
+.fs-base { font-size: var(--text-base); }
+.fs-lg   { font-size: var(--text-lg); }
+.fs-xl   { font-size: var(--text-xl); }
+.fs-2xl  { font-size: var(--text-2xl); }
+.fs-3xl  { font-size: var(--text-3xl); }
+
+/* ============================================================
+ * Code Syntax Highlighting — Pandoc skylighting classes
+ * 配色遵循 OKLCH 設計系統，Lightness 0.40-0.60 確保淺底可讀性
+ * ============================================================ */
+
+div.sourceCode {
+  background: oklch(0.96 0.005 250);
+  border: 1px solid oklch(0.88 0.01 250);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+pre.sourceCode { margin: 0; padding: 0; background: transparent; }
+code.sourceCode { font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace; }
+
+/* Keywords, control flow, imports */
+code.sourceCode span.kw,
+code.sourceCode span.cf,
+code.sourceCode span.im { color: oklch(0.45 0.15 300); font-weight: 600; }
+
+/* Data types, builtins */
+code.sourceCode span.dt,
+code.sourceCode span.bu { color: oklch(0.45 0.12 220); }
+
+/* Strings, chars */
+code.sourceCode span.st,
+code.sourceCode span.vs,
+code.sourceCode span.ss,
+code.sourceCode span.ch,
+code.sourceCode span.sc { color: oklch(0.45 0.12 150); }
+
+/* Numbers */
+code.sourceCode span.dv,
+code.sourceCode span.bn,
+code.sourceCode span.fl { color: oklch(0.50 0.14 50); }
+
+/* Comments */
+code.sourceCode span.co { color: oklch(0.60 0.02 250); font-style: italic; }
+
+/* Operators */
+code.sourceCode span.op { color: oklch(0.40 0.10 30); }
+
+/* Functions */
+code.sourceCode span.fu { color: oklch(0.45 0.14 250); }
+
+/* Decorators, attributes, preprocessor */
+code.sourceCode span.at { color: oklch(0.50 0.12 80); }
+code.sourceCode span.pp { color: oklch(0.50 0.12 80); font-weight: 600; }
+
+/* Errors, alerts */
+code.sourceCode span.al { color: oklch(0.50 0.18 25); font-weight: 600; }
+code.sourceCode span.er { color: oklch(0.50 0.18 25); text-decoration: underline; }
+
+/* Line number links */
+code.sourceCode span a { color: oklch(0.65 0.02 250); text-decoration: none; }
+code.sourceCode span a:hover { text-decoration: underline; }
+
+/* ── Document-specific styles ── */
+
+/* Header title area */
+.doc-header {
+  border-bottom: 3px solid var(--color-link);
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.doc-header .doc-id {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.doc-header .doc-title-zh {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+  margin-top: 0.25rem;
+}
+
+.doc-header .doc-title-en {
+  font-size: var(--text-lg);
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+/* Metadata grid */
+.doc-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  background: var(--bg-surface);
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+  border: 1px solid var(--border-subtle);
+}
+
+.doc-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.doc-meta-label {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.doc-meta-value {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* Content typography */
+.doc-content {
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  line-height: 1.7;
+}
+
+.doc-content h1 {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--border-subtle);
+}
+
+.doc-content h2 {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 1.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.doc-content h3 {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.doc-content p {
+  margin-bottom: 1rem;
+}
+
+.doc-content ul,
+.doc-content ol {
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.doc-content ul {
+  list-style-type: disc;
+}
+
+.doc-content ol {
+  list-style-type: decimal;
+}
+
+.doc-content li {
+  margin-bottom: 0.35rem;
+}
+
+.doc-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.25rem;
+  font-size: var(--text-sm);
+  background: var(--bg-surface);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.doc-content table thead {
+  background: var(--bg-overlay);
+}
+
+.doc-content table th {
+  padding: 0.6rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+.doc-content table td {
+  padding: 0.5rem 1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.doc-content table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+/* Version history */
+.version-history {
+  background: var(--bg-surface);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+
+.version-history-entry {
+  display: grid;
+  grid-template-columns: 9rem 7rem 1fr;
+  gap: 1rem;
+  padding: 0.6rem 1.25rem;
+  border-top: 1px solid var(--border-subtle);
+  font-size: var(--text-sm);
+  align-items: start;
+}
+
+.version-history-entry:first-child {
+  border-top: none;
+}
+
+.version-history-header {
+  display: grid;
+  grid-template-columns: 9rem 7rem 1fr;
+  gap: 1rem;
+  padding: 0.6rem 1.25rem;
+  background: var(--bg-overlay);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.version-history-date {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.version-history-hash {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--color-link);
+  font-size: var(--text-xs);
+}
+
+.version-history-msg {
+  color: var(--text-primary);
+}
+
+/* Reference section */
+.ref-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.ref-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  transition: background 0.15s;
+}
+
+.ref-card:hover {
+  background: var(--bg-hover);
+}
+
+.ref-link {
+  color: var(--color-link);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.ref-link:hover {
+  text-decoration: underline;
+}
+
+.ref-desc {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* Automation badge */
+.automation-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1.5px solid var(--color-pass);
+  color: var(--color-pass);
+  background: oklch(0.97 0.02 150);
+  border-radius: 9999px;
+  padding: 0.2rem 0.8rem;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+@supports not (color: oklch(0 0 0)) {
+  .automation-badge {
+    background: #edf7f0;
+  }
+}
+
+/* Automation source section */
+.automation-source {
+  background: oklch(0.95 0.015 150);
+  border-left: 4px solid var(--color-pass);
+  border-radius: 0 0.5rem 0.5rem 0;
+  padding: 1rem 1.25rem;
+  margin-bottom: 2rem;
+  font-size: var(--text-sm);
+}
+
+@supports not (color: oklch(0 0 0)) {
+  .automation-source {
+    background: #edf7f0;
+  }
+}
+
+.automation-source .automation-title {
+  font-weight: 700;
+  color: var(--color-pass);
+  margin-bottom: 0.35rem;
+}
+
+/* Section wrappers */
+.section-block {
+  margin-bottom: 2.5rem;
+}
+
+.section-title {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--border-subtle);
+  margin-bottom: 1.25rem;
+}
+
+/* Footer */
+.doc-footer {
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 3rem;
+  padding-top: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+  </style>
+</head>
+<body class="min-h-screen" style="background: var(--bg-base);">
+
+  <div class="max-w-5xl mx-auto px-6 py-10">
+
+    <!-- ══ Header ══ -->
+    <header class="doc-header">
+      <div class="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <div class="doc-id">POL-ESG</div>
+          <div class="doc-title-zh">ESG 政策聲明</div>
+          <div class="doc-title-en">ESG Policy Statement</div>
+        </div>
+        <div class="flex items-center gap-2 pt-1">
+          <span class="badge" style="background: oklch(0.92 0.04 80); color: var(--color-warn);">Draft</span>
+          
+        </div>
+      </div>
+    </header>
+
+    <!-- ══ Metadata grid ══ -->
+    <div class="doc-meta">
+      <div class="doc-meta-item">
+        <span class="doc-meta-label">文件版本</span>
+        <span class="doc-meta-value">v1.0</span>
+      </div>
+      <div class="doc-meta-item">
+        <span class="doc-meta-label">機密等級</span>
+        <span class="doc-meta-value">internal</span>
+      </div>
+      <div class="doc-meta-item">
+        <span class="doc-meta-label">文件負責人</span>
+        <span class="doc-meta-value"></span>
+      </div>
+      <div class="doc-meta-item">
+        <span class="doc-meta-label">核准人</span>
+        <span class="doc-meta-value"></span>
+      </div>
+      <div class="doc-meta-item">
+        <span class="doc-meta-label">生效日期</span>
+        <span class="doc-meta-value"></span>
+      </div>
+      <div class="doc-meta-item">
+        <span class="doc-meta-label">下次審查</span>
+        <span class="doc-meta-value"></span>
+      </div>
+      <div class="doc-meta-item">
+        <span class="doc-meta-label">最後修改</span>
+        <span class="doc-meta-value">2026-05-05</span>
+      </div>
+      {{#if ISO_CONTROLS}}<div class="doc-meta-item">
+        <span class="doc-meta-label">__CONTROL_NAME__</span>
+        <span class="doc-meta-value"></span>
+      </div>{{/if}}
+    </div>
+
+    <!-- ══ Automation source (empty if not automated) ══ -->
+    
+
+    <!-- ══ Main content ══ -->
+    <div class="section-block doc-content">
+      <pre># ESG 政策聲明
+
+document_id: POL-ESG
+
+## 1. 目的與範圍
+
+本政策聲明闡述國軍臺中總醫院（以下簡稱「本院」）在環境（Environment）、社會（Social）與治理（Governance）三大構面之方針與承諾，作為全院 ESG 管理工作之最高指導原則。
+
+**適用對象：** 本院全體人員（含軍職、文職、約聘僱及承攬廠商）。
+
+**適用範圍：** 本院總院院區（臺中市太平區中山路二段 348 號）及所有業務活動。
+
+本政策依據《溫室氣體管理法》、《職業安全衛生法》、《廢棄物清理法》及國防部軍醫局相關指令制定，並參照 TCFD 氣候相關財務揭露建議書、GRI 永續發展報告準則。
+
+## 2. 政策聲明
+
+### 2.1 環境（Environment）
+
+本院承諾推動系統性環境管理，並宣示以下政策方針：
+
+**碳盤查與減碳（E1）**
+
+本院 **shall** 依 ISO 14064-1 標準每年執行溫室氣體盤查，涵蓋類別 1 直接排放及類別 2 間接排放，並公開揭露盤查結果。本院 **shall** 以 2023 年盤查基準年數據為基礎，設定 2028 年減碳目標，持續推動減碳措施。
+
+**能源管理（E2）**
+
+本院 **shall** 推動節能減碳行動計畫（PLN-ENERGY），優先針對外購電力（佔總排放量 91%）實施能效改善，包含照明 LED 化、空調汰換及設備能效管理。本院 **shall** 評估再生能源導入可行性。
+
+**廢棄物管理（E3）**
+
+本院 **shall** 依法分類處理醫療廢棄物及一般廢棄物，定期監控廢棄物產生量，並積極推動減量措施，目標達成廢棄物妥善處置率 100%。
+
+**水資源管理（E4）**
+
+本院 **shall** 定期監控用水量，推動節水措施，確保廢水排放符合法規標準，並記錄水資源使用數據以供年度盤點。
+
+### 2.2 社會（Social）
+
+**醫院評鑑（S1）**
+
+本院 **shall** 持續維持醫療機構評鑑合格資格，以提升醫療品質與病人安全為首要目標，定期執行自我評估並落實評鑑建議改善事項。
+
+**職業安全衛生（S2）**
+
+本院 **shall** 依《職業安全衛生法》建立職安衛管理系統，設置職業安全衛生委員會，定期評估職場危害風險，落實員工安全教育訓練，目標達成職業災害零死亡。
+
+**社區參與（S3）**
+
+本院 **shall** 積極參與在地社區健康促進活動，提供義診、衛教等社會服務，與社區建立良好互動關係，每年至少舉辦一次大型社區健康活動。
+
+### 2.3 治理（Governance）
+
+**ESG 治理架構（G1）**
+
+本院 **shall** 設立 ESG 委員會，由副院長擔任召集人，醫務企劃管理室擔任執行秘書，每季召開委員會議審視 ESG 目標達成情形。本院 **shall** 每年發布 ESG 相關報告，揭露重大 ESG 議題之管理方針與績效。
+
+**建案 ESG 管理（G2）**
+
+本院 **shall** 對新建及改建工程案（包含新建醫療大樓）納入 ESG 規劃，設定綠建築目標，管控工程期間之環境影響，並於建物點交後納入溫室氣體盤查邊界。
+
+**時程管制（G3）**
+
+本院 **shall** 建立 ESG 年度工作計畫與關鍵時程總表，追蹤各項 ESG 任務之執行進度，確保法規申報、查證作業與評鑑準備均按時完成。
+
+## 3. 角色與責任
+
+| 角色 | 單位 | ESG 職責 |
+|------|------|------|
+| ESG 政策核定人 | 院長 | 核定 ESG 政策、年度目標及重大決策 |
+| ESG 委員會召集人 | 副院長 | 召集委員會議、督管 ESG 整體推展 |
+| ESG 執行秘書 | 醫務企劃管理室主任 | 協調各單位、彙整報告、追蹤時程 |
+| 環境管理執行 | 行政組 | 能源、廢棄物、水資源、建案之日常管理 |
+| 職安衛管理執行 | 職業安全衛生室 | 職安衛法規遵循、事故調查 |
+| 醫療品質管理 | 醫務企劃管理室 | 評鑑準備、品質改善 |
+| 各單位主管 | 全院各單位 | 配合 ESG 措施執行、數據提報 |
+
+## 4. 例外處理
+
+因特殊任務需求（如重大災難救援、軍事緊急狀況）導致暫時無法遵循本政策特定要求時，權責單位主管應於事後 30 個工作天內向 ESG 委員會說明原因，並提出補救措施計畫。
+
+## 5. 違規處置
+
+本院人員未遵循本政策相關規定時，依下列方式處理：
+
+1. **輕微違規**（如未按時填報數據）：由醫務企劃管理室通知當事人及其主管，要求於 5 個工作天內補正。
+2. **重大違規**（如故意填寫不實數據、嚴重損害本院 ESG 形象）：提報院長室，依相關人事法規辦理。
+3. **承攬廠商違規**：依合約約款辦理，情節重大者終止合約並列入不良廠商記錄。
+
+## 6. 審查與修訂
+
+本政策由院長核定發布，每年進行一次定期審查（次年 4 月底前完成），遇下列情形得不定期修訂：
+
+- 法規要求重大變更
+- 國防部或軍醫局政策調整
+- ESG 委員會決議修訂
+- 重大環境事件或社會事件發生後
+
+修訂版本須經 ESG 委員會審議後，提報院長核定後生效，並公告全院周知。
+
+## 7. 相關文件
+
+本政策向下連結以下執行文件：
+
+| 文件編號 | 文件名稱 | 構面 |
+|------|------|------|
+| PRO-ESG-COMMITTEE | ESG 委員會運作程序 | G1 |
+| PRO-GHG-INV | 溫室氣體盤查程序書 | E1 |
+| PRO-GHG-VERIFY | 溫室氣體查證程序書 | E1 |
+| PRO-WASTE | 廢棄物管理程序書 | E3 |
+| PRO-WATER | 水資源管理程序書 | E4 |
+| PRO-OHS | 職業安全衛生管理程序書 | S2 |
+| PLN-ENERGY | 節能減碳行動計畫 | E2 |
+| PLN-CONSTRUCTION | 建案 ESG 規劃 | G2 |
+| PLN-ANNUAL | 年度 ESG 工作計畫 | G3 |
+| MTX-STAKEHOLDER | 利害關係人鑑別矩陣 | G1 |
+| MTX-RISK-CLIMATE | 氣候風險評估矩陣(TCFD) | G1 |
+| MTX-TIMELINE | 關鍵時程總表 | G3 |</pre>
+    </div>
+
+    <!-- ══ References ══ -->
+    <div class="section-block">
+      <div class="section-title">參考文件</div>
+      <div style="color: var(--text-muted); font-size: var(--text-sm);">（無參考文件）</div>
+    </div>
+
+    <!-- ══ Version history ══ -->
+    <div class="section-block">
+      <div class="section-title">版本歷程</div>
+      <div class="version-history">
+        <div class="version-history-header">
+          <span>日期</span>
+          <span>Commit</span>
+          <span>變更說明</span>
+        </div>
+        <div class="version-history-entry"><span class="version-history-date">2026-05-05</span><span class="version-history-hash">b61e100</span><span class="version-history-msg">feat: G1-G3 governance, construction, timeline documents</span></div>
+      </div>
+    </div>
+
+    <!-- ══ Footer ══ -->
+    <footer class="doc-footer">
+      <span>__ORGANIZATION__ &mdash; __KB_NAME__</span>
+      <span>產生時間：2026-05-05 14:18:11</span>
+    </footer>
+
+  </div><!-- /max-w-5xl -->
+
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });
+// pandoc outputs <pre class="mermaid"><code>...</code></pre>
+// mermaid expects <pre class="mermaid">...</pre> (no <code> wrapper)
+document.querySelectorAll('pre.mermaid code').forEach(el => {
+  const pre = el.parentElement;
+  pre.textContent = el.textContent;
+  pre.classList.add('mermaid');
+});
+mermaid.run({ querySelector: '.mermaid' });
+</script>
+
+</body>
+</html>

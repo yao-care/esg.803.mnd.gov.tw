@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STD-WASTE-REG 廢棄物管理法規摘要</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+/* ============================================================
+ * OKLCH Design System — System Integration Quality Control
+ * 感知均勻的淺色主題配色 + 字級系統
+ *
+ * 設計原則：
+ *   - 淺色背景適合列印和簡報投影
+ *   - 嚴重度色彩在淺底上保持足夠對比 (WCAG AA 4.5:1+)
+ *   - 色彩 Lightness 統一壓低至 0.45-0.55 確保可讀性
+ * ============================================================ */
+
+:root {
+  /* ── 背景層級 ── */
+  --bg-base:     oklch(0.97 0.005 250);   /* 近白 */
+  --bg-surface:  oklch(0.94 0.005 250);   /* 淺灰 */
+  --bg-overlay:  oklch(0.90 0.008 250);   /* 表頭灰 */
+  --bg-hover:    oklch(0.92 0.005 250);   /* hover */
+
+  /* ── 文字層級 ── */
+  --text-primary:   oklch(0.20 0.01 250);   /* 近黑 */
+  --text-secondary: oklch(0.45 0.01 250);   /* 中灰 */
+  --text-muted:     oklch(0.60 0.008 250);  /* 淺灰 */
+
+  /* ── 嚴重度色彩（L 壓低至 0.45-0.55，確保淺底對比） ── */
+  --color-critical: oklch(0.55 0.22 25);    /* 紅 */
+  --color-high:     oklch(0.55 0.16 55);    /* 橘 */
+  --color-medium:   oklch(0.52 0.14 80);    /* 暗琥珀（黃在淺底需更深） */
+  --color-low:      oklch(0.52 0.13 240);   /* 藍 */
+
+  /* ── 狀態色彩 ── */
+  --color-pass:  oklch(0.48 0.16 150);      /* 森林綠 */
+  --color-fail:  oklch(0.55 0.22 25);       /* 同 critical */
+  --color-warn:  oklch(0.52 0.14 80);       /* 同 medium */
+  --color-info:  oklch(0.52 0.13 240);      /* 同 low */
+
+  /* ── 功能色彩 ── */
+  --color-link:   oklch(0.48 0.15 250);     /* 連結藍 */
+  --color-purple: oklch(0.50 0.17 300);     /* 滲透測試紫 */
+  --color-cyan:   oklch(0.48 0.10 200);     /* SBOM 青 */
+  --color-pink:   oklch(0.52 0.17 340);     /* Schema 粉 */
+  --color-indigo: oklch(0.48 0.15 280);     /* SGE 靛 */
+
+  /* ── 邊框 ── */
+  --border-subtle: oklch(0.85 0.005 250);
+
+  /* ── 字級系統（最小 18px，卡片數字 48px） ── */
+  --text-xs:   1.125rem;   /* 18px — 徽章、標籤 */
+  --text-sm:   1.25rem;    /* 20px — 表格內文 */
+  --text-base: 1.5rem;     /* 24px — 正文 */
+  --text-lg:   1.75rem;    /* 28px — 強調文字 */
+  --text-xl:   2rem;       /* 32px — 區段標題 */
+  --text-2xl:  3rem;       /* 48px — 摘要卡片數字 */
+  --text-3xl:  3.5rem;     /* 56px — 報告標題 */
+}
+
+/* ── Fallback for browsers without OKLCH ── */
+@supports not (color: oklch(0 0 0)) {
+  :root {
+    --bg-base:     #f5f6f8;
+    --bg-surface:  #ecedf0;
+    --bg-overlay:  #dfe0e5;
+    --bg-hover:    #e5e6ea;
+
+    --text-primary:   #1e2030;
+    --text-secondary: #5e6070;
+    --text-muted:     #8a8c98;
+
+    --color-critical: #c93135;
+    --color-high:     #b86a2a;
+    --color-medium:   #8a7020;
+    --color-low:      #2a6bb8;
+
+    --color-pass:  #1e8050;
+    --color-fail:  #c93135;
+    --color-warn:  #8a7020;
+    --color-info:  #2a6bb8;
+
+    --color-link:   #1e5ab8;
+    --color-purple: #7830b8;
+    --color-cyan:   #1e7a8a;
+    --color-pink:   #b8306a;
+    --color-indigo: #4830b8;
+
+    --border-subtle: #d5d6da;
+  }
+}
+
+/* ── Base styles ── */
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: var(--text-base);
+  line-height: 1.6;
+}
+
+/* ── Utility classes ── */
+.text-primary   { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted     { color: var(--text-muted); }
+
+.text-critical { color: var(--color-critical); }
+.text-high     { color: var(--color-high); }
+.text-medium   { color: var(--color-medium); }
+.text-low      { color: var(--color-low); }
+.text-pass     { color: var(--color-pass); }
+.text-fail     { color: var(--color-fail); }
+.text-warn     { color: var(--color-warn); }
+.text-info     { color: var(--color-info); }
+.text-link     { color: var(--color-link); }
+.text-purple   { color: var(--color-purple); }
+.text-cyan     { color: var(--color-cyan); }
+.text-pink     { color: var(--color-pink); }
+.text-indigo   { color: var(--color-indigo); }
+
+.bg-base    { background: var(--bg-base); }
+.bg-surface { background: var(--bg-surface); }
+.bg-overlay { background: var(--bg-overlay); }
+
+.border-subtle { border-color: var(--border-subtle); }
+
+/* ── Status badges ── */
+.status-pass { color: var(--color-pass); font-weight: 600; }
+.status-fail { color: var(--color-fail); font-weight: 600; }
+.status-warn { color: var(--color-warn); font-weight: 600; }
+
+/* ── Severity badges ── */
+.badge {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+.badge-critical { background: oklch(0.92 0.06 25);  color: var(--color-critical); }
+.badge-high     { background: oklch(0.92 0.04 55);  color: var(--color-high); }
+.badge-medium   { background: oklch(0.92 0.04 80);  color: var(--color-medium); }
+.badge-low      { background: oklch(0.92 0.03 240); color: var(--color-low); }
+
+@supports not (color: oklch(0 0 0)) {
+  .badge-critical { background: #fce8e8; }
+  .badge-high     { background: #fceee8; }
+  .badge-medium   { background: #fcf5e8; }
+  .badge-low      { background: #e8f0fc; }
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--bg-surface);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  text-align: center;
+}
+.card-value {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+}
+.card-label {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* ── Tables ── */
+.table-container {
+  background: var(--bg-surface);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+.table-container table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table-container thead {
+  background: var(--bg-overlay);
+}
+.table-container th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.table-container td {
+  padding: 0.5rem 1rem;
+  font-size: var(--text-sm);
+}
+.table-container tbody tr {
+  border-top: 1px solid var(--border-subtle);
+}
+.table-container tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+/* ── Links ── */
+a { color: var(--color-link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Code blocks ── */
+pre {
+  background: oklch(0.92 0.005 250);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+}
+
+@supports not (color: oklch(0 0 0)) {
+  pre { background: #e8e9ed; }
+}
+
+/* ── Quality gate ── */
+.qg-pass { color: var(--color-pass); }
+.qg-fail { color: var(--color-fail); }
+
+/* ── Font size classes ── */
+.fs-xs   { font-size: var(--text-xs); }
+.fs-sm   { font-size: var(--text-sm); }
+.fs-base { font-size: var(--text-base); }
+.fs-lg   { font-size: var(--text-lg); }
+.fs-xl   { font-size: var(--text-xl); }
+.fs-2xl  { font-size: var(--text-2xl); }
+.fs-3xl  { font-size: var(--text-3xl); }
+
+/* ============================================================
+ * Code Syntax Highlighting — Pandoc skylighting classes
+ * 配色遵循 OKLCH 設計系統，Lightness 0.40-0.60 確保淺底可讀性
+ * ============================================================ */
+
+div.sourceCode {
+  background: oklch(0.96 0.005 250);
+  border: 1px solid oklch(0.88 0.01 250);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+pre.sourceCode { margin: 0; padding: 0; background: transparent; }
+code.sourceCode { font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace; }
+
+/* Keywords, control flow, imports */
+code.sourceCode span.kw,
+code.sourceCode span.cf,
+code.sourceCode span.im { color: oklch(0.45 0.15 300); font-weight: 600; }
+
+/* Data types, builtins */
+code.sourceCode span.dt,
+code.sourceCode span.bu { color: oklch(0.45 0.12 220); }
+
+/* Strings, chars */
+code.sourceCode span.st,
+code.sourceCode span.vs,
+code.sourceCode span.ss,
+code.sourceCode span.ch,
+code.sourceCode span.sc { color: oklch(0.45 0.12 150); }
+
+/* Numbers */
+code.sourceCode span.dv,
+code.sourceCode span.bn,
+code.sourceCode span.fl { color: oklch(0.50 0.14 50); }
+
+/* Comments */
+code.sourceCode span.co { color: oklch(0.60 0.02 250); font-style: italic; }
+
+/* Operators */
+code.sourceCode span.op { color: oklch(0.40 0.10 30); }
+
+/* Functions */
+code.sourceCode span.fu { color: oklch(0.45 0.14 250); }
+
+/* Decorators, attributes, preprocessor */
+code.sourceCode span.at { color: oklch(0.50 0.12 80); }
+code.sourceCode span.pp { color: oklch(0.50 0.12 80); font-weight: 600; }
+
+/* Errors, alerts */
+code.sourceCode span.al { color: oklch(0.50 0.18 25); font-weight: 600; }
+code.sourceCode span.er { color: oklch(0.50 0.18 25); text-decoration: underline; }
+
+/* Line number links */
+code.sourceCode span a { color: oklch(0.65 0.02 250); text-decoration: none; }
+code.sourceCode span a:hover { text-decoration: underline; }
+
+/* ── Document-specific styles ── */
+
+/* Header title area */
+.doc-header {
+  border-bottom: 3px solid var(--color-link);
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.doc-header .doc-id {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.doc-header .doc-title-zh {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+  margin-top: 0.25rem;
+}
+
+.doc-header .doc-title-en {
+  font-size: var(--text-lg);
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+/* Metadata grid */
+.doc-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  background: var(--bg-surface);
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+  border: 1px solid var(--border-subtle);
+}
+
+.doc-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.doc-meta-label {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.doc-meta-value {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* Content typography */
+.doc-content {
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  line-height: 1.7;
+}
+
+.doc-content h1 {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--border-subtle);
+}
+
+.doc-content h2 {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 1.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.doc-content h3 {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.doc-content p {
+  margin-bottom: 1rem;
+}
+
+.doc-content ul,
+.doc-content ol {
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.doc-content ul {
+  list-style-type: disc;
+}
+
+.doc-content ol {
+  list-style-type: decimal;
+}
+
+.doc-content li {
+  margin-bottom: 0.35rem;
+}
+
+.doc-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.25rem;
+  font-size: var(--text-sm);
+  background: var(--bg-surface);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.doc-content table thead {
+  background: var(--bg-overlay);
+}
+
+.doc-content table th {
+  padding: 0.6rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+.doc-content table td {
+  padding: 0.5rem 1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.doc-content table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+/* Version history */
+.version-history {
+  background: var(--bg-surface);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+
+.version-history-entry {
+  display: grid;
+  grid-template-columns: 9rem 7rem 1fr;
+  gap: 1rem;
+  padding: 0.6rem 1.25rem;
+  border-top: 1px solid var(--border-subtle);
+  font-size: var(--text-sm);
+  align-items: start;
+}
+
+.version-history-entry:first-child {
+  border-top: none;
+}
+
+.version-history-header {
+  display: grid;
+  grid-template-columns: 9rem 7rem 1fr;
+  gap: 1rem;
+  padding: 0.6rem 1.25rem;
+  background: var(--bg-overlay);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.version-history-date {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.version-history-hash {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--color-link);
+  font-size: var(--text-xs);
+}
+
+.version-history-msg {
+  color: var(--text-primary);
+}
+
+/* Reference section */
+.ref-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.ref-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  transition: background 0.15s;
+}
+
+.ref-card:hover {
+  background: var(--bg-hover);
+}
+
+.ref-link {
+  color: var(--color-link);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.ref-link:hover {
+  text-decoration: underline;
+}
+
+.ref-desc {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* Automation badge */
+.automation-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1.5px solid var(--color-pass);
+  color: var(--color-pass);
+  background: oklch(0.97 0.02 150);
+  border-radius: 9999px;
+  padding: 0.2rem 0.8rem;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+@supports not (color: oklch(0 0 0)) {
+  .automation-badge {
+    background: #edf7f0;
+  }
+}
+
+/* Automation source section */
+.automation-source {
+  background: oklch(0.95 0.015 150);
+  border-left: 4px solid var(--color-pass);
+  border-radius: 0 0.5rem 0.5rem 0;
+  padding: 1rem 1.25rem;
+  margin-bottom: 2rem;
+  font-size: var(--text-sm);
+}
+
+@supports not (color: oklch(0 0 0)) {
+  .automation-source {
+    background: #edf7f0;
+  }
+}
+
+.automation-source .automation-title {
+  font-weight: 700;
+  color: var(--color-pass);
+  margin-bottom: 0.35rem;
+}
+
+/* Section wrappers */
+.section-block {
+  margin-bottom: 2.5rem;
+}
+
+.section-title {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--border-subtle);
+  margin-bottom: 1.25rem;
+}
+
+/* Footer */
+.doc-footer {
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 3rem;
+  padding-top: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+  </style>
+</head>
+<body class="min-h-screen" style="background: var(--bg-base);">
+
+  <div class="max-w-5xl mx-auto px-6 py-10">
+
+    <!-- ══ Header ══ -->
+    <header class="doc-header">
+      <div class="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <div class="doc-id">STD-WASTE-REG</div>
+          <div class="doc-title-zh">廢棄物管理法規摘要</div>
+          <div class="doc-title-en">Waste Management Regulatory Summary</div>
+        </div>
+        <div class="flex items-center gap-2 pt-1">
+          <span class="badge" style="background: oklch(0.92 0.04 80); color: var(--color-warn);">Draft</span>
+          
+        </div>
+      </div>
+    </header>
+
+    <!-- ══ Metadata grid ══ -->
+    <div class="doc-meta">
+      <div class="doc-meta-item">
+        <span class="doc-meta-label">文件版本</span>
+        <span class="doc-meta-value">v1.0</span>
+      </div>
+      <div class="doc-meta-item">
+        <span class="doc-meta-label">機密等級</span>
+        <span class="doc-meta-value">internal</span>
+      </div>
+      <div class="doc-meta-item">
+        <span class="doc-meta-label">文件負責人</span>
+        <span class="doc-meta-value"></span>
+      </div>
+      <div class="doc-meta-item">
+        <span class="doc-meta-label">核准人</span>
+        <span class="doc-meta-value"></span>
+      </div>
+      <div class="doc-meta-item">
+        <span class="doc-meta-label">生效日期</span>
+        <span class="doc-meta-value"></span>
+      </div>
+      <div class="doc-meta-item">
+        <span class="doc-meta-label">下次審查</span>
+        <span class="doc-meta-value"></span>
+      </div>
+      <div class="doc-meta-item">
+        <span class="doc-meta-label">最後修改</span>
+        <span class="doc-meta-value">2026-05-05</span>
+      </div>
+      {{#if ISO_CONTROLS}}<div class="doc-meta-item">
+        <span class="doc-meta-label">__CONTROL_NAME__</span>
+        <span class="doc-meta-value"></span>
+      </div>{{/if}}
+    </div>
+
+    <!-- ══ Automation source (empty if not automated) ══ -->
+    
+
+    <!-- ══ Main content ══ -->
+    <div class="section-block doc-content">
+      <pre># 廢棄物管理法規摘要
+
+document_id: STD-WASTE-REG
+
+## 1. 標準概述
+
+本文件摘錄國軍臺中總醫院執行醫療廢棄物管理所應遵循之主要法規條文，提供各單位快速查閱合規要求之依據。
+
+| 法規名稱 | 發布機構 | 現行版本/修正日期 | 法規位階 |
+|------|------|------|------|
+| 廢棄物清理法 | 中華民國環境部 | 民國 111 年 5 月 18 日修正 | 法律 |
+| 事業廢棄物貯存清除處理方法及設施標準 | 環境部 | 民國 111 年 10 月 26 日修正 | 法規命令 |
+| 醫療廢棄物管理辦法 | 衛生福利部 | 民國 106 年 1 月 24 日發布 | 法規命令 |
+| 感染性事業廢棄物清理及管制作業要點 | 環境部 | 民國 110 年 3 月 11 日修正 | 行政規則 |
+| 有害事業廢棄物認定標準 | 環境部 | 民國 110 年 12 月 23 日修正 | 法規命令 |
+
+**重要提示：** 本摘要依上述版本整理，法規更新時應以官方最新公告版本為準。更新追蹤機制詳見第 5 節。
+
+## 2. 適用條款摘錄
+
+### 2.1 廢棄物清理法（主要條款）
+
+**第 2 條（廢棄物定義）：**
+本法所稱廢棄物，指下列能以搬動方式移動之固態或液態物質或物品：
+- 一、被拋棄者。
+- 二、減失原效用、被放棄原效用、不具效用或效用不明者。
+- 三、於營建、製造、包裝、消費、使用或其他活動過程所產生，不再具有原使用目的之物質或物品。
+- 事業廢棄物：指事業活動產生非屬其事業廢棄物之廢棄物。
+
+**第 28 條（事業廢棄物清理義務）：**
+事業廢棄物之清理，除再利用方式外，應以下列方式為之：
+- 一、自行清除、處理。
+- 二、共同清除、處理。
+- 三、委託清除、處理。
+事業委託公、民營廢棄物清除、處理機構清除、處理廢棄物，應先確認廢棄物清除、處理機構具有主管機關許可文件，始得委託。
+
+**第 31 條（申報義務）：**
+事業廢棄物之清理，依前條規定委託清除、處理前，應向直轄市、縣（市）主管機關或中央主管機關委託之機構申報。
+
+**第 36 條（清運聯單）：**
+事業廢棄物之清除、處理，應依規定製作紀錄，並隨同運送或保存。
+
+**第 71 條（罰則）：**
+未依第 31 條辦理申報者，處新臺幣 6,000 元以上 30,000 元以下罰鍰。
+
+### 2.2 事業廢棄物貯存清除處理方法及設施標準（主要條款）
+
+**第 3 條（事業廢棄物貯存原則）：**
+事業廢棄物之貯存，應符合下列規定：
+- 一、貯存地點、設施及容器，應有防止廢棄物飛散、流失、滲出、惡臭擴散、引起火災爆炸及防止地面水、雨水流入之措施。
+- 二、廢棄物應依其特性分類貯存，不得混合貯存性質不相容之廢棄物。
+- 三、感染性廢棄物應與其他廢棄物分開貯存。
+
+**第 5 條（感染性廢棄物貯存期限）：**
+感染性廢棄物貯存期間不得超過下列規定：
+- 一、冷藏（4°C 以下）：30 日。
+- 二、冷凍（-20°C 以下）：60 日。
+- 三、未冷藏之室溫貯存：48 小時。
+
+### 2.3 醫療廢棄物管理辦法（主要條款）
+
+**第 3 條（醫療廢棄物定義）：**
+本辦法所稱醫療廢棄物，指醫療機構在醫療行為過程中所產生之感染性廢棄物及有害事業廢棄物。
+
+**第 5 條（感染性廢棄物分類）：**
+醫療機構感染性廢棄物分類如下：
+- 一、病理性廢棄物：人體或動物體組織、器官及胎盤等。
+- 二、利器廢棄物：皮下注射針頭、縫合針、靜脈注射管、刀片、破碎玻璃等。
+- 三、培養廢棄物：培養基及相關器具。
+- 四、血液廢棄物：血袋、帶血液物質及廢棄血清瓶。
+- 五、隔離廢棄物：隔離病患接觸物。
+
+**第 6 條（包裝要求）：**
+感染性廢棄物之盛裝、密封及標示，應符合下列規定：
+- 一、病理性、血液、培養、隔離廢棄物：以不滲漏之黃色垃圾袋包裝，並予密封後，再以不滲漏之黃色外袋雙重包裝。
+- 二、利器廢棄物：盛裝於防穿刺、不滲漏之容器內，填滿度不得超過容器容積之四分之三，加蓋密封後，再行外袋包裝。
+- 三、廢棄物外表應貼附感染性廢棄物標示。
+
+**第 8 條（清運頻率）：**
+醫療機構感染性廢棄物，應於下列期限內完成清除：
+- 一、存放於室溫場所（未冷藏）：48 小時內。
+- 二、存放於冷藏（4°C 以下）場所：30 日內。
+
+### 2.4 有害事業廢棄物認定標準（主要條款）
+
+**第 2 條（有害特性）：**
+事業廢棄物具有下列特性之一者，為有害事業廢棄物：
+- 一、易燃性。
+- 二、腐蝕性。
+- 三、反應性。
+- 四、毒性。
+- 五、溶出毒性。
+
+醫院常見有害事業廢棄物包含：廢藥品（含化學治療廢棄物）、廢顯影液及廢定影液（X 光室）、廢汞製品（水銀血壓計、體溫計）、廢化學品試劑（實驗室）。
+
+## 3. 合規要求
+
+依上述法規，本院應符合以下具體要求，每項要求均可追溯至法規來源條款：
+
+| 編號 | 合規要求 | 來源條款 |
+|------|------|------|
+| W-CR-01 | 感染性廢棄物室溫貯存不得超過 48 小時 | 廢棄物清理法§5；醫療廢棄物管理辦法§8 |
+| W-CR-02 | 感染性廢棄物冷藏（4°C 以下）貯存不得超過 30 日 | 事業廢棄物標準§5；醫療廢棄物管理辦法§8 |
+| W-CR-03 | 感染性廢棄物使用黃色垃圾袋雙重包裝並密封，外貼感染性廢棄物標示 | 醫療廢棄物管理辦法§6 |
+| W-CR-04 | 利器廢棄物使用防穿刺不滲漏硬容器，填裝量不得超過 3/4 | 醫療廢棄物管理辦法§6 |
+| W-CR-05 | 委託清除業者前應確認其持有主管機關許可文件 | 廢棄物清理法§28 |
+| W-CR-06 | 事業廢棄物清除前應向主管機關申報 | 廢棄物清理法§31 |
+| W-CR-07 | 清除作業應製作紀錄（清運聯單）並隨同運送或保存 | 廢棄物清理法§36 |
+| W-CR-08 | 有害事業廢棄物應依特性分類貯存，不得混合性質不相容廢棄物 | 事業廢棄物標準§3 |
+| W-CR-09 | 廢棄物貯存場所應有防止飛散、流失、滲出及雨水流入之措施 | 事業廢棄物標準§3 |
+| W-CR-10 | 感染性廢棄物應與其他廢棄物分開貯存 | 事業廢棄物標準§3 |
+
+## 4. 合規對照
+
+| 條款號 | 合規要求（摘要） | 本院現行做法 | 符合狀態 |
+|------|------|------|------|
+| 醫廢§8 / 廢清§5 | 室溫貯存上限 48 小時 | 感染性廢棄物於 48 小時內清運或移至冷藏區，PRO-WASTE 明定 SLA | 符合 |
+| 醫廢§8 / 事標§5 | 冷藏（4°C 以下）上限 30 日 | 冷藏貯存區設置、溫度紀錄每日確認 | 符合 |
+| 醫廢§6 | 黃色垃圾袋雙重包裝 | 全院採購黃色廢棄物袋，護理部門有雙重包裝 SOP | 符合 |
+| 醫廢§6 | 利器防穿刺容器，填裝不超過 3/4 | 各單位配置防刺穿硬容器，定期更換 | 符合 |
+| 廢清§28 | 委託前確認業者許可文件 | 每年合約審查時確認許可證有效期 | 符合 |
+| 廢清§31 | 清除前申報 | 透過廢棄物申報系統進行申報 | 符合 |
+| 廢清§36 | 清運聯單製作保存 | 三聯式聯單，本院留存一聯，保存 5 年 | 符合 |
+| 事標§3 | 廢棄物分類貯存 | 依三類分區貯存，一般/感染性/有害廢棄物區域隔離 | 符合 |
+| 事標§3 | 貯存場所防護措施 | 暫存區有防滲漏、通風、門禁管制設施 | 符合 |
+| 事標§3 | 感染性與其他廢棄物分開 | 感染性廢棄物有獨立冷藏貯存區 | 符合 |
+
+## 5. 更新追蹤
+
+### 5.1 更新機制
+
+| 項目 | 說明 |
+|------|------|
+| 負責人 | 醫勤組組長（主責）；醫務企劃管理室（ESG 整合） |
+| 更新週期 | 每年一次例行審查（每年 Q1）；法規修正時立即更新 |
+| 監控方式 | 醫勤組訂閱環境部及衛福部法規公告電子報；每季確認法規有無修訂 |
+| 通知流程 | 法規更新時，醫勤組組長通知 ESG 委員會及 PRO-WASTE 文件管理者，於 30 個工作天內完成文件更新 |
+
+### 5.2 版本歷史
+
+| 版本 | 更新日期 | 更新內容 | 更新者 |
+|------|------|------|------|
+| 1.0 | 2026-05-05 | 初版建立，摘錄主要法規條文及合規對照 | 醫勤組 |</pre>
+    </div>
+
+    <!-- ══ References ══ -->
+    <div class="section-block">
+      <div class="section-title">參考文件</div>
+      <div style="color: var(--text-muted); font-size: var(--text-sm);">（無參考文件）</div>
+    </div>
+
+    <!-- ══ Version history ══ -->
+    <div class="section-block">
+      <div class="section-title">版本歷程</div>
+      <div class="version-history">
+        <div class="version-history-header">
+          <span>日期</span>
+          <span>Commit</span>
+          <span>變更說明</span>
+        </div>
+        <div class="version-history-entry"><span class="version-history-date">2026-05-05</span><span class="version-history-hash">974ee03</span><span class="version-history-msg">feat: E2-E4 environmental skeleton documents (energy, waste, water)</span></div>
+      </div>
+    </div>
+
+    <!-- ══ Footer ══ -->
+    <footer class="doc-footer">
+      <span>__ORGANIZATION__ &mdash; __KB_NAME__</span>
+      <span>產生時間：2026-05-05 14:18:18</span>
+    </footer>
+
+  </div><!-- /max-w-5xl -->
+
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });
+// pandoc outputs <pre class="mermaid"><code>...</code></pre>
+// mermaid expects <pre class="mermaid">...</pre> (no <code> wrapper)
+document.querySelectorAll('pre.mermaid code').forEach(el => {
+  const pre = el.parentElement;
+  pre.textContent = el.textContent;
+  pre.classList.add('mermaid');
+});
+mermaid.run({ querySelector: '.mermaid' });
+</script>
+
+</body>
+</html>
