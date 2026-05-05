@@ -1,0 +1,41 @@
+document_id: FRM-INCIDENT
+type: FRM
+title_zh: 職災異常事件通報表
+title_en: Incident Report Form
+main:
+  zh: 職災異常事件通報表.md
+status: active
+owner: 職業安全衛生室
+effective_date: 2026-05-05
+next_review_date: 2027-05-05
+fields:
+  - name: incident_date
+    label: 事件日期
+    type: date
+    required: true
+  - name: location
+    label: 發生地點
+    type: text
+    required: true
+  - name: incident_type
+    label: 事件類型
+    type: select
+    options: [針扎, 跌倒, 化學暴露, 輻射暴露, 暴力事件, 其他]
+    required: true
+  - name: description
+    label: 事件描述
+    type: textarea
+    required: true
+  - name: severity
+    label: 傷害程度
+    type: select
+    options: [輕微, 中度, 嚴重]
+    required: true
+  - name: immediate_action
+    label: 立即處置措施
+    type: textarea
+    required: true
+  - name: reporter_name
+    label: 通報人姓名
+    type: text
+    required: true
