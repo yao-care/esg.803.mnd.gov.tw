@@ -617,7 +617,7 @@ ${chunkTexts}`;
  * @param {Object} searchResultsMap
  * @returns {Object} Exportable JSON structure
  */
-function exportQuestions(questions, searchResultsMap, dynamicNeeds) {
+function exportQuestions(questions, searchResultsMap) {
   return {
     exported_at: new Date().toISOString(),
     total: questions.length,
@@ -634,7 +634,6 @@ function exportQuestions(questions, searchResultsMap, dynamicNeeds) {
         context: sr.context,
       };
     }),
-    dynamic_needs: dynamicNeeds || [],
   };
 }
 
@@ -856,19 +855,17 @@ function generateHtmlReport(results) {
   const dynCardValue = dynCount === 0 ? 'N/A' : (dynHits === dynCount && dynAnswered === dynCount && dynCited === dynCount ? '100%' : pct(Math.min(dynHits, dynAnswered, dynCited), dynCount));
   const dynCardClass = dynCount === 0 ? 'warn' : (dynHits >= dynCount && dynAnswered >= dynCount && dynCited >= dynCount ? 'pass' : 'fail');
 
-  const dynCard = dynCount > 0 ? `
-  <div class="card">
-    <div class="card-value ${dynCardClass}">${dynCardValue}</div>
-    <div class="card-label">動態題（${dynCount} 題）</div>
-    <div class="card-sub">搜尋 ${dynHits}/${dynCount} ｜ 回答 ${dynAnswered}/${dynCount} ｜ 引文 ${dynCited}/${dynCount}</div>
-  </div>` : '';
-  const gridCols = dynCount > 0 ? '1fr 1fr' : '1fr';
-  const sourceBreakdownCards = `<div class="cards" style="grid-template-columns: ${gridCols};">
+  const sourceBreakdownCards = `<div class="cards" style="grid-template-columns: 1fr 1fr;">
   <div class="card">
     <div class="card-value ${seedCardClass}">${seedCardValue}</div>
     <div class="card-label">種子題（${seedCount} 題）</div>
     <div class="card-sub">搜尋 ${seedHits}/${seedCount} ｜ 回答 ${seedAnswered}/${seedCount} ｜ 引文 ${seedCited}/${seedCount}</div>
-  </div>${dynCard}
+  </div>
+  <div class="card">
+    <div class="card-value ${dynCardClass}">${dynCardValue}</div>
+    <div class="card-label">動態題（${dynCount} 題）</div>
+    <div class="card-sub">搜尋 ${dynHits}/${dynCount} ｜ 回答 ${dynAnswered}/${dynCount} ｜ 引文 ${dynCited}/${dynCount}</div>
+  </div>
 </div>`;
 
   const footerOrg = orgName ? `${escHtml(orgName)} &mdash; ` : '';
@@ -1256,89 +1253,17 @@ async function main() {
         searchDocKeys: [...new Set(searchResults.map(r => r.doc_key))],
       };
     }
-
-    // Compute dynamic question needs for Claude Code mode
-    const config = cfg();
-    const kbName = config.knowledge_body?.name || 'Knowledge Base';
-    const identityDocMap = config.domain?.identity_doc_map || {};
-    const hasIdentities = Object.keys(identityDocMap).length > 0;
-    const seedCoverage = new Map();
-    for (const q of questions) {
-      seedCoverage.set(q.expected_doc_key, (seedCoverage.get(q.expected_doc_key) || 0) + 1);
-    }
-    const allDocKeysSet = [...new Set(allChunks.map(c => c.doc_key).filter(Boolean))];
-    const dynamicNeeds = [];
-    for (const dk of allDocKeysSet) {
-      const count = seedCoverage.get(dk) || 0;
-      if (count < 2) {
-        const needed = 2 - count;
-        const chunkTexts = allChunks
-          .filter(c => c.doc_key === dk)
-          .map(c => c.text)
-          .join('\n\n---\n\n')
-          .slice(0, 4000);
-        const identity = pickIdentityForDocKey(dk);
-        const isCollected = allChunks.find(c => c.doc_key === dk)?.source_type === 'collected';
-        const identityClause = hasIdentities
-          ? `\n2. 問題要像真實的${identity}會問的問題`
-          : '\n2. 問題要像實際使用者會問的問題';
-        const prompt = isCollected
-          ? `以下是一份自動化掃描的證據資料。請產生 ${needed} 個稽核員在審查這份證據時會問的問題。\n要求：\n1. 問題必須是稽核員驗證合規性時會問的\n2. 禁止問具體數字\n3. 問題應該能從這份證據中找到答案\n4. 輸出 JSON 陣列格式，每個元素有 question 和 category 欄位\n\n證據資料：\n${chunkTexts}`
-          : `根據以下${kbName}文件內容，產生 ${needed} 個相關問題。\n要求：\n1. 問題必須能從這份文件的內容中找到答案，不要問其他文件才能回答的問題${identityClause}\n3. 避免問「本文件的目的為何」這類過於制式的問題\n4. 輸出 JSON 陣列格式，每個元素有 question 和 category 欄位\n\n文件內容：\n${chunkTexts}`;
-        dynamicNeeds.push({ doc_key: dk, needed, identity, prompt });
-      }
-    }
-
-    const exported = exportQuestions(questions, searchResultsMap, dynamicNeeds);
+    const exported = exportQuestions(questions, searchResultsMap);
     const exportPath = path.join(flags.outputDir, 'qa-export.json');
     fs.mkdirSync(flags.outputDir, { recursive: true });
     fs.writeFileSync(exportPath, JSON.stringify(exported, null, 2), 'utf8');
-    console.log(`匯出完成: ${exportPath} (${exported.total} 題, ${dynamicNeeds.length} 個動態題需求)`);
+    console.log(`匯出完成: ${exportPath} (${exported.total} 題)`);
     return;
   }
 
   // --evaluate mode: load answers from file, evaluate, generate reports
   if (flags.evaluateFile) {
     const answersData = JSON.parse(fs.readFileSync(flags.evaluateFile, 'utf8'));
-
-    // Inject dynamic questions from Claude Code mode if present
-    if (Array.isArray(answersData.dynamic_questions) && answersData.dynamic_questions.length > 0) {
-      let dynIdCounter = 1;
-      for (const dq of answersData.dynamic_questions) {
-        questions.push({
-          id: `dyn-${String(dynIdCounter++).padStart(3, '0')}`,
-          question: dq.question,
-          expected_doc_key: dq.doc_key,
-          identity: dq.identity || '使用者',
-          category: dq.category || '一般',
-          source: 'dynamic',
-        });
-        // Also inject the answer into answersData.answers
-        answersData.answers.push({
-          id: `dyn-${String(dynIdCounter - 1).padStart(3, '0')}`,
-          answer: dq.answer,
-        });
-      }
-      // Update dynamic cache
-      const profileFlag = flags.profile || 'assistant';
-      const cachePath = path.join(__dirname, `qa-dynamic-cache-${profileFlag}.json`);
-      let cache = { version: 1, generated_at: new Date().toISOString(), entries: {} };
-      for (const dq of answersData.dynamic_questions) {
-        const currentHash = computeDocKeyHash(allChunks, dq.doc_key);
-        if (!cache.entries[dq.doc_key]) cache.entries[dq.doc_key] = { content_hash: currentHash, questions: [] };
-        cache.entries[dq.doc_key].questions.push({
-          id: questions[questions.length - 1].id,
-          question: dq.question,
-          expected_doc_key: dq.doc_key,
-          identity: dq.identity || '使用者',
-          category: dq.category || '一般',
-          source: 'dynamic',
-        });
-      }
-      fs.writeFileSync(cachePath, JSON.stringify(cache, null, 2), 'utf8');
-      console.log(`[dynamic] 從 Claude Code 匯入 ${answersData.dynamic_questions.length} 題動態題`);
-    }
-
     const searchResultsMap = {};
     for (const q of questions) {
       const expandedQuestion = expandGlossary(q.question, glossary);
