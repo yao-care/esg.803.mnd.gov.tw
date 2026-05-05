@@ -196,9 +196,12 @@ function readDocuments(docsDir, options = {}) {
       continue;
     }
 
+    // Prepend merge.yaml frontmatter to md so chunkMarkdown can read title_zh etc.
+    const mdWithFrontmatter = md.startsWith('---') ? md : `---\n${metaYaml}\n---\n${md}`;
+
     // Chunk the markdown
     const chunkConfig = options.chunk_threshold ? { chunk_threshold: options.chunk_threshold } : {};
-    const docChunks = chunkMarkdown(md, folderName, chunkConfig);
+    const docChunks = chunkMarkdown(mdWithFrontmatter, folderName, chunkConfig);
     chunks.push(...docChunks);
 
     // Determine rendered HTML path (if outputDir is provided)
